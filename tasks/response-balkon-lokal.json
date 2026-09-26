@@ -1,0 +1,15 @@
+{
+  "title": "Bienenfreundlicher Balkon in 5 Schritten",
+  "language": "de-DE",
+  "mode": "LOKAL",
+  "target_duration_seconds": 42,
+  "scenes": [
+    {"index": 1, "duration_seconds": 6, "narration": "Willst du Bienen retten? Mache deinen Stadtbalkon in fünf einfachen Schritten zu einer echten Bienen-Oase!", "visual_description": "Nahaufnahme einer Biene, die auf einer lila Blüte auf einem sonnigen Balkon Nektar sammelt. Im Hintergrund ist eine unscharfe Stadtkulisse zu sehen.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Biene Balkon", "bee on balcony flower", "urban gardening", "city nature"]},
+    {"index": 2, "duration_seconds": 5, "narration": "Schritt 1: Wähle Töpfe mit Abflusslöchern. Bienen mögen keine Staunässe in ihren Lieblingsblumen.", "visual_description": "Eine Hand füllt Blähton als Drainage in einen schönen Terracotta-Pflanzkübel.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Pflanztopf", "planting pot", "gardening drainage", "terracotta pot"]},
+    {"index": 3, "duration_seconds": 5, "narration": "Schritt 2: Nutze torffreie Erde. Das schützt die Moore, hilft dem Klima und bietet die perfekte Grundlage.", "visual_description": "Zwei Hände graben in frischer, dunkler Blumenerde und füllen sie behutsam in einen Balkonkasten.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Blumenerde", "potting soil", "hands in soil", "gardening dirt"]},
+    {"index": 4, "duration_seconds": 7, "narration": "Schritt 3: Pflanze heimische, ungefüllte Blüten. Lavendel, Thymian und Glockenblumen sind wahre Bienenmagnete!", "visual_description": "Eine bunte Auswahl an blühendem Lavendel und Thymian in Töpfen. Eine Hand streicht sanft über die lila Blütenstände.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Lavendel", "lavender plant", "herbs on balcony", "bee friendly plants"]},
+    {"index": 5, "duration_seconds": 6, "narration": "Schritt 4: Stelle eine flache Bienentränke auf. Ein Schälchen mit Wasser und ein paar Steinen als Landeplatz reicht schon.", "visual_description": "Eine flache Tonschale wird aus einer kleinen Kanne mit Wasser gefüllt. Mehrere kleine Kieselsteine ragen als Inseln aus dem Wasser heraus.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Wasserschale", "bird bath stones", "water bowl macro", "bee bath"]},
+    {"index": 6, "duration_seconds": 6, "narration": "Schritt 5: Hänge ein kleines Insektenhotel an eine sonnige, regengeschützte Wand für die Wildbienen.", "visual_description": "Ein hölzernes Insektenhotel mit vielen kleinen Bambusröhrchen wird an einer Ziegelwand auf dem Balkon aufgehängt.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Insektenhotel", "insect hotel", "bug house", "bamboo tubes"]},
+    {"index": 7, "duration_seconds": 7, "narration": "Schon fertig! Jetzt kannst du dich zurücklehnen und das Summen genießen. Folge mir für mehr grüne Tipps!", "visual_description": "Eine glückliche Person sitzt mit einer Teetasse auf dem fertig bepflanzten Balkon, schließt die Augen und genießt die Sonne. Im Vordergrund unscharfe Blüten.", "media_type": "STOCK_VIDEO", "pexels_queries": ["Balkon entspannen", "relaxing on balcony", "urban oasis", "tea balcony"]}
+  ]
+}

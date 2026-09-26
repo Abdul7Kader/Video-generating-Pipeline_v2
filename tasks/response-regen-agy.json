@@ -1,0 +1,56 @@
+{
+  "title": "Ein Regentag in der Stadt",
+  "language": "de-DE",
+  "mode": "CLOUD",
+  "target_duration_seconds": 36,
+  "scenes": [
+    {
+      "index": 1,
+      "duration_seconds": 5,
+      "narration": "Die Stadt erwacht unter einem grauen Himmel. Regentropfen fallen sanft auf den nassen Asphalt.",
+      "visual_description": "Nahaufnahme von Regentropfen, die in eine Pfütze auf einer asphaltierten Straße fallen. Im Hintergrund unscharfe Gebäude.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "Close up of raindrops falling into a puddle on an asphalt street in a city, blurred buildings in the background, cinematic, moody, rainy day, photorealistic, 4k resolution, vertical video format"
+    },
+    {
+      "index": 2,
+      "duration_seconds": 6,
+      "narration": "Menschen eilen mit bunten Regenschirmen durch die Straßen, ein stetiger Fluss im grauen Meer der Stadt.",
+      "visual_description": "Von oben herab gefilmt: Fußgänger überqueren eine nasse Kreuzung, viele tragen verschiedenfarbige Regenschirme.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "Top down view of pedestrians crossing a wet city intersection, carrying colorful umbrellas, rainy day, cinematic lighting, 4k resolution, photorealistic, vertical video format"
+    },
+    {
+      "index": 3,
+      "duration_seconds": 7,
+      "narration": "In den Cafés suchen die Menschen Zuflucht. Durch beschlagene Fenster sieht man das warme Licht und spürt förmlich den Kaffeeduft.",
+      "visual_description": "Blick von draußen durch das beschlagene Fenster eines gemütlichen Cafés. Drinnen sitzen Menschen im warmen Licht und trinken Kaffee.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "Looking from outside through a steamed up window of a cozy city cafe. Inside, people are sitting in warm light drinking coffee, raindrops on the window glass, moody atmosphere, 4k resolution, vertical video format"
+    },
+    {
+      "index": 4,
+      "duration_seconds": 6,
+      "narration": "Autoreifen zischen über die nassen Straßen und werfen kleine Fontänen auf. Die Lichter der Stadt spiegeln sich in jeder Pfütze.",
+      "visual_description": "Ein Auto fährt durch eine Pfütze und spritzt Wasser auf. Die Scheinwerfer und Neonlichter spiegeln sich auf der nassen Straße.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "A car drives through a puddle on a wet city street splashing water, headlights and neon signs reflecting on the wet asphalt, cinematic night city, rainy, photorealistic, 4k, vertical video format"
+    },
+    {
+      "index": 5,
+      "duration_seconds": 6,
+      "narration": "Der Regen wäscht den Staub der Tage fort und lässt die Farben der Stadt neu erstrahlen.",
+      "visual_description": "Eine nasse rote Telefonzelle oder Ampel hebt sich leuchtend vom grauen Hintergrund ab. Regentropfen perlen daran ab.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "A wet, brightly colored red traffic light standing out against a gray, rainy city background, water droplets rolling down, vibrant colors, cinematic, photorealistic, 4k, vertical video format"
+    },
+    {
+      "index": 6,
+      "duration_seconds": 6,
+      "narration": "Auch ein Regentag hat seine eigene, ruhige Magie, wenn man nur genau hinsieht.",
+      "visual_description": "Ein stiller Park in der Stadt. Bäume mit nassen Blättern. Eine leere, nasse Parkbank unter einer Straßenlaterne.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "A quiet city park on a rainy day. Trees with wet leaves, an empty wet park bench under a street lamp glowing warmly, serene, moody, photorealistic, 4k resolution, vertical video format"
+    }
+  ]
+}

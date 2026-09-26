@@ -1,0 +1,34 @@
+Erstelle ein deutsches Skript für ein vertikales Kurzvideo.
+Idee: Ein Regentag in der Stadt
+Produktionsmodus: CLOUD
+
+Antworte ausschließlich mit einem gültigen JSON-Objekt. Keine Markdown-Codeblöcke,
+keine Einleitung und keine Kommentare. Verwende exakt diese Struktur und Schlüssel:
+{
+  "title": "Deutscher Videotitel",
+  "language": "de-DE",
+  "mode": "CLOUD",
+  "target_duration_seconds": 42,
+  "scenes": [
+    {
+      "index": 1,
+      "duration_seconds": 7,
+      "narration": "Deutscher Sprechertext für genau diese Szene.",
+      "visual_description": "Konkrete sichtbare Handlung und Bildkomposition.",
+      "media_type": "AI_GENERATED_VIDEO",
+      "wan_prompt": "Detailed English text-to-video prompt for this scene"
+    }
+  ]
+}
+
+Regeln:
+- 6 bis 10 Szenen in erzählerischer Reihenfolge; index beginnt bei 1 und steigt ohne Lücke.
+- Gesamtdauer 30 bis 60 Sekunden. Jede Szene dauert ganzzahlig 3 bis 12 Sekunden.
+  Die Summe aller duration_seconds ist exakt target_duration_seconds.
+- title 1 bis 120 Zeichen; narration pro Szene 1 bis 400 Zeichen und auf Deutsch;
+  visual_description pro Szene 1 bis 600 Zeichen, konkret und filmbar.
+- Alle visuellen Szenen verwenden ausschließlich AI_GENERATED_VIDEO.
+- Für CLOUD hat jede Szene "wan_prompt" und keinen Schlüssel der anderen Quelle.
+- Bei LOKAL: je Szene 2 bis 4 unterschiedliche Pexels-Suchbegriffe, je 1 bis 100 Zeichen.
+  Bei CLOUD: je Szene ein englischer Wan-Prompt mit 1 bis 1000 Zeichen.
+- Keine zusätzlichen Schlüssel. Keine Musik-, Rechte- oder Veröffentlichungsbehauptungen erfinden.

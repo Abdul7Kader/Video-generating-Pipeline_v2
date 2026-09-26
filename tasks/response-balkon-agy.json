@@ -1,0 +1,82 @@
+{
+  "title": "Bienenfreundlicher Balkon in 5 Schritten",
+  "language": "de-DE",
+  "mode": "LOKAL",
+  "target_duration_seconds": 40,
+  "scenes": [
+    {
+      "index": 1,
+      "duration_seconds": 7,
+      "narration": "Willst du deinen Balkon in ein Paradies für Bienen verwandeln? So geht's in fünf einfachen Schritten!",
+      "visual_description": "Eine Nahaufnahme einer Biene, die auf einer lila Lavendelblüte auf einem sonnigen Stadtbalkon landet.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "bee on lavender",
+        "Biene auf Balkon",
+        "city balcony nature"
+      ]
+    },
+    {
+      "index": 2,
+      "duration_seconds": 7,
+      "narration": "Schritt eins: Finde den richtigen Platz. Bienen lieben Sonne, also häng deine Blumenkästen an ein sonniges Geländer.",
+      "visual_description": "Jemand hängt einen leeren oder frisch bepflanzten Blumenkasten an ein Balkongeländer in hellstem Sonnenlicht.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "flower box balcony",
+        "Blumenkasten",
+        "sunny balcony"
+      ]
+    },
+    {
+      "index": 3,
+      "duration_seconds": 7,
+      "narration": "Schritt zwei: Verwende torffreie Erde. Sie ist umweltfreundlich und perfekt für heimische Pflanzen.",
+      "visual_description": "Nahaufnahme von Händen in Gartenhandschuhen, die frische, dunkle Blumenerde in einen Topf füllen.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "potting soil",
+        "Blumenerde",
+        "gardening hands"
+      ]
+    },
+    {
+      "index": 4,
+      "duration_seconds": 7,
+      "narration": "Schritt drei: Pflanze Bienenmagneten wie Thymian, Salbei oder heimische Wildblumen mit offenen Blüten.",
+      "visual_description": "Kräuter und blühende Pflanzen in Töpfen. Bienen schwirren um die gelben und violetten Blüten.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "herbs on balcony",
+        "Wildblumen",
+        "bee friendly plants",
+        "blooming thyme"
+      ]
+    },
+    {
+      "index": 5,
+      "duration_seconds": 6,
+      "narration": "Schritt vier: Biete Wasser an. Eine flache Schale mit ein paar Steinen ist die perfekte Bienentränke an heißen Tagen.",
+      "visual_description": "Eine kleine, mit Wasser gefüllte Keramikschale, in der Steine liegen. Wasser reflektiert das Sonnenlicht.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "water bowl stones",
+        "Bienentränke",
+        "insects drinking water"
+      ]
+    },
+    {
+      "index": 6,
+      "duration_seconds": 6,
+      "narration": "Schritt fünf: Häng ein Insektenhotel auf, um Nistplätze zu schaffen. Mach mit und hilf der Natur, direkt von zu Hause aus!",
+      "visual_description": "Ein kleines, aus Holz gefertigtes Insektenhotel hängt an einer Ziegelwand. Eine Wildbiene kriecht in ein kleines Loch.",
+      "media_type": "STOCK_VIDEO",
+      "pexels_queries": [
+        "insect hotel",
+        "Insektenhotel",
+        "wild bee nest",
+        "bug hotel"
+      ]
+    }
+  ]
+}
