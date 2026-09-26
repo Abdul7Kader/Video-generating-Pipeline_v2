@@ -23,9 +23,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Zwei echte Webantworten und zwei automatisch erzeugte Antigravity-Pro-Antworten gegen das Schema validiert; Fehl-/Teilausgabe in fünf lokalen Tests abgewiesen. [Prüfbericht](script-probe.md). Kein Gemini-API-Aufruf.
 
 ### 04. Pexels-Probe (S; abhängig von: 01–02)
-- [ ] Videosuche liefert zu mehreren Testszenen verwendbare Dateien mit Auflösung, Dauer und Quellen-ID.
-- [ ] Rate-Limit, Download, Namensnennung und Nutzungsbedingungen sind für den geplanten Einsatz dokumentiert.
-- **Prüfung:** Einen Clip herunterladen, mit ffprobe prüfen und Herkunft speichern.
+- [x] Videosuche liefert zu drei Testszenen verwendbare Dateien mit Auflösung, Dauer und Quellen-ID.
+- [x] Rate-Limit, Download, Namensnennung und Nutzungsbedingungen sind für den geplanten Einsatz dokumentiert.
+- **Prüfung:** [Prüfbericht](pexels-probe.md); einen echten Clip heruntergeladen, mit ffprobe geprüft und Herkunft gespeichert. Die visuelle Abweichung bei Szene 2 ist für die spätere Produktionsauswahl notiert.
 
 ### 05. Wan/Modal-Entwurfsprüfung ohne Generierung (S; abhängig von: 01–02)
 - [ ] Offizielle ComfyUI-/Wan-/Modal-Dokumentation bestätigt benötigten T2V-Workflow, Modellgewichte, `A100-80GB`, mögliche Clipgrößen und Transferweg.
