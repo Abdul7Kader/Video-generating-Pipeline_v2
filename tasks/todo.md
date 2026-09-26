@@ -37,9 +37,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ## M1 – Skriptfreigabe
 
 ### 06. Projektgerüst und Compose (M; abhängig von: 01)
-- [ ] React, FastAPI, Worker, PostgreSQL und Redis starten reproduzierbar per Docker Compose.
-- [ ] Beispielkonfiguration, Secret-Einbindung und lokale Entwicklungsanleitung liegen vor.
-- **Prüfung:** Frischer Checkout: Build, Start und Healthchecks erfolgreich.
+- [x] React, FastAPI, RQ-Worker, PostgreSQL und Redis starten reproduzierbar per Docker Compose.
+- [x] Beispielkonfiguration, lokale `.env` für das Datenbankpasswort und Entwicklungsanleitung liegen vor; der Pexels-Key bleibt in Schritt 06 außerhalb der Container.
+- **Prüfung:** Frischer lokaler Git-Checkout **ohne `.env`**: Compose-Build und Start erfolgreich, alle fünf Container gesund, Web und API-Bereitschaft mit HTTP 200. API-Dokumentation ebenfalls HTTP 200. Ein gestoppter Worker bewirkt HTTP 503 und wird nach Neustart wieder als bereit gemeldet. Die temporären Testcontainer und Volumes wurden entfernt.
 
 ### 07. Datenmodell und Zustandsmaschine (M; abhängig von: 01, 06)
 - [ ] Tabellen für Projekt, Skriptversion, Szene, Freigabe, Produktionslauf, Artefakt und Plattformpublikation samt Migrationen existieren.

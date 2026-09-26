@@ -115,7 +115,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 
 ### M1 – Skriptfreigabe
 
-06. [ ] Projektgerüst, Docker Compose und Konfigurationsverwaltung anlegen.
+06. [x] Projektgerüst, Docker Compose und Konfigurationsverwaltung anlegen.
 07. [ ] Datenmodell, Migrationen und verbindliche Zustandsmaschine erstellen.
 08. [ ] API-Verträge für Projekt, Skriptversion, Freigaben, Jobs und Medien definieren.
 09. [ ] Idee- und Modusformular in React umsetzen.
