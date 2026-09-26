@@ -2,6 +2,8 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
+**Fortsetzung ab 27. September 2026:** Entwicklung ab Aufgabe 07 in Codex Cloud am GitHub-Repository; [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
+
 ## M0 – Machbarkeit und Vertrag
 
 ### 01. V1-Produktparameter fixieren (S; abhängig von: keine)
@@ -59,7 +61,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ### 10. Automatische Gemini-Pro-Skriptintegration (M; abhängig von: 03, 07–08)
 - [ ] Die Oberfläche startet aus Idee und Modus einen Hintergrundauftrag. Ein Worker ruft Antigravity CLI mit der Google-AI-Pro-Anmeldung auf, validiert und speichert Skript und geordnete Szenen; kein beliebiger Freitext wird als valides Skript akzeptiert. Codex und manuelles Kopieren sind zur Laufzeit nicht erforderlich.
 - [ ] Ungültige oder unvollständige Antworten, fehlende Anmeldung und erschöpftes Kontingent führen zu verständlichen Fehlern mit bewusster Wiederholung. Automatische AI-Credit-Überziehung ist nachweislich deaktiviert; es gibt keinen stillen Wechsel zu einer kostenpflichtigen API.
-- **Prüfung:** Browserprobe: Idee absenden, ohne weitere Eingabe automatisch ein echtes Gemini-Pro-Skript erhalten und bearbeiten; kontrollierte Fehlerfälle. Kein Gemini-API-Aufruf.
+- **Prüfung:** Cloud-Entwicklung mit kontrollierten Antworten; Live-Abnahme erst auf einem erreichbaren Worker mit eigener, bestätigter Google-AI-Pro-/Antigravity-Anmeldung: Idee im Browser absenden, ohne weitere Eingabe echtes Skript erhalten und bearbeiten; kontrollierte Fehlerfälle. Kein Gemini-API-Aufruf. Die lokale Anmeldung des früheren Entwicklungsrechners ist kein Cloud-Zugang.
 
 ### 11. Skript- und Szeneneditor (M; abhängig von: 08, 10)
 - [ ] Benutzer sieht und bearbeitet Sprechertext, Szenen, Bildbeschreibungen sowie Prompts/Suchbegriffe.
@@ -100,17 +102,17 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - [ ] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
 - **Prüfung:** Ein komplettes LOKAL-Testvideo ansehen und technische Sollwerte maschinell vergleichen.
 
-### 18. Lokaler Medienspeicher (S; abhängig von: 07, 17)
-- [ ] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher des Entwicklungsrechners; derselbe Pfadvertrag ist für Ubuntu konfigurierbar.
+### 18. Persistenter Medienspeicher im Remote-Testbetrieb (S; abhängig von: 07, 17)
+- [ ] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher eines erreichbaren Remote-Testbetriebs, vorzugsweise des geplanten Ubuntu-Servers. Der bisherige Entwicklungsrechner ist nicht erforderlich.
 - [ ] Browserabruf ist berechtigt und unterstützt Videowiedergabe; Pfadmanipulation wird abgewehrt.
-- **Prüfung:** Containerneustart, Dateiprüfsumme und Browser-Playback.
+- **Prüfung:** Remote-Adresse und Zugriffsweg sind eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback über diese Adresse geprüft. Aufgabe 35 behandelt danach Backup, Härtung und endgültige Betriebsübergabe.
 
 ### 19. Produktionsstatus und Videoprüfung (S; abhängig von: 13, 18)
 - [ ] React zeigt laufende Schritte, Fehler und das fertige Video zur Prüfung an.
 - [ ] Bis zur Videofreigabe wird kein Publikationsjob erzeugt.
 - **Prüfung:** End-to-End-Browserlauf im LOKAL-Modus.
 
-**Checkpoint M2:** [ ] Ein fertiges lokales Video mit ausschließlich Pexels-Szenen liegt auf dem Entwicklungsrechner und ist im Browser abspielbar; Ubuntu folgt in Aufgabe 35.
+**Checkpoint M2:** [ ] Ein fertiges Video im Modus `LOKAL` mit ausschließlich Pexels-Szenen liegt im Remote-Testbetrieb und ist über dessen Weboberfläche abspielbar.
 
 ## M3 – Cloud-Produktionspfad
 
@@ -120,7 +122,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Workflow-Datei, Abhängigkeiten und Deploy-Konfiguration statisch prüfen; keine Inferenz auslösen.
 
 ### 21. Cloud-Szenen und Rücktransfer mit Testdaten anbinden (M; abhängig von: 18, 20)
-- [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Entwicklungsrechners.
+- [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Remote-Testbetriebs.
 - [ ] Ein abgebrochener Transfer erzeugt weder gültiges Artefakt noch duplizierten Auftrag.
 - **Prüfung:** Erfolgs-, Timeout- und beschädigte-Datei-Proben mit kontrollierten Antworten und Testdateien; Manifest enthält nur `AI_GENERATED_VIDEO`. Keine echte Wan-Generierung.
 
@@ -131,14 +133,14 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Grenzwert- und Fehlerfalltests.
 
 ### 23. CLOUD-Ablauf mit Testdaten prüfen (M; abhängig von: 15–19, 21–22)
-- [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video auf dem Entwicklungsrechner.
+- [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video im Remote-Testbetrieb.
 - [ ] Renderer weist absichtlich gemischtes Manifest zurück.
 - **Prüfung:** Browserlauf und maschineller Manifest-/ffprobe-Test mit Testdaten; kein echter Cloud-Generierungsaufruf.
 
 ### 24. Erstes echtes CLOUD-Video und Videoabnahme (M; abhängig von: 19, 23)
 - [ ] Ein reales LOKAL-Video ist bereits gespeichert und im Browser abspielbar; der CLOUD-Pfad wurde mit kontrollierten Testdaten geprüft.
 - [ ] Kontoinhaber bestätigt verfügbares Modal-Gratis-Guthaben, Zahlungsmethode für GPU und wirksames Limit von 0 USD Nettokosten; der geschätzte Ressourcenverbrauch liegt innerhalb des Guthabens. Fehlt ein Nachweis, bleibt der Live-Lauf gesperrt.
-- [ ] Modal erzeugt mit `A100-80GB`, ComfyUI und Wan 2.2 T2V-A14B die Szenen für Beispiel B. Das fertige Video liegt auf dem Entwicklungsrechner und ist im Browser prüfbar; Ubuntu wird in Aufgabe 35 eingerichtet.
+- [ ] Modal erzeugt mit `A100-80GB`, ComfyUI und Wan 2.2 T2V-A14B die Szenen für Beispiel B. Das fertige Video liegt im Remote-Testbetrieb und ist über dessen Weboberfläche prüfbar; Aufgabe 35 schließt den produktiven Betrieb ab.
 - [ ] Laufzeit, Ressourcenverbrauch, Qualität, Manifest, Prüfsumme und ffprobe-Profil werden protokolliert; ein Fehlschlag wird innerhalb dieser Aufgabe bearbeitet.
 - **Prüfung:** Benutzer sieht und beurteilt ein echtes CLOUD-Video. Kein Social-Media-Upload ist für die Videoabnahme nötig.
 
@@ -205,7 +207,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 
 ### 34. Automatisierte Qualitätsprüfungen (M; abhängig von: 24, 31)
 - [ ] Verträge, Zustandsregeln, Medientyptrennung, Renderpfad und Adapter-Fehlerfälle werden automatisiert geprüft.
-- [ ] Browser-End-to-End-Pfade laufen für LOKAL mit realen lokalen Artefakten und für CLOUD mit kontrollierten Antworten; der bereits absolvierte echte CLOUD-Lauf ist dokumentiert.
+- [ ] Browser-End-to-End-Pfade laufen für LOKAL mit realen Artefakten im Remote-Testbetrieb und für CLOUD mit kontrollierten Antworten; der bereits absolvierte echte CLOUD-Lauf ist dokumentiert.
 - **Prüfung:** CI/Build und Tests auf frischem Stand erfolgreich.
 
 ### 35. Ubuntu-Deployment und Handbuch (M; abhängig von: 32–34)

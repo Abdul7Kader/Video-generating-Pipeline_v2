@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
-Stand: 26. September 2026
-Status: Aufgaben 01–03 abgeschlossen; automatischer Skriptweg am 26. September 2026 nach Nutzerkorrektur festgelegt; Webanwendung noch nicht implementiert
+Stand: 27. September 2026
+Status: Aufgaben 01–06 abgeschlossen. Das startbare Web-Grundgerüst ist implementiert; Entwicklung ab Aufgabe 07 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
@@ -17,7 +17,9 @@ Beide Modi verwenden Piper für Sprechertext, FFmpeg/ffprobe für Verarbeitung u
 
 **Kosten- und Prioritätsregel:** Zuerst soll der Benutzer fertige LOKAL- und CLOUD-Videos in der Oberfläche ansehen und beurteilen können. Erst danach folgen Social-Media-Verbindungen und Veröffentlichungen. Ohne neue Produktentscheidung werden keine kostenpflichtigen APIs aktiviert. Für Modal ist nur ein kontrollierter Test innerhalb tatsächlich verfügbarer kostenloser Credits vorgesehen; eine hinterlegte Zahlungsmethode allein ist keine Kostenfreigabe. **Skriptweg für V1:** Die offizielle Antigravity CLI nutzt die bestehende Google-AI-Pro-Anmeldung und erzeugt im Hintergrund strukturierte Skripte. Die Gemini API und ein Gemini-API-Key werden nicht verwendet. Bei fehlender Anmeldung, erschöpftem Abo-Kontingent oder ungültiger Antwort zeigt die Anwendung einen Fehler; sie wechselt weder zu einer Bezahl-API noch zu einer manuellen Übergabe.
 
-**Qwen-Regel für Entwicklung und Produktion:** Das bereits installierte Qwen auf dem Entwicklungsrechner darf für lokale Tests und Vergleiche der entwickelten Anwendung verwendet werden. Es wird dafür nicht neu installiert oder verändert. Ein Test mit Qwen ersetzt keinen später gewünschten Gemini-Integrationstest. Erst auf dem Ubuntu-Produktionsrechner wird geprüft, ob und wo dort ein geeignetes Qwen-Modell installiert ist. Nur falls keines vorhanden ist, wird dort das stärkste für die vorhandene Hardware sinnvoll lauffähige Qwen-Modell installiert. Qwen ist kein Videogenerator und ersetzt Wan nicht.
+**Entwicklungsort ab 27. September 2026:** Der Betreiber möchte die weitere Programmierung in [Codex Cloud](https://learn.chatgpt.com/docs/cloud) direkt am GitHub-Repository, ohne Abhängigkeit vom bisherigen Windows-Entwicklungsrechner. `LOKAL` bezeichnet weiterhin ausschließlich den Pexels-Videomodus. Codex Cloud checkt GitHub-Code aus und kann ihn bearbeiten und prüfen; die dortige Entwicklungsumgebung ist weder der spätere Webanwendungsserver noch ein Zugriff auf `localhost:4177`, lokale `.env`, Antigravity-Anmeldung oder heruntergeladene Clips dieses Rechners. Die Cloud-Umgebung benötigt eine eigene GitHub-Verbindung und Einrichtung. Quellen und nächster Arbeitsauftrag stehen in [STATE.md](../STATE.md); eine Verbindung des konkreten Codex-Cloud-Kontos wurde hier noch nicht bestätigt.
+
+**Qwen-Regel für Entwicklung und Produktion:** Das früher auf dem Windows-Entwicklungsrechner installierte Qwen war eine optionale Testmöglichkeit und ist **keine Voraussetzung** für Codex Cloud. Es wird dafür nicht neu installiert oder verändert. Ein Test mit Qwen ersetzt keinen später gewünschten Gemini-Integrationstest. Erst auf dem Ubuntu-Produktionsrechner wird geprüft, ob und wo dort ein geeignetes Qwen-Modell installiert ist. Nur falls keines vorhanden ist, wird dort das stärkste für die vorhandene Hardware sinnvoll lauffähige Qwen-Modell installiert. Qwen ist kein Videogenerator und ersetzt Wan nicht.
 
 ## 2. Produkt- und Architekturentscheidungen
 
@@ -47,7 +49,7 @@ React UI ── FastAPI ── PostgreSQL (Projekte, Versionen, Freigaben, Jobs,
 
 - Docker Compose verwaltet Weboberfläche, API, RQ-Worker, PostgreSQL und Redis. Produktionsdateien und Datenbank liegen auf persistenten Ubuntu-Volumes. Die Modal-Anwendung ist ein separat deployter Cloud-Dienst; Compose startet keine lokale Wan-Instanz.
 - Der Skript-Worker startet die offizielle Antigravity CLI mit Pro-Modell und JSON-Ausgabe in einem isolierten temporären Arbeitsordner. Der Prototyp in `tasks/agy_script_probe.py` hat beide Modi mit einer vorhandenen Antigravity-Anmeldung erfolgreich geprüft. Ob diese Anmeldung demselben Google-AI-Pro-Konto wie die Webanwendung gehört, wird vor Aufgabe 10 bestätigt. Auf Ubuntu braucht der Worker eine einmalige Google-Anmeldung unter seinem eigenen Dienstkonto und Zugriff auf die dort gespeicherte Sitzung; das wird vor dem Produktivbetrieb getestet. Ein leeres oder ungültiges Ergebnis wird abgewiesen.
-- Die frühe Videoabnahme läuft auf dem Entwicklungsrechner mit lokalen, persistenten Testdateien. Das Produktionsziel bleibt der Ubuntu-Server; die dortige Ablage und Wiederherstellung werden in Aufgabe 35 geprüft. Dieser Unterschied wird im Medienpfad konfigurierbar gehalten.
+- Die frühe Videoabnahme läuft künftig auf einem erreichbaren Remote-Testbetrieb mit persistentem Medienspeicher, vorzugsweise auf dem geplanten Ubuntu-Server. Der bisherige Entwicklungsrechner ist dafür keine Voraussetzung. Aufgabe 18 richtet diesen Speicher und den Browserabruf im Remote-Testbetrieb ein; Aufgabe 35 prüft Härtung, Backup, Wiederherstellung und endgültige Betriebsübergabe. Die Adresse und Zugangsdaten des Remote-Testbetriebs sind noch nicht bekannt und gehören nicht ins Repository.
 - PostgreSQL ist die fachliche Quelle für Zustände. Redis/RQ transportiert Hintergrundjobs. Jeder Schritt ist anhand von Projekt-ID, Skriptversion und Job-ID wiederaufnehmbar und gegen doppelte Ausführung geschützt.
 - Der Produktionsmodus und der daraus abgeleitete Medientyp werden beim Anlegen gespeichert und bei jeder Szenenbeschaffung und vor dem finalen Rendern geprüft.
 - Der Cloud-Worker übergibt nur die nötigen Prompts an Modal. Er lädt fertige Clips zurück, prüft sie mit ffprobe und legt sie auf dem Ubuntu-Server ab. Das finale Rendering geschieht auf Ubuntu.
@@ -90,12 +92,12 @@ Die Implementierung erfolgt in **vertikalen, testbaren Abschnitten**. Nach jedem
 | --- | --- | --- |
 | M0: Machbarkeit und Vertrag | 01–05 | Produktparameter, kostenfreie Skript-/Pexels-Optionen und dokumentenbasierte Wan-/Modal-Prüfung sind belegt. Social-Kontozugänge werden später geprüft. |
 | M1: Skriptfreigabe | 06–12 | Idee → automatischer Gemini-Pro-Skriptauftrag → validiertes, editierbares Skript → unveränderliche Freigabe funktioniert im Browser, ohne Codex und ohne manuelle Übergabe. |
-| M2: Lokaler Produktionspfad | 13–19 | Freigegebenes Skript → ausschließlich Pexels → Piper/Remotion/FFmpeg → auf dem Entwicklungsrechner gespeichertes, prüfbares Video. |
+| M2: Pexels-Produktionspfad | 13–19 | Freigegebenes Skript → ausschließlich Pexels → Piper/Remotion/FFmpeg → im Remote-Testbetrieb gespeichertes, im Browser prüfbares Video. |
 | M3: Cloud-Produktionspfad und Videoabnahme | 20–24 | CLOUD-Integration erst mit Testdaten prüfen, dann innerhalb nachgewiesener Gratis-Credits ein echtes Wan-Video erzeugen und im Browser ansehen. |
 | M4: Veröffentlichung nach Videoabnahme | 25–31 | Plattformzugänge, Freigabe und Adapter erst jetzt bearbeiten; kostenpflichtige APIs bleiben ohne gesonderte Entscheidung deaktiviert. |
 | M5: Produktionsreife und Übergabe | 32–35 | Sicherheit, Ausfallsicherheit, Tests und Ubuntu-Betrieb für die tatsächlich aktivierten Funktionen nachweisen. |
 
-**Kritischer Pfad:** Produktparameter und kostenfreier Skriptweg → Daten-/Zustandsvertrag → Skriptfreigabe → realer LOKAL-Videotest → CLOUD-Pfad mit Testdaten → geprüfte Modal-Credits/Kostensperre → echter CLOUD-Videotest und Benutzerprüfung. Erst danach folgen Plattformverbindungen, Veröffentlichungsfreigabe und Adapter. Die Anforderungen und späteren Kontoprüfungen stehen in der [Zugangs- und Freigabematrix](access-matrix.md).
+**Kritischer Pfad:** Produktparameter und kostenfreier Skriptweg → Daten-/Zustandsvertrag → Skriptfreigabe → erreichbarer Remote-Testbetrieb mit eigener Antigravity-Anmeldung und persistentem Speicher → realer LOKAL-Videotest → CLOUD-Pfad mit Testdaten → geprüfte Modal-Credits/Kostensperre → echter CLOUD-Videotest und Benutzerprüfung. Erst danach folgen Plattformverbindungen, Veröffentlichungsfreigabe und Adapter. Die Anforderungen und späteren Kontoprüfungen stehen in der [Zugangs- und Freigabematrix](access-matrix.md).
 
 **Verbindliche Testreihenfolge:** Vor Aufgabe 24 wird kein Video mit Wan auf Modal generiert. CLOUD-Jobs, Fehlerfälle, Rücktransfer und Benutzeroberfläche werden zunächst mit festen Beispielartefakten geprüft. Erst wenn ein reales LOKAL-Video vorliegt, die CLOUD-Testdaten funktionieren und Modal-Guthaben samt Kostenbegrenzung nachgewiesen sind, darf Aufgabe 24 einen echten Wan-Lauf auslösen. Ohne sichere Null-Nettokosten-Grenze bleibt dieser Lauf gesperrt. Vor der Videoabnahme erfolgt kein Social-Media-Upload.
 
@@ -130,7 +132,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 15. [ ] Piper-Sprechersegmente und Zeitdaten erzeugen.
 16. [ ] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern.
 17. [ ] FFmpeg/ffprobe-Normalisierung, Szenenschnitt, Audio und Encoding bauen.
-18. [ ] Lokalen Medienspeicher, Manifest und sicheren Videoabruf einrichten.
+18. [ ] Persistenten Medienspeicher im Remote-Testbetrieb, Manifest und sicheren Videoabruf einrichten.
 19. [ ] Produktionsstatus und Videoprüfung in React bereitstellen.
 
 ### M3 – Cloud-Produktionspfad
@@ -156,7 +158,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 32. [ ] Zugriffe, Secrets, Eingaben, Dateipfade und externe Requests absichern.
 33. [ ] Metriken, Logs, Alarmierung, Backups und Wiederherstellung einrichten.
 34. [ ] Automatisierte Vertrags-, Integrations- und End-to-End-Tests ergänzen.
-35. [ ] Ubuntu-Deployment, Qwen-Bestandsprüfung, Betriebshandbuch und Rollback-Probe abschließen.
+35. [ ] Ubuntu-Produktionsbetrieb, Qwen-Bestandsprüfung, Betriebshandbuch und Rollback-Probe abschließen.
 
 ## 5. Qualitäts- und Abnahmeregeln
 
@@ -185,6 +187,8 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 ## 7. Produktentscheidung und Änderungskontrolle
 
 Aufgabe 01 ist mit den konkreten V1-Startwerten und zwei Abnahmeideen in Abschnitt 2.3–2.4 abgeschlossen. Am 26. September 2026 wurde die Priorität geändert: zuerst Videos ohne laufende API-Kosten nachweisen, dann Social Media prüfen. Die frühere Vorgabe „echtes CLOUD-Video als letzter Schritt“ ist damit durch den früheren, kostenkontrollierten Test in Aufgabe 24 ersetzt. Die ursprüngliche manuelle Gemini-Pro-Übergabe aus Aufgabe 02 wurde auf ausdrücklichen Wunsch des Betreibers durch einen automatischen Antigravity-CLI-Aufruf ersetzt. Aufgabe 03 belegt mit vier echten Skripten, dass beide Modi gültige strukturierte Antworten liefern; der CLI-Prototyp lief mit einem angemeldeten Google-Konto und Pro-Modell ohne Gemini API. Die Abo-Zuordnung dieser CLI-Sitzung wird vor der Webintegration bestätigt. Technische Plattformgrenzen und tatsächliche Modal-Nutzung können weitere dokumentierte Anpassungen nötig machen.
+
+Am 27. September 2026 wurde der **Arbeitsort** geändert: Weiterentwicklung über Codex Cloud und GitHub; keine Abhängigkeit vom Windows-Entwicklungsrechner. Der Pexels-Modus `LOKAL` bleibt inhaltlich gleich. Für echte Browser- und Videoproben wird ein Remote-Testbetrieb benötigt; der bereits laufende lokale Compose-Stack ist nur der bisherige Nachweis für Aufgabe 06. Codex Cloud erhält keine lokale Anmeldung oder `.env` durch den GitHub-Checkout. Aufgaben 07–09 können ohne diese Zugänge entwickelt werden. Für Aufgabe 10 muss der Antigravity-CLI-Weg auf einem tatsächlich erreichbaren, angemeldeten Worker ohne Gemini API geprüft werden; ohne diesen Nachweis bleibt die Live-Abnahme offen. Vor Aufgaben 19 und 24 müssen Remote-Speicher und Browserzugang verfügbar sein.
 
 ## 8. Verifizierte Quellen und erneute Prüfung
 
