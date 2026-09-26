@@ -111,7 +111,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 02. [x] Anbieteranforderungen prüfen und Gemini Pro ohne Gemini API als Skriptweg festlegen; Social-Kontostatus später erfassen ([Matrix](access-matrix.md)).
 03. [x] Gemini-Pro-Auftrag, strukturierte Antworten und automatischen Aufruf über Antigravity CLI prototypisch prüfen ([Prüfbericht](script-probe.md)).
 04. [x] Pexels-Videosuche und Quellen-/Lizenzdaten prototypisch prüfen ([Prüfbericht](pexels-probe.md)).
-05. [ ] ComfyUI/Wan auf Modal A100-80GB dokumentenbasiert prüfen; keinen Testclip erzeugen.
+05. [x] ComfyUI/Wan auf Modal A100-80GB dokumentenbasiert prüfen; keinen Testclip erzeugen ([Prüfbericht](wan-modal-design.md)).
 
 ### M1 – Skriptfreigabe
 

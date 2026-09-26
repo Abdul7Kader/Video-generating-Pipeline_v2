@@ -39,7 +39,7 @@ Recherchestand: 26. September 2026. Diese Datei trennt **dokumentierte Anbietera
 | Nachweis | Zuständig | Frühester sinnvoller Zeitpunkt | Status |
 | --- | --- | --- | --- |
 | Gemini-Pro-Skriptweg ohne API festlegen | Betreiber | Vor Aufgabe 03 | Erledigt; nach Nutzerkorrektur automatische Antigravity-CLI-Übergabe entschieden und in Aufgabe 03 prototypisch geprüft |
-| Pexels-Konto, Key und tatsächliche Quote prüfen | Betreiber mit Dashboard-Zugriff | Vor Aufgabe 04 | Offen |
+| Pexels-Konto, Key und tatsächliche Quote prüfen | Betreiber mit Dashboard-Zugriff | Vor Aufgabe 04 | Erledigt für Prototyp: lokaler Key und API-Antwort mit tatsächlicher Monatsquote; Live-Quote vor Produktionsbetrieb erneut prüfen ([Bericht](pexels-probe.md)) |
 | Modal-Guthaben, GPU-Zahlungsmethode, Workspace-Budget und Null-Nettokosten-Grenze nachweisen | Betreiber mit Dashboard-Zugriff | Vor Aufgabe 24 | Offen; ohne Nachweis kein GPU-Live-Test |
 | Social-Entwicklerkonten, Test-/Produktionskonten, Rechte, Billing und Reviewstatus je Plattform prüfen | Betreiber/Kontoinhaber | Nach Videoabnahme, vor Aufgaben 25–31 | Aufgeschoben gemäß Kosten- und Prioritätsentscheidung |
 | Fehlende Social-API-Projekte/Apps anlegen und sichere Secret-Ablage vorbereiten | Betreiber bzw. berechtigter Entwickler | Nach Videoabnahme; vor echten Veröffentlichungstests | Aufgeschoben |
@@ -55,7 +55,7 @@ Die folgende Kurzliste ist die noch fehlende **Ist-Prüfung**, nicht eine Auffor
 | Dienst | Im Dashboard zu bestätigen (ohne Secrets) |
 | --- | --- |
 | Gemini Pro / Antigravity CLI | Aufgabe 03 erledigt: angemeldete Webanwendung und automatische CLI-Proben für beide Modi gültig. Vor Aufgabe 10 und Ubuntu-Betrieb Anmeldung und gespeicherte Sitzung des Worker-Dienstkontos sowie Abo-Kontingent bestätigen. Kein Gemini-API-Projekt, Key oder API-Billing erforderlich. |
-| Pexels | Konto und API-Key **vorhanden?**; aktuelle Stunden-/Monatsquote, Bedingungen für Attribution. Den Key selbst nicht eintragen. |
+| Pexels | Konto und API-Key für Prototyp vorhanden; tatsächliche Monatsquote in [Aufgabe 04](pexels-probe.md) gesehen. Stundenquote, aktuelle Limits und Attribution vor Produktionsbetrieb erneut prüfen. Key nicht im Chat teilen. |
 | Modal | Workspace/Token **vorhanden?**; Zahlungsmethode für GPU, verfügbare `A100-80GB`, Ausgabenlimit. Token selbst nicht eintragen. |
 | YouTube | Cloud-Projekt und Erstellungsdatum, API aktiviert, OAuth-App und Kanal, `youtube.upload`, Quotenansicht, Audit-/Privatstatus. |
 | TikTok | Developer-App, Content Posting API/Direct Post, `video.publish` für App und Testkonto, privates Testkonto, Auditstatus. |
@@ -63,4 +63,4 @@ Die folgende Kurzliste ist die noch fehlende **Ist-Prüfung**, nicht eine Auffor
 | Facebook | Dieselbe oder separate Meta-App, Zielseite und Betreiberrechte, Page-Token/Scopes **vorhanden?**, Access-Level und Reviewstatus. |
 | X | Developer-App, User-Context-OAuth mit Schreib- und Medienrechten, Credit-Guthaben bzw. Budget, tatsächliche Endpunktpreise. |
 
-**Aufgaben 02–03 abgeschlossen:** Die Anbieteranforderungen, Kostenrisiken und Antragswege sind belegt; Gemini Pro ohne Gemini API ist als automatischer Skriptweg prototypisch geprüft. Tatsächliche Pexels- und Modal-Zugänge werden vor den Aufgaben 04 bzw. 24 nachgewiesen. Social-Konten, Rechte, Billing und Reviews werden nach der Videoabnahme vor den Aufgaben 25–31 geprüft. „Unbestätigt“ ist ein sichtbarer offener Zugang, keine Freigabe für einen echten API-Aufruf. Öffentliche Veröffentlichung bleibt von tatsächlichen Plattformfreigaben und gegebenenfalls einer separaten Kostenentscheidung abhängig.
+**Aufgaben 02–05 abgeschlossen:** Die Anbieteranforderungen, Kostenrisiken und Antragswege sind belegt; Gemini Pro ohne Gemini API und Pexels sind prototypisch geprüft. [Wan/Modal](wan-modal-design.md) ist bisher ausschließlich dokumentenbasiert geprüft. Das tatsächliche Modal-Guthaben und eine wirksame Grenze von 0 USD Nettokosten müssen vor Aufgabe 24 nachgewiesen werden. Social-Konten, Rechte, Billing und Reviews werden nach der Videoabnahme vor den Aufgaben 25–31 geprüft. „Unbestätigt“ ist ein sichtbarer offener Zugang, keine Freigabe für einen echten API-Aufruf. Öffentliche Veröffentlichung bleibt von tatsächlichen Plattformfreigaben und gegebenenfalls einer separaten Kostenentscheidung abhängig.

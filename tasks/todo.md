@@ -28,11 +28,11 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** [Prüfbericht](pexels-probe.md); einen echten Clip heruntergeladen, mit ffprobe geprüft und Herkunft gespeichert. Die visuelle Abweichung bei Szene 2 ist für die spätere Produktionsauswahl notiert.
 
 ### 05. Wan/Modal-Entwurfsprüfung ohne Generierung (S; abhängig von: 01–02)
-- [ ] Offizielle ComfyUI-/Wan-/Modal-Dokumentation bestätigt benötigten T2V-Workflow, Modellgewichte, `A100-80GB`, mögliche Clipgrößen und Transferweg.
-- [ ] Erwartete Ressourcen, Gratis-Guthaben und Laufzeit werden als unsichere Planwerte notiert; offene technische Risiken für den ersten Live-Test in Aufgabe 24 erfasst.
-- **Prüfung:** Quellen, Workflow-Entwurf und Risikoentscheidungen dokumentiert. Kein Modal/Wan-Testclip und kein Cloud-Video vor Aufgabe 24.
+- [x] Offizielle ComfyUI-/Wan-/Modal-Dokumentation bestätigt benötigten T2V-Workflow, Modellgewichte, `A100-80GB`, mögliche Clipgrößen und Transferweg.
+- [x] Erwartete Ressourcen, Gratis-Guthaben und Laufzeit sind als unsichere Planwerte notiert; offene technische Risiken für den ersten Live-Test in Aufgabe 24 erfasst.
+- **Prüfung:** [Entwurfs- und Prüfbericht](wan-modal-design.md) mit Quellen, Workflow und Risikoentscheidungen. Kein Modal/Wan-Testclip und kein Cloud-Video vor Aufgabe 24.
 
-**Checkpoint M0:** [ ] Produktparameter und kostenfreier Skriptweg fixiert; gewählter Skriptweg und Pexels real geprüft; Wan/Modal dokumentenbasiert vorbereitet. Social-Zugänge sind für die Videoabnahme keine Voraussetzung.
+**Checkpoint M0:** [x] Produktparameter und kostenfreier Skriptweg fixiert; gewählter Skriptweg und Pexels real geprüft; Wan/Modal dokumentenbasiert vorbereitet. Social-Zugänge sind für die Videoabnahme keine Voraussetzung.
 
 ## M1 – Skriptfreigabe
 
