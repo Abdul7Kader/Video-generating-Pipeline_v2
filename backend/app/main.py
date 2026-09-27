@@ -7,10 +7,14 @@ from redis import Redis
 from redis.exceptions import RedisError
 from rq import Worker
 
+from app.api import install_error_handlers, router as api_router
+
 app = FastAPI(
     title="Video Pipeline", version="0.1.0",
     docs_url="/api/docs", openapi_url="/api/openapi.json",
 )
+app.include_router(api_router)
+install_error_handlers(app)
 
 
 @app.get("/api/health/live")

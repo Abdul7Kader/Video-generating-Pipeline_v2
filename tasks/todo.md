@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 27. September 2026:** Aufgaben 01–07 sind abgeschlossen; Entwicklung ab Aufgabe 08 in Codex Cloud am GitHub-Repository. [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
+**Fortsetzung ab 28. September 2026:** Aufgaben 01–08 sind abgeschlossen; Entwicklung ab Aufgabe 09 in Codex Cloud am GitHub-Repository. [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -49,9 +49,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Migration 0001 auf leerer PostgreSQL-17-Testdatenbank, Rückmigration und erneute Migration erfolgreich; sieben Fachtabellen vorhanden. Vier echte PostgreSQL-Integrationstests prüfen Modus/Medientyp, vollständige unveränderliche Skriptversion, Freigaben, Dateiprüfsumme, Übergänge und Dubletten. Compose-API, DB, Redis und Worker gesund; acht bestehende Python-Tests und Web-Build erfolgreich. [Migration](../backend/app/migrations/0001_initial.sql), [Tests](../backend/app/test_database.py).
 
 ### 08. API-Vertrag (S; abhängig von: 07)
-- [ ] FastAPI-Schemas/Endpunkte für Anlegen, Lesen, Bearbeiten, Freigeben, Status und Medienabruf dokumentiert.
-- [ ] Versionskonflikt, Validierungsfehler und wiederholte Freigabe haben definierte Antworten.
-- **Prüfung:** OpenAPI- und Vertragstests mit Beispielpayloads.
+- [x] FastAPI-Schemas/Endpunkte für Anlegen, Lesen, Bearbeiten durch neue Skriptversion, Skript- und Videofreigabe, Status und Medienmetadaten/-abruf dokumentiert.
+- [x] Versionskonflikt, Validierungsfehler und wiederholte Freigabe haben definierte Antworten.
+- **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Ausführung folgt in Aufgabe 12/13. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
 
 ### 09. Idee- und Modusformular (S; abhängig von: 08)
 - [ ] React erfasst Idee und Dropdown `CLOUD`/`LOKAL` und zeigt den gewählten Medientyp an.

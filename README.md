@@ -1,12 +1,14 @@
 # Video-generating-Pipeline v2
 
-Stand: Schritt 7. Das Web-Grundgerüst sowie PostgreSQL-Datenmodell, Migration und Freigabe-/Zustandsregeln sind implementiert. Fachliche API-Endpunkte, Skriptintegration, Videoproduktion und Veröffentlichung folgen in den nächsten Schritten.
+Stand: Schritt 8. Web-Grundgerüst, PostgreSQL-Datenmodell und fachliche API für Projekte, Skriptversionen, Freigabe und Status sind implementiert. Die Oberfläche zur Ideeneingabe, automatische Skriptgenerierung, Videoproduktion und Veröffentlichung folgen in den nächsten Schritten.
 
-**Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 08 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt nur den bisherigen lokalen Nachweis von Schritt 6; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
+**Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 09 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt nur den bisherigen lokalen Nachweis von Schritt 6; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
 
 Die geplante Anwendung nimmt eine Videoidee und den Modus `LOKAL` oder `CLOUD` in einer Weboberfläche entgegen. Ein Hintergrundauftrag soll mit dem vorhandenen Google-AI-Pro-Konto über die offizielle Antigravity CLI ein Skript erzeugen, ohne Gemini Developer API und ohne Codex zur Laufzeit. Nach Prüfung und Freigabe wird das Video erstellt. Social-Media-Veröffentlichungen folgen erst nach der Videoabnahme.
 
 Der Prototyp unter [`tasks/`](tasks/) enthält den [Umsetzungsplan](tasks/plan.md), die [Aufgabenliste](tasks/todo.md), das [Skriptformat](tasks/script-probe.md) und vier geprüfte Beispielskripte. Zwei davon wurden automatisch mit Antigravity CLI erzeugt. Die [Pexels-Probe](tasks/pexels-probe.md) hat drei echte Suchtreffer und einen geprüften Download nachgewiesen. Der [Wan/Modal-Entwurf](tasks/wan-modal-design.md) beschreibt Workflow, Gewichte, Rücktransfer, unsichere Kostenwerte und die Sperre für einen kostenfreien Live-Test.
+
+Der [API-Vertrag](tasks/api-contract.md) beschreibt die Endpunkte und Beispielpayloads aus Schritt 8. Die OpenAPI-Dokumentation liegt bei gestartetem Compose-Stack unter `/api/docs`. Die API speichert bei Skriptfreigabe bereits einen Produktionslauf als `QUEUED` und kann eine finale Datei per Prüfsumme freigeben; RQ-Ausführung, Dateiabruf und Publikationsaufträge folgen später.
 
 ## Webanwendung lokal starten
 
@@ -32,6 +34,7 @@ Beim Start der API wird Migration 0001 automatisch auf PostgreSQL angewandt. Fü
 ```powershell
 docker compose run --rm api python -m app.migrate up
 docker compose run --rm api python -m unittest app.test_database -v
+docker compose run --rm api python -m unittest app.test_api -v
 ```
 
 Die Rückmigration `python -m app.migrate down` löscht alle sieben Fachtabellen und ist nur für eine **wegwerfbare Testdatenbank** vorgesehen.

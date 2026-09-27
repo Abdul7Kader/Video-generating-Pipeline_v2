@@ -16,7 +16,7 @@ def migrate(direction: str = "up") -> None:
 
     with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
         conn.execute("SELECT pg_advisory_xact_lock(71007)")
-        exists = conn.execute("SELECT to_regclass('public.schema_migrations')").fetchone()[0]
+        exists = conn.execute("SELECT to_regclass('schema_migrations')").fetchone()[0]
         if direction == "up":
             if exists:
                 versions = {row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
