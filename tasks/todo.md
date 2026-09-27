@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 28. September 2026:** Aufgaben 01–08 sind abgeschlossen; Entwicklung ab Aufgabe 09 in Codex Cloud am GitHub-Repository. [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
+**Fortsetzung ab 28. September 2026:** Aufgaben 01–09 sind abgeschlossen; Entwicklung ab Aufgabe 10 in Codex Cloud am GitHub-Repository. [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -54,9 +54,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Ausführung folgt in Aufgabe 12/13. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
 
 ### 09. Idee- und Modusformular (S; abhängig von: 08)
-- [ ] React erfasst Idee und Dropdown `CLOUD`/`LOKAL` und zeigt den gewählten Medientyp an.
-- [ ] Fehlerhafte oder leere Eingaben werden verständlich abgewiesen.
-- **Prüfung:** Browserlauf vom Formular bis zur gespeicherten Projektansicht.
+- [x] React erfasst Idee und Dropdown `CLOUD`/`LOKAL` und zeigt den gewählten Medientyp an.
+- [x] Fehlerhafte oder leere Eingaben werden verständlich abgewiesen.
+- **Prüfung:** Echter Chrome-Browserlauf gegen den gesunden Fünf-Container-Compose-Stack: Leere Idee abgewiesen; `CLOUD` → `AI_GENERATED_VIDEO` und `LOKAL` → `STOCK_VIDEO`; beide Projekte über das Formular angelegt, aus PostgreSQL geladen und nach Neuladen erneut angezeigt. Web-Build und Python-Tests bestanden. Die UI erzeugt noch kein Skript und kein Video.
 
 ### 10. Automatische Gemini-Pro-Skriptintegration (M; abhängig von: 03, 07–08)
 - [ ] Die Oberfläche startet aus Idee und Modus einen Hintergrundauftrag. Ein Worker ruft Antigravity CLI mit der Google-AI-Pro-Anmeldung auf, validiert und speichert Skript und geordnete Szenen; kein beliebiger Freitext wird als valides Skript akzeptiert. Codex und manuelles Kopieren sind zur Laufzeit nicht erforderlich.

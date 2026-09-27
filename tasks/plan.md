@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
 Stand: 28. September 2026
-Status: Aufgaben 01–08 abgeschlossen. Datenmodell und API-Vertrag sind gegen PostgreSQL geprüft; Entwicklung ab Aufgabe 09 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
+Status: Aufgaben 01–09 abgeschlossen. Datenmodell und API-Vertrag sind gegen PostgreSQL geprüft; das Idee- und Modusformular wurde im Browser gegen PostgreSQL geprüft. Entwicklung ab Aufgabe 10 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
@@ -120,7 +120,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 06. [x] Projektgerüst, Docker Compose und Konfigurationsverwaltung anlegen.
 07. [x] Datenmodell, Migrationen und verbindliche Zustandsmaschine erstellen. Migration 0001 auf leerer PostgreSQL-17-Datenbank und vier Integrationstests bestanden.
 08. [x] API-Verträge für Projekt, Skriptversion, Freigaben, Status und Medien definieren. HTTP-/OpenAPI-Vertragstests gegen PostgreSQL bestanden; [Vertrag](api-contract.md).
-09. [ ] Idee- und Modusformular in React umsetzen.
+09. [x] Idee- und Modusformular in React umsetzen; Browserprobe für beide Modi, Validierung und gespeicherte Projektansicht bestanden.
 10. [ ] Automatischen Antigravity-Pro-Skriptauftrag samt Schema-Validierung und Fehlerbehandlung anbinden.
 11. [ ] Skript- und Szeneneditor mit Versionierung umsetzen.
 12. [ ] Skriptfreigabe und automatische, eindeutige Produktionsauslösung umsetzen.
