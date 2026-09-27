@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
 Stand: 27. September 2026
-Status: Aufgaben 01–06 abgeschlossen. Das startbare Web-Grundgerüst ist implementiert; Entwicklung ab Aufgabe 07 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
+Status: Aufgaben 01–07 abgeschlossen. Datenmodell, Migration und Freigaberegeln sind in PostgreSQL geprüft; Entwicklung ab Aufgabe 08 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
@@ -118,7 +118,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 ### M1 – Skriptfreigabe
 
 06. [x] Projektgerüst, Docker Compose und Konfigurationsverwaltung anlegen.
-07. [ ] Datenmodell, Migrationen und verbindliche Zustandsmaschine erstellen.
+07. [x] Datenmodell, Migrationen und verbindliche Zustandsmaschine erstellen. Migration 0001 auf leerer PostgreSQL-17-Datenbank und vier Integrationstests bestanden.
 08. [ ] API-Verträge für Projekt, Skriptversion, Freigaben, Jobs und Medien definieren.
 09. [ ] Idee- und Modusformular in React umsetzen.
 10. [ ] Automatischen Antigravity-Pro-Skriptauftrag samt Schema-Validierung und Fehlerbehandlung anbinden.
@@ -188,7 +188,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 
 Aufgabe 01 ist mit den konkreten V1-Startwerten und zwei Abnahmeideen in Abschnitt 2.3–2.4 abgeschlossen. Am 26. September 2026 wurde die Priorität geändert: zuerst Videos ohne laufende API-Kosten nachweisen, dann Social Media prüfen. Die frühere Vorgabe „echtes CLOUD-Video als letzter Schritt“ ist damit durch den früheren, kostenkontrollierten Test in Aufgabe 24 ersetzt. Die ursprüngliche manuelle Gemini-Pro-Übergabe aus Aufgabe 02 wurde auf ausdrücklichen Wunsch des Betreibers durch einen automatischen Antigravity-CLI-Aufruf ersetzt. Aufgabe 03 belegt mit vier echten Skripten, dass beide Modi gültige strukturierte Antworten liefern; der CLI-Prototyp lief mit einem angemeldeten Google-Konto und Pro-Modell ohne Gemini API. Die Abo-Zuordnung dieser CLI-Sitzung wird vor der Webintegration bestätigt. Technische Plattformgrenzen und tatsächliche Modal-Nutzung können weitere dokumentierte Anpassungen nötig machen.
 
-Am 27. September 2026 wurde der **Arbeitsort** geändert: Weiterentwicklung über Codex Cloud und GitHub; keine Abhängigkeit vom Windows-Entwicklungsrechner. Der Pexels-Modus `LOKAL` bleibt inhaltlich gleich. Für echte Browser- und Videoproben wird ein Remote-Testbetrieb benötigt; der bereits laufende lokale Compose-Stack ist nur der bisherige Nachweis für Aufgabe 06. Codex Cloud erhält keine lokale Anmeldung oder `.env` durch den GitHub-Checkout. Aufgaben 07–09 können ohne diese Zugänge entwickelt werden. Für Aufgabe 10 muss der Antigravity-CLI-Weg auf einem tatsächlich erreichbaren, angemeldeten Worker ohne Gemini API geprüft werden; ohne diesen Nachweis bleibt die Live-Abnahme offen. Vor Aufgaben 19 und 24 müssen Remote-Speicher und Browserzugang verfügbar sein.
+Am 27. September 2026 wurde der **Arbeitsort** geändert: Weiterentwicklung über Codex Cloud und GitHub; keine Abhängigkeit vom Windows-Entwicklungsrechner. Der Pexels-Modus `LOKAL` bleibt inhaltlich gleich. Für echte Browser- und Videoproben wird ein Remote-Testbetrieb benötigt; der bereits laufende lokale Compose-Stack ist nur der bisherige Nachweis für Aufgabe 06. Codex Cloud erhält keine lokale Anmeldung oder `.env` durch den GitHub-Checkout. Aufgaben 08–09 können ohne diese Zugänge entwickelt werden. Für Aufgabe 10 muss der Antigravity-CLI-Weg auf einem tatsächlich erreichbaren, angemeldeten Worker ohne Gemini API geprüft werden; ohne diesen Nachweis bleibt die Live-Abnahme offen. Vor Aufgaben 19 und 24 müssen Remote-Speicher und Browserzugang verfügbar sein.
 
 ## 8. Verifizierte Quellen und erneute Prüfung
 

@@ -14,6 +14,7 @@ services:
 
   api:
     build: ./backend
+    command: ["sh", "-c", "python -m app.migrate up && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     environment:
       DATABASE_URL: postgresql://pipeline:${POSTGRES_PASSWORD:-dev-only-change-me}@db:5432/pipeline
       REDIS_URL: redis://redis:6379/0

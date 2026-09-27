@@ -1,8 +1,8 @@
 # Video-generating-Pipeline v2
 
-Stand: Schritt 6. Das Web-Grundgerüst mit React, FastAPI, RQ-Worker, PostgreSQL und Redis ist implementiert. Skriptintegration, Videoproduktion und Veröffentlichung folgen in den nächsten Schritten.
+Stand: Schritt 7. Das Web-Grundgerüst sowie PostgreSQL-Datenmodell, Migration und Freigabe-/Zustandsregeln sind implementiert. Fachliche API-Endpunkte, Skriptintegration, Videoproduktion und Veröffentlichung folgen in den nächsten Schritten.
 
-**Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 07 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt nur den bisherigen lokalen Nachweis von Schritt 6; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
+**Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 08 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt nur den bisherigen lokalen Nachweis von Schritt 6; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
 
 Die geplante Anwendung nimmt eine Videoidee und den Modus `LOKAL` oder `CLOUD` in einer Weboberfläche entgegen. Ein Hintergrundauftrag soll mit dem vorhandenen Google-AI-Pro-Konto über die offizielle Antigravity CLI ein Skript erzeugen, ohne Gemini Developer API und ohne Codex zur Laufzeit. Nach Prüfung und Freigabe wird das Video erstellt. Social-Media-Veröffentlichungen folgen erst nach der Videoabnahme.
 
@@ -26,6 +26,15 @@ docker compose down
 ```
 
 `down` lässt die Datenbank- und Redis-Volumes bestehen. Die Weboberfläche ist der sichtbare Stand von Schritt 6; die Eingabe einer Videoidee folgt in Schritt 9. Vor dem produktiven Betrieb ein eigenes `POSTGRES_PASSWORD` in der ignorierten `.env` setzen. Das Passwort aus `.env.example` ist nur für lokale Entwicklung. Der Pexels-Key bleibt lokal in `.env` und wird in Schritt 6 noch keinem Container übergeben. Modal und Social-Media-Konten werden hier nicht verwendet.
+
+Beim Start der API wird Migration 0001 automatisch auf PostgreSQL angewandt. Für einen separaten Datenbanktest nach `docker compose up -d --wait db`:
+
+```powershell
+docker compose run --rm api python -m app.migrate up
+docker compose run --rm api python -m unittest app.test_database -v
+```
+
+Die Rückmigration `python -m app.migrate down` löscht alle sieben Fachtabellen und ist nur für eine **wegwerfbare Testdatenbank** vorgesehen.
 
 ## Lokale Prüfung
 

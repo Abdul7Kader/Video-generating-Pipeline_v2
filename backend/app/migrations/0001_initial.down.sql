@@ -1,0 +1,16 @@
+DROP TABLE platform_publications;
+DROP TABLE approvals CASCADE;
+DROP TABLE artifacts;
+DROP TABLE production_runs;
+DROP TABLE scenes;
+DROP TABLE script_versions;
+DROP TABLE projects;
+DROP FUNCTION guard_publication();
+DROP FUNCTION guard_production();
+DROP FUNCTION protect_approval();
+DROP FUNCTION guard_approval();
+DROP FUNCTION guard_artifact();
+DROP FUNCTION guard_scene();
+DROP FUNCTION protect_script_version();
+DROP FUNCTION protect_project_mode();
+DROP TABLE schema_migrations;

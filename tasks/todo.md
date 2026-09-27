@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 27. September 2026:** Entwicklung ab Aufgabe 07 in Codex Cloud am GitHub-Repository; [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
+**Fortsetzung ab 27. September 2026:** Aufgaben 01–07 sind abgeschlossen; Entwicklung ab Aufgabe 08 in Codex Cloud am GitHub-Repository. [STATE.md](../STATE.md) enthält die Übergabe. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für einen lokalen Entwicklungsrechner. Eine Cloud-Entwicklungsumgebung ersetzt nicht den später benötigten Remote-Testbetrieb für echte Skript- und Videoproben.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -44,9 +44,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Frischer lokaler Git-Checkout **ohne `.env`**: Compose-Build und Start erfolgreich, alle fünf Container gesund, Web und API-Bereitschaft mit HTTP 200. API-Dokumentation ebenfalls HTTP 200. Ein gestoppter Worker bewirkt HTTP 503 und wird nach Neustart wieder als bereit gemeldet. Die temporären Testcontainer und Volumes wurden entfernt.
 
 ### 07. Datenmodell und Zustandsmaschine (M; abhängig von: 01, 06)
-- [ ] Tabellen für Projekt, Skriptversion, Szene, Freigabe, Produktionslauf, Artefakt und Plattformpublikation samt Migrationen existieren.
-- [ ] Erlaubte Zustandsübergänge verhindern Produktion/Publikation ohne passende Freigabe; Modus und Medientyp sind konsistent.
-- **Prüfung:** Migration auf leerer DB und Zustandsübergangstests.
+- [x] Tabellen für Projekt, Skriptversion, Szene, Freigabe, Produktionslauf, Artefakt und Plattformpublikation samt Migrationen existieren.
+- [x] Erlaubte Zustandsübergänge verhindern Produktion/Publikation ohne passende Freigabe; Modus und Medientyp sind konsistent.
+- **Prüfung:** Migration 0001 auf leerer PostgreSQL-17-Testdatenbank, Rückmigration und erneute Migration erfolgreich; sieben Fachtabellen vorhanden. Vier echte PostgreSQL-Integrationstests prüfen Modus/Medientyp, vollständige unveränderliche Skriptversion, Freigaben, Dateiprüfsumme, Übergänge und Dubletten. Compose-API, DB, Redis und Worker gesund; acht bestehende Python-Tests und Web-Build erfolgreich. [Migration](../backend/app/migrations/0001_initial.sql), [Tests](../backend/app/test_database.py).
 
 ### 08. API-Vertrag (S; abhängig von: 07)
 - [ ] FastAPI-Schemas/Endpunkte für Anlegen, Lesen, Bearbeiten, Freigeben, Status und Medienabruf dokumentiert.
