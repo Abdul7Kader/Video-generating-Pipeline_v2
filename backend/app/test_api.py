@@ -7,6 +7,8 @@ from uuid import uuid4
 import psycopg
 from fastapi.testclient import TestClient
 from psycopg import sql
+from redis import Redis
+from rq import Queue
 
 from app.main import app
 from app.migrate import migrate
@@ -105,9 +107,19 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(conflict.status_code, 409)
         self.assertEqual(conflict.json()["error"]["code"], "VERSION_CONFLICT")
         next_payload = self.script_payload(expected_version=1)
+        next_payload["title"] = "Bearbeiteter Titel"
+        next_payload["scenes"][0]["narration"] = "Bearbeiteter Sprechertext"
+        next_payload["scenes"][0]["visual_description"] = "Bearbeitete Bildbeschreibung"
+        next_payload["scenes"][0]["pexels_query"] = "edited garden flowers"
         second = self.client.post(url, json=next_payload)
         self.assertEqual(second.status_code, 201, second.text)
         self.assertEqual(second.json()["version"], 2)
+        reloaded = self.client.get(url + "/2").json()
+        self.assertEqual(reloaded["title"], "Bearbeiteter Titel")
+        self.assertEqual(reloaded["scenes"][0]["narration"], "Bearbeiteter Sprechertext")
+        self.assertEqual(reloaded["scenes"][0]["visual_description"], "Bearbeitete Bildbeschreibung")
+        self.assertEqual(reloaded["scenes"][0]["pexels_query"], "edited garden flowers")
+        self.assertEqual(self.client.get(url + "/1").json()["title"], "Testtitel")
         stale = self.client.post(url + "/1/approval")
         self.assertEqual(stale.status_code, 409)
         approve = self.client.post(url + "/2/approval")
@@ -164,6 +176,24 @@ class ApiContractTest(unittest.TestCase):
         with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
             publications = conn.execute("SELECT count(*) FROM platform_publications").fetchone()[0]
         self.assertEqual(publications, 0)
+
+    @unittest.skipUnless(os.getenv("REDIS_URL"), "REDIS_URL required")
+    def test_script_generation_is_enqueued_once_and_reported(self):
+        project = self.project()
+        url = f"/api/projects/{project['id']}/script-generation"
+        first = self.client.post(url)
+        self.assertEqual(first.status_code, 202, first.text)
+        self.assertEqual(first.json()["state"], "QUEUED")
+        repeated = self.client.post(url)
+        self.assertEqual(repeated.status_code, 200, repeated.text)
+        self.assertEqual(repeated.json()["id"], first.json()["id"])
+        self.assertEqual(self.client.get(url).json()["id"], first.json()["id"])
+        status = self.client.get(f"/api/projects/{project['id']}/status").json()
+        self.assertEqual(status["script_generation"]["state"], "QUEUED")
+        queue = Queue(connection=Redis.from_url(os.environ["REDIS_URL"]))
+        queued = queue.fetch_job(f"script-generation-{first.json()['id']}")
+        self.assertIsNotNone(queued)
+        queued.delete()
 
 
 if __name__ == "__main__":

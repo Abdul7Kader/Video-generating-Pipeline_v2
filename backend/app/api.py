@@ -11,6 +11,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from psycopg.rows import dict_row
+from redis import Redis
+from rq import Queue
+
+from app.script_generation import generate_script
 
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -94,6 +98,17 @@ class VideoApprovalOutput(StrictModel):
     checksum_sha256: str
 
 
+class ScriptGenerationOutput(StrictModel):
+    id: UUID
+    project_id: UUID
+    state: Literal["QUEUED", "RUNNING", "FAILED", "COMPLETED"]
+    error_code: str | None
+    error_message: str | None
+    script_version: int | None
+    created_at: datetime
+    updated_at: datetime
+
+
 class ProjectStatus(StrictModel):
     project_id: UUID
     latest_script_version: int | None
@@ -102,6 +117,7 @@ class ProjectStatus(StrictModel):
     production_state: Literal["QUEUED", "RUNNING", "FAILED", "COMPLETED"] | None
     final_artifact_id: UUID | None
     video_approved: bool
+    script_generation: ScriptGenerationOutput | None = None
 
 
 class ArtifactOutput(StrictModel):
@@ -200,6 +216,58 @@ def create_project(body: ProjectInput):
             (body.idea, body.mode, media_type),
         ).fetchone()
     return row
+
+
+@router.post(
+    "/projects/{project_id}/script-generation", response_model=ScriptGenerationOutput,
+    status_code=202, responses={200: {"model": ScriptGenerationOutput, "description": "Active job"}},
+)
+def start_script_generation(project_id: UUID, response: Response):
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        active = conn.execute(
+            "SELECT j.*, NULL::integer AS script_version FROM script_generation_jobs j "
+            "WHERE project_id=%s AND state IN ('QUEUED','RUNNING') ORDER BY created_at DESC LIMIT 1",
+            (project_id,),
+        ).fetchone()
+        if active:
+            response.status_code = 200
+            return active
+        job = conn.execute(
+            "INSERT INTO script_generation_jobs(project_id) VALUES(%s) RETURNING *, NULL::integer AS script_version",
+            (project_id,),
+        ).fetchone()
+    try:
+        rq_job = Queue(connection=Redis.from_url(os.environ["REDIS_URL"])).enqueue(
+            generate_script, str(job["id"]), job_id=f"script-generation-{job['id']}",
+            job_timeout=240, retry=None,
+        )
+    except Exception as exc:
+        with database() as conn:
+            conn.execute(
+                "UPDATE script_generation_jobs SET state='FAILED',error_code='QUEUE_UNAVAILABLE',"
+                "error_message='Der Skriptauftrag konnte nicht eingereiht werden.',updated_at=now() WHERE id=%s",
+                (job["id"],),
+            )
+        raise problem(503, "QUEUE_UNAVAILABLE", "Der Skriptauftrag konnte nicht eingereiht werden") from exc
+    with database() as conn:
+        conn.execute("UPDATE script_generation_jobs SET rq_job_id=%s WHERE id=%s", (rq_job.id, job["id"]))
+    return job
+
+
+@router.get("/projects/{project_id}/script-generation", response_model=ScriptGenerationOutput)
+def get_script_generation(project_id: UUID):
+    with database() as conn:
+        require_project(conn, project_id)
+        job = conn.execute(
+            "SELECT j.id,j.project_id,j.state,j.error_code,j.error_message,j.created_at,j.updated_at,"
+            "s.version AS script_version FROM script_generation_jobs j LEFT JOIN script_versions s "
+            "ON s.id=j.script_version_id WHERE j.project_id=%s ORDER BY j.created_at DESC LIMIT 1",
+            (project_id,),
+        ).fetchone()
+    if job is None:
+        raise problem(404, "GENERATION_NOT_FOUND", "Für dieses Projekt wurde noch kein Skript gestartet")
+    return job
 
 
 @router.get("/projects/{project_id}", response_model=ProjectOutput)
@@ -362,6 +430,12 @@ def get_status(project_id: UUID):
             "LEFT JOIN approvals va ON va.artifact_id = f.id AND va.kind = 'VIDEO' "
             "WHERE s.project_id = %s ORDER BY s.version DESC LIMIT 1", (project_id,),
         ).fetchone()
+        generation = conn.execute(
+            "SELECT j.id,j.project_id,j.state,j.error_code,j.error_message,j.created_at,j.updated_at,"
+            "gs.version AS script_version FROM script_generation_jobs j LEFT JOIN script_versions gs "
+            "ON gs.id=j.script_version_id WHERE j.project_id=%s ORDER BY j.created_at DESC LIMIT 1",
+            (project_id,),
+        ).fetchone()
     return {
         "project_id": project_id,
         "latest_script_version": row["version"] if row else None,
@@ -370,6 +444,7 @@ def get_status(project_id: UUID):
         "production_state": row["state"] if row else None,
         "final_artifact_id": row["final_id"] if row else None,
         "video_approved": bool(row and row["video_approval_id"]),
+        "script_generation": generation,
     }
 
 
