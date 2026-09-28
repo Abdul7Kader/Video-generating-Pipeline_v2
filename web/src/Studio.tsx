@@ -6,6 +6,9 @@ type Services = { database: boolean; redis: boolean; worker: boolean }
 type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProjectStatus = { latest_script_version: number | null; production_state: string | null }
+type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null }
+type ScriptScene = { position: number; narration: string; visual_description: string; duration_seconds: number | null; pexels_queries: string[] | null; wan_prompt: string | null }
+type Script = { title: string; version: number; target_duration_seconds: number | null; scenes: ScriptScene[] }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
 const serviceLabels: Record<keyof Services, string> = {
@@ -33,6 +36,10 @@ export default function Studio() {
   const [loading, setLoading] = useState(false)
   const [project, setProject] = useState<Project | null>(null)
   const [projectStatus, setProjectStatus] = useState<ProjectStatus | null>(null)
+  const [scriptJob, setScriptJob] = useState<ScriptJob | null>(null)
+  const [script, setScript] = useState<Script | null>(null)
+  const [generationError, setGenerationError] = useState('')
+  const [startingGeneration, setStartingGeneration] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -59,7 +66,16 @@ export default function Studio() {
       ])
       if (!projectResponse.ok || !statusResponse.ok) throw new Error()
       setProject(await projectResponse.json() as Project)
-      setProjectStatus(await statusResponse.json() as ProjectStatus)
+      const status = await statusResponse.json() as ProjectStatus
+      setProjectStatus(status)
+      if (status.latest_script_version) {
+        const scriptResponse = await fetch(`/api/projects/${encodeURIComponent(id)}/scripts/${status.latest_script_version}`, { cache: 'no-store' })
+        if (scriptResponse.ok) setScript(await scriptResponse.json() as Script)
+      } else {
+        setScript(null)
+        const jobId = window.localStorage.getItem(`videostudio:script-job:${id}`)
+        if (jobId) void refreshGeneration(id, jobId)
+      }
       setSaveError('')
     } catch {
       setSaveError('Das gespeicherte Projekt konnte nicht geladen werden. Bitte versuche es erneut.')
@@ -91,6 +107,9 @@ export default function Studio() {
       window.localStorage.setItem(STORAGE_KEY, saved.id)
       setProject(saved)
       setProjectStatus({ latest_script_version: null, production_state: null })
+      setScriptJob(null)
+      setScript(null)
+      setGenerationError('')
       setIdea('')
       await loadProject(saved.id)
       window.requestAnimationFrame(() => {
@@ -100,6 +119,47 @@ export default function Studio() {
       setSaveError(error instanceof Error ? error.message : 'Das Projekt konnte nicht gespeichert werden.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function refreshGeneration(projectId: string, jobId: string) {
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/script-generations/${encodeURIComponent(jobId)}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error(await responseError(response))
+      const job = await response.json() as ScriptJob
+      setScriptJob(job)
+      if (job.state === 'COMPLETED' && job.script_version) {
+        const scriptResponse = await fetch(`/api/projects/${encodeURIComponent(projectId)}/scripts/${job.script_version}`, { cache: 'no-store' })
+        if (!scriptResponse.ok) throw new Error('Das fertige Skript konnte nicht geladen werden.')
+        setScript(await scriptResponse.json() as Script)
+        setProjectStatus((current) => current ? { ...current, latest_script_version: job.script_version } : current)
+      }
+      setGenerationError('')
+    } catch (error) {
+      setGenerationError(error instanceof Error ? error.message : 'Der Skriptstatus konnte nicht geladen werden.')
+    }
+  }
+
+  useEffect(() => {
+    if (!project || !scriptJob || !['QUEUED', 'RUNNING'].includes(scriptJob.state)) return
+    const timer = window.setInterval(() => void refreshGeneration(project.id, scriptJob.id), 3000)
+    return () => window.clearInterval(timer)
+  }, [project?.id, scriptJob?.id, scriptJob?.state])
+
+  async function startGeneration() {
+    if (!project || startingGeneration) return
+    setStartingGeneration(true)
+    setGenerationError('')
+    try {
+      const response = await fetch(`/api/projects/${encodeURIComponent(project.id)}/script-generations`, { method: 'POST' })
+      if (!response.ok) throw new Error(await responseError(response))
+      const job = await response.json() as ScriptJob
+      window.localStorage.setItem(`videostudio:script-job:${project.id}`, job.id)
+      setScriptJob(job)
+    } catch (error) {
+      setGenerationError(error instanceof Error ? error.message : 'Der Skriptauftrag konnte nicht gestartet werden.')
+    } finally {
+      setStartingGeneration(false)
     }
   }
 
@@ -121,7 +181,7 @@ export default function Studio() {
           <div className="hero-copy">
             <p className="eyebrow"><span className="eyebrow-line" /> SCHRITT 09 · PROJEKT ANLEGEN</p>
             <h1 id="hero-title">Deine Idee.<br /><em>Ein echtes Projekt.</em></h1>
-            <p className="hero-description">Beschreibe dein Video und wähle, woher die Bilder später kommen. Deine Idee wird jetzt in der Datenbank gespeichert. Skript und Video folgen in den nächsten Entwicklungsschritten.</p>
+            <p className="hero-description">Beschreibe dein Video und wähle die spätere Bildquelle. Nach dem Speichern kannst du die automatische Skripterstellung starten. Ein Video wird noch nicht produziert.</p>
             <div className="status-pill" role="status" aria-live="polite">
               <span className={`status-dot ${ready ? 'is-ready' : ''}`} aria-hidden="true" />
               {ready ? 'Technische Basis bereit' : reachable ? 'Dienste starten oder werden geprüft' : 'API derzeit nicht erreichbar'}
@@ -153,7 +213,7 @@ export default function Studio() {
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? 'Projekt wird gespeichert …' : 'Projekt speichern'}<span aria-hidden="true">→</span>
             </button>
-            <p className="form-footnote">Das Speichern startet noch keine Skript- oder Videoerstellung und verursacht keine Modal-Kosten.</p>
+            <p className="form-footnote">Das Speichern startet noch keinen KI-Auftrag. Die Skripterstellung wird im Projekt bewusst gestartet; Modal wird nicht verwendet.</p>
           </form>
         </section>
 
@@ -173,6 +233,15 @@ export default function Studio() {
                 <div><span className="data-label">STATUS</span><strong>{projectStatus?.latest_script_version ? `Skriptversion ${projectStatus.latest_script_version}` : 'Idee gespeichert'}</strong></div>
               </div>
               <p className="project-id">Projekt-ID: <code>{project.id}</code></p>
+              <div className="generation-area">
+                <h3>Automatisches Skript</h3>
+                {!script && <p>Der Hintergrund-Worker verwendet Antigravity mit einem angemeldeten Google-AI-Pro-Konto. Ohne eingerichteten Remote-Worker erscheint ein Fehler.</p>}
+                {!script && (!scriptJob || scriptJob.state === 'FAILED') && <button className="secondary-button" type="button" onClick={() => void startGeneration()} disabled={startingGeneration}>{startingGeneration ? 'Auftrag wird gestartet …' : scriptJob ? 'Skript erneut versuchen' : 'Skript automatisch erstellen'}</button>}
+                {scriptJob && ['QUEUED', 'RUNNING'].includes(scriptJob.state) && <p role="status">{scriptJob.state === 'QUEUED' ? 'Skriptauftrag wartet auf den Worker …' : 'Antigravity erstellt das Skript …'}</p>}
+                {scriptJob?.state === 'FAILED' && <p className="notice-error" role="alert">{scriptJob.error_message}</p>}
+                {generationError && <p className="notice-error" role="alert">{generationError}</p>}
+                {script && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Bearbeiten und Freigeben folgen in den nächsten Schritten.</p><h4>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small></li>)}</ol></div>}
+              </div>
             </div>}
           </section>
         )}
@@ -182,7 +251,7 @@ export default function Studio() {
             <div className="section-heading"><span className="section-index">03 / ABLAUF</span><h2>Was schon möglich ist</h2></div>
             <ol className="workflow-list">
               <li><span className="step-number">01</span><div><h3>Idee speichern</h3><p>Projekt und Modus werden in PostgreSQL gesichert.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">02</span><div><h3>Skript prüfen</h3><p>Die automatische Gemini-Pro-Integration folgt.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Der Auftrag läuft über Antigravity auf einem angemeldeten Worker. Die Live-Abnahme auf einem Remote-Worker ist noch offen.</p></div><span className="step-tag available">Auftrag testen</span></li>
               <li><span className="step-number">03</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>
@@ -199,7 +268,7 @@ export default function Studio() {
           </div>
         </section>
       </main>
-      <footer className="site-footer"><span>VIDEOSTUDIO / V2</span><span>Entwicklungsstand · Schritt 9</span></footer>
+      <footer className="site-footer"><span>VIDEOSTUDIO / V2</span><span>Entwicklungsstand · Schritt 10</span></footer>
     </div>
   )
 }

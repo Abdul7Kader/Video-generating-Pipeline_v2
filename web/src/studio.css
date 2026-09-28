@@ -50,6 +50,7 @@ button:disabled{cursor:wait;opacity:.66}
 .project-meta{display:flex;flex-wrap:wrap;gap:20px 36px;border-top:1px solid #35434b;padding-top:20px}
 .project-meta>div{display:flex;flex-direction:column;gap:7px}.project-meta strong{font-size:13px;color:#dcebe5}
 .project-id{margin:0;font-size:12px;color:#94a9ae;overflow-wrap:anywhere}.project-id code{font:inherit;color:#c8d5d1}
+.generation-area{border-top:1px solid #35434b;padding-top:20px}.generation-area h3{margin:0 0 8px;font-size:18px}.generation-area>p{color:#a9b9bd;font-size:13px;line-height:1.6;max-width:750px}.secondary-button{background:#b6e7d3;border:1px solid #b6e7d3;border-radius:3px;color:#122128;font-weight:800;padding:11px 16px}.secondary-button:hover:not(:disabled){background:#d0f2e5}.script-success{color:#a5e5c2!important}.script-preview h4{font-size:18px;margin:16px 0 5px}.script-preview>p{color:#a9b9bd;font-size:13px}.script-preview ol{margin:20px 0 0;padding-left:24px}.script-preview li{padding:12px 0;border-top:1px solid #35434b}.script-preview li p{margin:7px 0;color:#e2eee9;line-height:1.5}.script-preview li small{color:#a9b9bd;line-height:1.5}
 .saved-note{color:#b6e7d3;font-size:13px}.notice-error{border:1px solid #8a5555;background:#392c30;color:#ffd1c8;padding:12px;font-size:13px;line-height:1.5}
 .content-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;padding-bottom:76px}
 .workflow-list,.service-list{list-style:none;padding:0;margin:0}

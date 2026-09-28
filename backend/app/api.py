@@ -11,6 +11,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from psycopg.rows import dict_row
+from redis import Redis
+from redis.exceptions import RedisError
+from rq import Queue
 
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -56,6 +59,8 @@ class SceneOutput(StrictModel):
     media_type: MediaType
     pexels_query: str | None
     wan_prompt: str | None
+    duration_seconds: int | None = None
+    pexels_queries: list[str] | None = None
 
 
 class ScriptOutput(StrictModel):
@@ -64,6 +69,8 @@ class ScriptOutput(StrictModel):
     version: int
     title: str
     narration: str
+    language: str = "de-DE"
+    target_duration_seconds: int | None = None
     scenes: list[SceneOutput]
     created_at: datetime
 
@@ -73,6 +80,17 @@ class ScriptSummary(StrictModel):
     version: int
     title: str
     created_at: datetime
+
+
+class ScriptGenerationOutput(StrictModel):
+    id: UUID
+    project_id: UUID
+    state: Literal["QUEUED", "RUNNING", "FAILED", "COMPLETED"]
+    error_code: str | None
+    error_message: str | None
+    script_version: int | None
+    created_at: datetime
+    updated_at: datetime
 
 
 class ScriptApprovalOutput(StrictModel):
@@ -218,6 +236,67 @@ def list_scripts(project_id: UUID):
         ).fetchall()
 
 
+@router.post(
+    "/projects/{project_id}/script-generations",
+    response_model=ScriptGenerationOutput, status_code=202,
+    responses={200: {"model": ScriptGenerationOutput, "description": "Existing active job"}},
+)
+def start_script_generation(project_id: UUID, response: Response):
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        existing_script = conn.execute(
+            "SELECT 1 FROM script_versions WHERE project_id = %s LIMIT 1", (project_id,),
+        ).fetchone()
+        if existing_script:
+            raise problem(409, "SCRIPT_EXISTS", "Project already has a script")
+        active = conn.execute(
+            "SELECT * FROM script_generation_jobs WHERE project_id = %s "
+            "AND state IN ('QUEUED', 'RUNNING') ORDER BY created_at DESC LIMIT 1",
+            (project_id,),
+        ).fetchone()
+        if active:
+            response.status_code = 200
+            return active
+        job = conn.execute(
+            "INSERT INTO script_generation_jobs (project_id) VALUES (%s) RETURNING *",
+            (project_id,),
+        ).fetchone()
+    try:
+        queue = Queue("default", connection=Redis.from_url(os.environ["REDIS_URL"]))
+        queue.enqueue("app.script_jobs.run_generation", str(job["id"]),
+                      job_id=str(job["id"]), job_timeout=300, result_ttl=0)
+    except (RedisError, OSError, KeyError) as exc:
+        with database() as conn:
+            conn.execute(
+                "UPDATE script_generation_jobs SET state = 'FAILED', error_code = 'QUEUE_UNAVAILABLE', "
+                "error_message = 'Skript-Worker nicht erreichbar. Bitte erneut versuchen.', "
+                "updated_at = now() WHERE id = %s", (job["id"],),
+            )
+        raise problem(503, "QUEUE_UNAVAILABLE", "Script worker is unavailable") from exc
+    return job
+
+
+@router.get("/projects/{project_id}/script-generations/{job_id}", response_model=ScriptGenerationOutput)
+def get_script_generation(project_id: UUID, job_id: UUID):
+    with database() as conn:
+        require_project(conn, project_id)
+        conn.execute(
+            "UPDATE script_generation_jobs SET state = 'FAILED', error_code = 'WORKER_INTERRUPTED', "
+            "error_message = 'Der Skriptauftrag wurde unterbrochen. Bitte erneut versuchen.', "
+            "updated_at = now() WHERE id = %s AND project_id = %s AND "
+            "((state = 'RUNNING' AND updated_at < now() - interval '6 minutes') OR "
+            "(state = 'QUEUED' AND updated_at < now() - interval '15 minutes'))",
+            (job_id, project_id),
+        )
+        job = conn.execute(
+            "SELECT * FROM script_generation_jobs WHERE id = %s AND project_id = %s",
+            (job_id, project_id),
+        ).fetchone()
+        if job is None:
+            raise problem(404, "JOB_NOT_FOUND", "Script generation job not found")
+        return job
+
+
 @router.post("/projects/{project_id}/scripts", response_model=ScriptOutput, status_code=201)
 def create_script(project_id: UUID, body: ScriptInput):
     with database() as conn:
@@ -263,7 +342,8 @@ def get_script(project_id: UUID, version: int):
         if script is None:
             raise problem(404, "SCRIPT_NOT_FOUND", "Script version not found")
         scenes = conn.execute(
-            "SELECT position, narration, visual_description, media_type, pexels_query, wan_prompt "
+            "SELECT position, narration, visual_description, media_type, pexels_query, wan_prompt, "
+            "duration_seconds, pexels_queries "
             "FROM scenes WHERE script_version_id = %s ORDER BY position", (script["id"],),
         ).fetchall()
     return {**script, "scenes": scenes}
