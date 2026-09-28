@@ -33,8 +33,14 @@ services:
     build: ./backend
     command: ["rq", "worker", "--url", "redis://redis:6379/0", "--name", "pipeline-worker", "default"]
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pipeline:${POSTGRES_PASSWORD:-dev-only-change-me}@db:5432/pipeline
+      REDIS_URL: redis://redis:6379/0
+      ANTIGRAVITY_SETTINGS_PATH: /run/antigravity/settings.json
     healthcheck:
       test: ["CMD", "python", "-c", "from redis import Redis; from rq import Worker; assert any(w.name == 'pipeline-worker' for w in Worker.all(connection=Redis.from_url('redis://redis:6379/0')))"]
       interval: 10s

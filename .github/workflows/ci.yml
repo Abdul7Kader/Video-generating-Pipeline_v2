@@ -1,0 +1,60 @@
+name: Automated checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pipeline_test
+          POSTGRES_USER: pipeline
+          POSTGRES_PASSWORD: pipeline-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pipeline -d pipeline_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://pipeline:pipeline-test-password@127.0.0.1:5432/pipeline_test
+      REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install Python dependencies
+        run: python -m pip install -r backend/requirements.txt
+      - name: Install web dependencies
+        run: npm ci --prefix web
+      - name: Apply database migrations
+        run: PYTHONPATH=backend python -m app.migrate up
+      - name: Test backend contracts, database, and script worker
+        run: PYTHONPATH=backend python -m unittest app.test_api app.test_database app.test_script_generation -v
+      - name: Test controlled provider probes
+        run: python -m unittest discover -s tasks -p 'test_*.py' -v
+      - name: Test editor model
+        run: npm test --prefix web
+      - name: Build web application
+        run: npm run build --prefix web
