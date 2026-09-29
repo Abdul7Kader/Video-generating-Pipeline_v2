@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
 Stand: 29. September 2026
-Status: Aufgaben 01–09 abgeschlossen. Der Codepfad für Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL sowie im Browser für Start und Fehleranzeige geprüft; die Live-Abnahme mit Antigravity auf einem angemeldeten Remote-Worker ist offen. Verbindlicher Stand: [STATE.md](../STATE.md).
+Status: Aufgaben 01–09 abgeschlossen. Der Codepfad für Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL sowie im Browser für Start und Fehleranzeige geprüft. Ein Compose-Zusatz, eine Ubuntu-Anleitung und eine systemd-Benutzerdienstvorlage sind vorbereitet. Der Ubuntu-Rechner ist derzeit ausgeschaltet und noch nicht als Server eingerichtet; die Live-Abnahme mit dortiger Antigravity-Anmeldung ist offen. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
@@ -47,7 +47,7 @@ React UI ── FastAPI ── PostgreSQL (Projekte, Versionen, Freigaben, Jobs,
                 └── offizielle YouTube-, TikTok-, Meta- und X-Schnittstellen
 ```
 
-- Docker Compose verwaltet Weboberfläche, API, RQ-Worker, PostgreSQL und Redis. Produktionsdateien und Datenbank liegen auf persistenten Ubuntu-Volumes. Die Modal-Anwendung ist ein separat deployter Cloud-Dienst; Compose startet keine lokale Wan-Instanz.
+- Docker Compose verwaltet Weboberfläche, API, RQ-Worker, PostgreSQL und Redis. Für den Ubuntu-Testbetrieb von Aufgabe 10 ersetzt `compose.remote-worker.yaml` den Container-Worker durch einen unter dem angemeldeten Host-Benutzer laufenden Worker; PostgreSQL und Redis bleiben an `127.0.0.1` gebunden. Dieser Weg ist vorbereitet, auf Ubuntu aber noch nicht live geprüft. Produktionsdateien und Datenbank sollen dort auf persistenten Volumes liegen. Die Modal-Anwendung ist ein separat deployter Cloud-Dienst; Compose startet keine lokale Wan-Instanz.
 - Der Skript-Worker startet die offizielle Antigravity CLI mit Pro-Modell und JSON-Ausgabe in einem isolierten temporären Arbeitsordner. Der Prototyp in `tasks/agy_script_probe.py` hat beide Modi mit einer vorhandenen Antigravity-Anmeldung erfolgreich geprüft. Ob diese Anmeldung demselben Google-AI-Pro-Konto wie die Webanwendung gehört, wird vor Aufgabe 10 bestätigt. Auf Ubuntu braucht der Worker eine einmalige Google-Anmeldung unter seinem eigenen Dienstkonto und Zugriff auf die dort gespeicherte Sitzung; das wird vor dem Produktivbetrieb getestet. Ein leeres oder ungültiges Ergebnis wird abgewiesen.
 - Die frühe Videoabnahme läuft künftig auf einem erreichbaren Remote-Testbetrieb mit persistentem Medienspeicher, vorzugsweise auf dem geplanten Ubuntu-Server. Der bisherige Entwicklungsrechner ist dafür keine Voraussetzung. Aufgabe 18 richtet diesen Speicher und den Browserabruf im Remote-Testbetrieb ein; Aufgabe 35 prüft Härtung, Backup, Wiederherstellung und endgültige Betriebsübergabe. Die Adresse und Zugangsdaten des Remote-Testbetriebs sind noch nicht bekannt und gehören nicht ins Repository.
 - PostgreSQL ist die fachliche Quelle für Zustände. Redis/RQ transportiert Hintergrundjobs. Jeder Schritt ist anhand von Projekt-ID, Skriptversion und Job-ID wiederaufnehmbar und gegen doppelte Ausführung geschützt.

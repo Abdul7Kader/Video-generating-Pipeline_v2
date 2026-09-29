@@ -59,6 +59,41 @@ Regeln:
 """
 
 
+def output_schema(mode: str) -> dict:
+    """Constrain CLI output; validate_script remains the final authority."""
+    if mode not in ("LOKAL", "CLOUD"):
+        raise ValueError("mode muss LOKAL oder CLOUD sein")
+    source = (
+        {"pexels_queries": {"type": "array", "minItems": 2, "maxItems": 4,
+                            "items": {"type": "string", "minLength": 1, "maxLength": 100}}}
+        if mode == "LOKAL" else
+        {"wan_prompt": {"type": "string", "minLength": 1, "maxLength": 1000}}
+    )
+    scene = {
+        "type": "object",
+        "properties": {
+            "index": {"type": "integer"},
+            "duration_seconds": {"type": "integer", "minimum": 3, "maximum": 12},
+            "narration": {"type": "string", "minLength": 1, "maxLength": 400},
+            "visual_description": {"type": "string", "minLength": 1, "maxLength": 600},
+            "media_type": {"type": "string", "enum": ["STOCK_VIDEO" if mode == "LOKAL" else "AI_GENERATED_VIDEO"]},
+            **source,
+        },
+        "required": ["index", "duration_seconds", "narration", "visual_description", "media_type", *source],
+    }
+    return {
+        "type": "object",
+        "properties": {
+            "title": {"type": "string", "minLength": 1, "maxLength": 120},
+            "language": {"type": "string", "enum": ["de-DE"]},
+            "mode": {"type": "string", "enum": [mode]},
+            "target_duration_seconds": {"type": "integer", "minimum": 30, "maximum": 60},
+            "scenes": {"type": "array", "minItems": 6, "maxItems": 10, "items": scene},
+        },
+        "required": ["title", "language", "mode", "target_duration_seconds", "scenes"],
+    }
+
+
 def _object_without_duplicates(pairs):
     result = {}
     for key, value in pairs:

@@ -148,6 +148,11 @@ class AntigravityBoundaryTest(unittest.TestCase):
             generate("Idee", "LOKAL")
         command = run.call_args.args[0]
         self.assertEqual(command[command.index("--model") + 1], "gemini-3.1-pro-high")
+        schema = json.loads(command[command.index("--json-schema") + 1])
+        self.assertEqual(schema["properties"]["mode"]["enum"], ["LOKAL"])
+        self.assertEqual(schema["properties"]["scenes"]["items"]["properties"]["media_type"]["enum"], ["STOCK_VIDEO"])
+        self.assertIn("pexels_queries", schema["properties"]["scenes"]["items"]["required"])
+        self.assertNotIn("wan_prompt", schema["properties"]["scenes"]["items"]["properties"])
         self.assertNotIn("GEMINI_API_KEY", run.call_args.kwargs["env"])
         self.assertNotIn("GOOGLE_API_KEY", run.call_args.kwargs["env"])
 
@@ -161,6 +166,23 @@ class AntigravityBoundaryTest(unittest.TestCase):
             with self.assertRaises(GenerationFailure) as caught:
                 generate("Idee", "LOKAL")
         self.assertEqual(caught.exception.code, "INVALID_SCRIPT")
+
+    def test_cloud_schema_keeps_only_wan_source(self):
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = json.dumps({"status": "SUCCESS", "response": json.dumps(sample_script("CLOUD"))})
+
+        with patch("app.antigravity._safe_settings"), \
+             patch("app.antigravity.subprocess.run", return_value=Result()) as run:
+            generate("Idee", "CLOUD")
+        command = run.call_args.args[0]
+        schema = json.loads(command[command.index("--json-schema") + 1])
+        self.assertEqual(schema["properties"]["mode"]["enum"], ["CLOUD"])
+        scene = schema["properties"]["scenes"]["items"]
+        self.assertEqual(scene["properties"]["media_type"]["enum"], ["AI_GENERATED_VIDEO"])
+        self.assertIn("wan_prompt", scene["required"])
+        self.assertNotIn("pexels_queries", scene["properties"])
 
     def test_auth_and_quota_errors_are_actionable(self):
         class Result:

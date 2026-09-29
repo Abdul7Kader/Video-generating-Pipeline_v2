@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from app.script_contract import make_prompt, validate_script
+from app.script_contract import make_prompt, output_schema, validate_script
 
 
 class GenerationFailure(Exception):
@@ -54,7 +54,8 @@ def generate(idea: str, mode: str) -> dict:
         with tempfile.TemporaryDirectory(prefix="video-script-") as scratch:
             result = subprocess.run(
                 ["agy", "-p", make_prompt(idea, mode), "--model", "gemini-3.1-pro-high",
-                 "--output-format", "json", "--print-timeout", "180s", "--sandbox"],
+                 "--output-format", "json", "--json-schema", json.dumps(output_schema(mode)),
+                 "--print-timeout", "180s", "--sandbox"],
                 cwd=scratch, env=env, capture_output=True, text=True,
                 encoding="utf-8", timeout=210, check=False,
             )

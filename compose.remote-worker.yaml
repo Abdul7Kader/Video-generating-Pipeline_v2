@@ -1,0 +1,10 @@
+# Remote-Testbetrieb: Antigravity-Worker läuft unter dem angemeldeten Host-Benutzer.
+services:
+  worker:
+    profiles: [container-worker]
+  db:
+    ports:
+      - "127.0.0.1:${HOST_POSTGRES_PORT:-5433}:5432"
+  redis:
+    ports:
+      - "127.0.0.1:${HOST_REDIS_PORT:-6380}:6379"
