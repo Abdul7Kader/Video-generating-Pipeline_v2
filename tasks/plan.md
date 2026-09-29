@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
 Stand: 29. September 2026
-Status: Aufgaben 01–09 abgeschlossen. Der Codepfad für Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL geprüft; die Live-Abnahme mit Antigravity auf einem angemeldeten Remote-Worker ist offen. Verbindlicher Stand: [STATE.md](../STATE.md).
+Status: Aufgaben 01–09 abgeschlossen. Der Codepfad für Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL sowie im Browser für Start und Fehleranzeige geprüft; die Live-Abnahme mit Antigravity auf einem angemeldeten Remote-Worker ist offen. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
