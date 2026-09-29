@@ -1,8 +1,8 @@
 # Video-generating-Pipeline v2
 
-Stand: Schritt 10 in Arbeit. Die Weboberfläche legt Projekte in PostgreSQL an und startet nach dem Speichern automatisch einen Skriptauftrag über Redis/RQ. Kontrollierte Skriptantworten werden validiert und gespeichert; die echte Antigravity-Probe auf einem angemeldeten Remote-Worker ist noch offen. Videoproduktion und Veröffentlichung folgen später.
+Stand: Schritt 10 in Arbeit. Die Weboberfläche legt Projekte in PostgreSQL an und startet nach dem Speichern automatisch einen Skriptauftrag über Redis/RQ. Kontrollierte Skriptantworten werden validiert und gespeichert; die echte Antigravity-Probe auf einem angemeldeten Installationsrechner ist noch offen. Videoproduktion und Veröffentlichung folgen später.
 
-**Entwicklung auf Windows, Installation später auf Ubuntu:** Einstieg über [STATE.md](STATE.md). Code und kontrollierte Tests laufen zunächst am aktuellen Windows-Entwicklungsrechner über dieses GitHub-Repository. Der folgende `localhost`-Abschnitt beschreibt die dortige Testoberfläche. Ubuntu wird erst nach Entwicklung der Videofunktionen für Installation und echte Skript- und Videoproben benötigt. [AGENTS.md](AGENTS.md) enthält die Projektregeln.
+**Entwicklung auf Windows, Installation auf einem unterstützten Rechner:** Einstieg über [STATE.md](STATE.md). Code und kontrollierte Tests laufen zunächst am aktuellen Windows-Entwicklungsrechner über dieses GitHub-Repository. Die Anwendung soll auf Windows, macOS oder Linux mit den benötigten Laufzeitwerkzeugen installierbar sein; Ubuntu ist ein möglicher Zielrechner. [Installationsanleitung](tasks/install-on-computer.md). [AGENTS.md](AGENTS.md) enthält die Projektregeln.
 
 Die geplante Anwendung nimmt eine Videoidee und den Modus `LOKAL` oder `CLOUD` in einer Weboberfläche entgegen. Ein Hintergrundauftrag soll mit dem vorhandenen Google-AI-Pro-Konto über die offizielle Antigravity CLI ein Skript erzeugen, ohne Gemini Developer API und ohne Codex zur Laufzeit. Nach Prüfung und Freigabe wird das Video erstellt. Social-Media-Veröffentlichungen folgen erst nach der Videoabnahme.
 
@@ -12,7 +12,7 @@ Der [API-Vertrag](tasks/api-contract.md) beschreibt die Endpunkte und Beispielpa
 
 ## Webanwendung lokal starten
 
-Voraussetzung: Docker Desktop mit Linux-Containern und Docker Compose. Im Projektordner:
+Voraussetzung: Docker mit Linux-Containern und Docker Compose ([Installation](https://docs.docker.com/compose/install/)). Im Projektordner für kontrollierte Entwicklungstests:
 
 ```powershell
 docker compose up --build -d --wait
@@ -53,4 +53,4 @@ Für eine neue automatische Skriptprobe muss die offizielle Antigravity CLI (`ag
 python tasks/agy_script_probe.py --idea "Ein Regentag in der Stadt" --mode CLOUD --out tasks/neues-skript.json
 ```
 
-Für die echte Live-Prüfung von Aufgabe 10 kann die vorhandene Ubuntu-Hardware direkt vor Ort eingerichtet werden; SSH oder eine öffentliche Freigabe sind zunächst nicht nötig. Die [Ubuntu-Anleitung](tasks/remote-script-worker.md) beschreibt den angemeldeten Host-Worker, die [Compose-Zusatzdatei](compose.remote-worker.yaml) und den Hintergrunddienst. Auf diesem Rechner muss die [Antigravity CLI](https://antigravity.google/docs/cli/install/) mit dem gewünschten Google-AI-Pro-Konto angemeldet sein. `~/.gemini/antigravity-cli/settings.json` muss ausdrücklich `"useG1Credits": false` enthalten; `modelProvider` darf nicht gesetzt sein. Die derzeitige Compose-Worker-Umgebung enthält keine CLI oder Anmeldung und dient der kontrollierten Fehler- und Integrationsprüfung. Keine Gemini API und kein API-Key als Ersatz. Die bisherige Windows-Anmeldung wird nicht über GitHub übertragen.
+Für die echte Live-Prüfung von Aufgabe 10 kann ein unterstützter Windows-, macOS- oder Linux-Rechner eingerichtet werden. Die [Installationsanleitung](tasks/install-on-computer.md) beschreibt den angemeldeten Host-Worker, die [Compose-Zusatzdatei](compose.host-worker.yaml) und den Start im Hintergrund je Betriebssystem. Auf **diesem** Rechner muss die [Antigravity CLI](https://antigravity.google/docs/cli/install/) mit dem gewünschten Google-AI-Pro-Konto angemeldet sein. `~/.gemini/antigravity-cli/settings.json` muss ausdrücklich `"useG1Credits": false` enthalten; `modelProvider` darf nicht gesetzt sein. Die Standard-Compose-Worker-Umgebung enthält keine CLI oder Anmeldung und dient der kontrollierten Fehler- und Integrationsprüfung. Keine Gemini API und kein API-Key als Ersatz. Anmeldungen werden nicht über GitHub übertragen. Windows- und macOS-Hostbetrieb sowie die Live-Abnahme sind noch ungeprüft.

@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 29. September 2026:** Aufgaben 01–09 sind abgeschlossen. Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository; Ubuntu wird erst zur Installation und Live-Abnahme der Videofunktionen eingerichtet. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf Ubuntu tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist; die Abnahmekriterien und Haken bleiben unverändert.
+**Fortsetzung ab 29. September 2026:** Aufgaben 01–09 sind abgeschlossen. Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -61,8 +61,8 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ### 10. Automatische Gemini-Pro-Skriptintegration (M; abhängig von: 03, 07–08)
 - [ ] Die Oberfläche startet aus Idee und Modus einen Hintergrundauftrag. Ein Worker ruft Antigravity CLI mit der Google-AI-Pro-Anmeldung auf, validiert und speichert Skript und geordnete Szenen; kein beliebiger Freitext wird als valides Skript akzeptiert. Codex und manuelles Kopieren sind zur Laufzeit nicht erforderlich.
 - [ ] Ungültige oder unvollständige Antworten, fehlende Anmeldung und erschöpftes Kontingent führen zu verständlichen Fehlern mit bewusster Wiederholung. Automatische AI-Credit-Überziehung ist nachweislich deaktiviert; es gibt keinen stillen Wechsel zu einer kostenpflichtigen API.
-- **Prüfung:** Entwicklung auf dem Windows-Rechner mit kontrollierten Antworten; Live-Abnahme erst nach der späteren Ubuntu-Installation mit eigener, bestätigter Google-AI-Pro-/Antigravity-Anmeldung: Idee im Browser absenden, ohne weitere Eingabe echtes Skript erhalten und bearbeiten; kontrollierte Fehlerfälle. Kein Gemini-API-Aufruf. Eine Anmeldung auf einem anderen Rechner wird nicht durch Git übertragen.
-- **Zwischenstand 29.09.2026:** Automatischer UI-Auftragsstart, PostgreSQL-Speicherung, Redis/RQ-Transport, Modusvalidierung, Fehleranzeige und bewusster Retry implementiert. Antigravity erhält nun ein modusspezifisches JSON-Schema; die vollständige eigene Validierung bleibt aktiv. 15 Backendtests bestanden, darunter echter Redis→RQ→PostgreSQL-Durchlauf mit kontrollierter Antwort; acht Projekttests und Web-Build ebenfalls bestanden. Ein isolierter Compose-Stack bestätigte PostgreSQL und Redis über die nur lokal geöffneten Host-Ports. Ein früherer echter HTTP→Worker-Auftrag endete ohne bestätigte Kostensperre erwartungsgemäß mit `CREDIT_GUARD_UNVERIFIED`; der Browserlauf bestätigte automatischen Start und sichtbaren Retry-Fehler. Für den noch nicht eingerichteten Ubuntu-Rechner liegen [Anleitung](remote-script-worker.md), Compose-Zusatz und systemd-Dienstvorlage vor. CLI-Installation, Pro-Anmeldung, Keyring-/Hintergrundbetrieb und echtes Browser-Skript sind dort nicht geprüft; beide Haken bleiben offen.
+- **Prüfung:** Entwicklung mit kontrollierten Antworten; Live-Abnahme auf einem unterstützten, vollständig eingerichteten Rechner mit eigener, bestätigter Google-AI-Pro-/Antigravity-Anmeldung: Idee im Browser absenden, ohne weitere Eingabe echtes Skript erhalten und bearbeiten; kontrollierte Fehlerfälle. Kein Gemini-API-Aufruf. Eine Anmeldung auf einem anderen Rechner wird nicht durch Git übertragen.
+- **Zwischenstand 29.09.2026:** Automatischer UI-Auftragsstart, PostgreSQL-Speicherung, Redis/RQ-Transport, Modusvalidierung, Fehleranzeige und bewusster Retry implementiert. Antigravity erhält ein modusspezifisches JSON-Schema; die eigene Validierung bleibt aktiv. 16 Backendtests mit echtem Redis/RQ/PostgreSQL-Durchlauf, acht Projekttests und Web-Build bestanden im Docker-Stack. Der native Windows-Test zeigte einen Fehler in RQs `SpawnWorker` 2.3.2; auf Windows wird deshalb `SimpleWorker` mit Timer, auf Linux/macOS `SpawnWorker` verwendet. Die Windows-Variante verarbeitete nativ einen echten Redis-Auftrag und startete auch mit privater JSON-Testkonfiguration. Der isolierte Stack wurde entfernt. [Installationsanleitung](install-on-computer.md), Compose-Zusatz und Startvorlagen sind vorbereitet. CLI-Anmeldung, Schlüsselspeicher, Hintergrundbetrieb und echtes Browser-Skript auf den Zielsystemen bleiben offen; beide Haken bleiben offen.
 
 ### 11. Skript- und Szeneneditor (M; abhängig von: 08, 10)
 - [ ] Benutzer sieht und bearbeitet Sprechertext, Szenen, Bildbeschreibungen sowie Prompts/Suchbegriffe.
@@ -103,27 +103,27 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - [ ] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
 - **Prüfung:** Ein komplettes LOKAL-Testvideo ansehen und technische Sollwerte maschinell vergleichen.
 
-### 18. Persistenter Medienspeicher im Remote-Testbetrieb (S; abhängig von: 07, 17)
-- [ ] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher eines erreichbaren Remote-Testbetriebs, vorzugsweise des geplanten Ubuntu-Servers. Der bisherige Entwicklungsrechner ist nicht erforderlich.
+### 18. Portabler persistenter Medienspeicher (S; abhängig von: 07, 17)
+- [ ] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher des Installationsrechners. Der Pfad ist konfigurierbar und für Windows, macOS und Linux geeignet.
 - [ ] Browserabruf ist berechtigt und unterstützt Videowiedergabe; Pfadmanipulation wird abgewehrt.
-- **Prüfung:** Remote-Adresse und Zugriffsweg sind eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback über diese Adresse geprüft. Aufgabe 35 behandelt danach Backup, Härtung und endgültige Betriebsübergabe.
+- **Prüfung:** Lokaler Browser-Zugriffsweg ist eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback auf dem Installationsrechner geprüft. Aufgabe 35 behandelt danach weitere Betriebssysteme, Backup, Härtung und Betriebsübergabe.
 
 ### 19. Produktionsstatus und Videoprüfung (S; abhängig von: 13, 18)
 - [ ] React zeigt laufende Schritte, Fehler und das fertige Video zur Prüfung an.
 - [ ] Bis zur Videofreigabe wird kein Publikationsjob erzeugt.
 - **Prüfung:** End-to-End-Browserlauf im LOKAL-Modus.
 
-**Checkpoint M2:** [ ] Ein fertiges Video im Modus `LOKAL` mit ausschließlich Pexels-Szenen liegt im Remote-Testbetrieb und ist über dessen Weboberfläche abspielbar.
+**Checkpoint M2:** [ ] Ein fertiges Video im Modus `LOKAL` mit ausschließlich Pexels-Szenen liegt auf dem Installationsrechner und ist über dessen Weboberfläche abspielbar.
 
 ## M3 – Cloud-Produktionspfad
 
 ### 20. Modal-Workflow ohne Generierung vorbereiten (M; abhängig von: 05, 13)
 - [ ] Versionierter ComfyUI-Wan-Workflow mit expliziter `A100-80GB`-GPU und reproduzierbaren Modellgewichten ist vorbereitet.
-- [ ] Keine lokale Wan-Installation ist Teil des Ubuntu-Compose-Stacks.
+- [ ] Keine lokale Wan-Installation ist Teil des Compose-Stacks auf einem Installationsrechner.
 - **Prüfung:** Workflow-Datei, Abhängigkeiten und Deploy-Konfiguration statisch prüfen; keine Inferenz auslösen.
 
 ### 21. Cloud-Szenen und Rücktransfer mit Testdaten anbinden (M; abhängig von: 18, 20)
-- [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Remote-Testbetriebs.
+- [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Installationsrechners.
 - [ ] Ein abgebrochener Transfer erzeugt weder gültiges Artefakt noch duplizierten Auftrag.
 - **Prüfung:** Erfolgs-, Timeout- und beschädigte-Datei-Proben mit kontrollierten Antworten und Testdateien; Manifest enthält nur `AI_GENERATED_VIDEO`. Keine echte Wan-Generierung.
 
@@ -134,14 +134,14 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Grenzwert- und Fehlerfalltests.
 
 ### 23. CLOUD-Ablauf mit Testdaten prüfen (M; abhängig von: 15–19, 21–22)
-- [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video im Remote-Testbetrieb.
+- [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video auf dem Installationsrechner.
 - [ ] Renderer weist absichtlich gemischtes Manifest zurück.
 - **Prüfung:** Browserlauf und maschineller Manifest-/ffprobe-Test mit Testdaten; kein echter Cloud-Generierungsaufruf.
 
 ### 24. Erstes echtes CLOUD-Video und Videoabnahme (M; abhängig von: 19, 23)
 - [ ] Ein reales LOKAL-Video ist bereits gespeichert und im Browser abspielbar; der CLOUD-Pfad wurde mit kontrollierten Testdaten geprüft.
 - [ ] Kontoinhaber bestätigt verfügbares Modal-Gratis-Guthaben, Zahlungsmethode für GPU und wirksames Limit von 0 USD Nettokosten; der geschätzte Ressourcenverbrauch liegt innerhalb des Guthabens. Fehlt ein Nachweis, bleibt der Live-Lauf gesperrt.
-- [ ] Modal erzeugt mit `A100-80GB`, ComfyUI und Wan 2.2 T2V-A14B die Szenen für Beispiel B. Das fertige Video liegt im Remote-Testbetrieb und ist über dessen Weboberfläche prüfbar; Aufgabe 35 schließt den produktiven Betrieb ab.
+- [ ] Modal erzeugt mit `A100-80GB`, ComfyUI und Wan 2.2 T2V-A14B die Szenen für Beispiel B. Das fertige Video liegt auf dem Installationsrechner und ist über dessen Weboberfläche prüfbar; Aufgabe 35 schließt den produktiven Betrieb ab.
 - [ ] Laufzeit, Ressourcenverbrauch, Qualität, Manifest, Prüfsumme und ffprobe-Profil werden protokolliert; ein Fehlschlag wird innerhalb dieser Aufgabe bearbeitet.
 - **Prüfung:** Benutzer sieht und beurteilt ein echtes CLOUD-Video. Kein Social-Media-Upload ist für die Videoabnahme nötig.
 
@@ -208,13 +208,13 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 
 ### 34. Automatisierte Qualitätsprüfungen (M; abhängig von: 24, 31)
 - [ ] Verträge, Zustandsregeln, Medientyptrennung, Renderpfad und Adapter-Fehlerfälle werden automatisiert geprüft.
-- [ ] Browser-End-to-End-Pfade laufen für LOKAL mit realen Artefakten im Remote-Testbetrieb und für CLOUD mit kontrollierten Antworten; der bereits absolvierte echte CLOUD-Lauf ist dokumentiert.
+- [ ] Browser-End-to-End-Pfade laufen für LOKAL mit realen Artefakten auf einem Installationsrechner und für CLOUD mit kontrollierten Antworten; der bereits absolvierte echte CLOUD-Lauf ist dokumentiert.
 - **Prüfung:** CI/Build und Tests auf frischem Stand erfolgreich.
 
-### 35. Ubuntu-Deployment und Handbuch (M; abhängig von: 32–34)
-- [ ] Compose-Deployment mit persistenten Volumes, TLS-Zugang, Secrets, Migrationen und Healthchecks dokumentiert.
-- [ ] Auf dem Ubuntu-Produktionsrechner vorhandenes Qwen-Modell und Hardware ermitteln; nur falls kein geeignetes Modell vorhanden ist, dort ein sinnvoll lauffähiges Qwen-Modell installieren. Qwen wird nicht als Videogenerator eingesetzt.
+### 35. Plattformübergreifende Installation und Handbuch (M; abhängig von: 32–34)
+- [ ] Docker-/Compose-Installation, angemeldeter Host-Worker, Medienwerkzeuge, persistente Volumes, lokale Zugriffe, Secrets, Migrationen und Healthchecks für Windows, macOS und Linux dokumentiert. TLS ist nötig, sobald die UI über den lokalen Rechner hinaus erreichbar sein soll.
+- [ ] Auf dem gewählten Produktionsrechner vorhandenes Qwen-Modell und Hardware ermitteln; nur falls kein geeignetes Modell vorhanden ist und die Hardware es erlaubt, dort ein sinnvoll lauffähiges Modell installieren. Qwen wird nicht als Videogenerator eingesetzt.
 - [ ] Update, Rollback, Backup, Restore und Störungsbehebung sind ausführbar beschrieben.
-- **Prüfung:** Deployment- und Rollback-Probe auf Ubuntu-Staging; für erneute Wan-Inferenz gelten weiterhin die Kostenregeln aus Aufgabe 24.
+- **Prüfung:** Installation, Hintergrundstart, Browser-End-to-End-Lauf und Rollback auf je einem repräsentativen Windows-, macOS- und Linux-Rechner geprüft. Nicht verfügbare Zielsysteme ausdrücklich als ungetestet ausweisen; für erneute Wan-Inferenz gelten weiterhin die Kostenregeln aus Aufgabe 24.
 
 **Checkpoint Video-MVP:** [ ] Nach Aufgabe 24 sind beide Modi real geprüft und Videos im Browser abspielbar. **Checkpoint Veröffentlichung:** [ ] Nur ausdrücklich aktivierte, kostenfrei nutzbare oder gesondert freigegebene Plattformen sind real geprüft; übrige Plattformen bleiben als offen ausgewiesen.

@@ -4,9 +4,8 @@ Description=Video Pipeline Antigravity script worker
 [Service]
 Type=simple
 WorkingDirectory=REPO_CHECKOUT/backend
-EnvironmentFile=%h/.config/video-pipeline/worker.env
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=VENV_RQ worker --url ${REDIS_URL} --name pipeline-worker default
+ExecStart=VENV_PYTHON -m app.worker
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=330

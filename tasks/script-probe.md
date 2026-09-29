@@ -7,7 +7,7 @@
 3. Die JSON-Antwort wird vor Speicherung und Bearbeitung validiert. Bei leerer oder ungültiger Antwort schlägt der Auftrag sichtbar fehl.
 4. Die beiden repräsentativen Probeaufträge liegen in `prompt-balkon-lokal.txt` und `prompt-regen-cloud.txt`.
 
-Es wird kein Gemini-API-Key benötigt und kein Aufruf der Gemini Developer API ausgelöst. Die Webanwendung ist noch nicht implementiert; die automatische CLI-Ausführung und Schema-Prüfung sind als Prototyp belegt. Die einmalige Anmeldung für den späteren Ubuntu-Worker ist in Aufgabe 10 und beim Deployment zu prüfen.
+Es wird kein Gemini-API-Key benötigt und kein Aufruf der Gemini Developer API ausgelöst. Zum Zeitpunkt dieser Probe war die Webanwendung noch nicht implementiert; die automatische CLI-Ausführung und Schema-Prüfung sind als Prototyp belegt. Die einmalige Anmeldung des Host-Workers auf jedem gewählten Installationsrechner ist in Aufgabe 10 und bei der Installation zu prüfen.
 Der Prototyp entfernt mögliche API-Key-Umgebungsvariablen und startet ohne pauschale Werkzeugfreigabe. Laut [Antigravity-Dokumentation](https://antigravity.google/docs/cli/credits/) kann `useG1Credits` zusätzliche Credits nach Ausschöpfen der Basisquote verbrauchen. Diese Einstellung ist hier nicht aktiv (die CLI-Konfigurationsdatei fehlt, dokumentierter Standard ist `false`); bei einer vorhandenen Konfiguration verlangt der Prototyp explizit `false` und bricht sonst ab.
 
 ## V1-Datenvertrag

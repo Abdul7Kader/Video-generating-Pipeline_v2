@@ -236,7 +236,7 @@ export default function Studio() {
               <p className="project-id">Projekt-ID: <code>{project.id}</code></p>
               <div className="generation-area">
                 <h3>Automatisches Skript</h3>
-                {!script && <p>Der Hintergrund-Worker verwendet Antigravity mit einem angemeldeten Google-AI-Pro-Konto. Ohne eingerichteten Remote-Worker erscheint ein Fehler.</p>}
+                {!script && <p>Der Hintergrund-Worker verwendet Antigravity mit einem angemeldeten Google-AI-Pro-Konto. Ohne eingerichteten Worker auf diesem Rechner erscheint ein Fehler.</p>}
                 {!script && (!scriptJob || scriptJob.state === 'FAILED') && <button className="secondary-button" type="button" onClick={() => void startGeneration()} disabled={startingGeneration}>{startingGeneration ? 'Auftrag wird gestartet …' : scriptJob ? 'Skript erneut versuchen' : 'Skript automatisch erstellen'}</button>}
                 {scriptJob && ['QUEUED', 'RUNNING'].includes(scriptJob.state) && <p role="status">{scriptJob.state === 'QUEUED' ? 'Skriptauftrag wartet auf den Worker …' : 'Antigravity erstellt das Skript …'}</p>}
                 {scriptJob?.state === 'FAILED' && <p className="notice-error" role="alert">{scriptJob.error_message}</p>}
@@ -252,7 +252,7 @@ export default function Studio() {
             <div className="section-heading"><span className="section-index">03 / ABLAUF</span><h2>Was schon möglich ist</h2></div>
             <ol className="workflow-list">
               <li><span className="step-number">01</span><div><h3>Idee speichern</h3><p>Projekt und Modus werden in PostgreSQL gesichert.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Der Auftrag läuft über Antigravity auf einem angemeldeten Worker. Die Live-Abnahme auf einem Remote-Worker ist noch offen.</p></div><span className="step-tag available">Auftrag testen</span></li>
+              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Der Auftrag läuft über Antigravity auf einem angemeldeten Worker. Die Live-Abnahme auf einem vollständig eingerichteten Rechner ist noch offen.</p></div><span className="step-tag available">Auftrag testen</span></li>
               <li><span className="step-number">03</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>

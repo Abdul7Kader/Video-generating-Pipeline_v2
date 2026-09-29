@@ -19,6 +19,7 @@ from app.main import app
 from app.migrate import migrate
 from app.script_contract import validate_script
 from app.script_jobs import run_generation
+from app.worker import host_worker_class
 
 
 def sample_script(mode):
@@ -39,6 +40,10 @@ def sample_script(mode):
         "target_duration_seconds": 36, "scenes": scenes,
     }
     return validate_script(json.dumps(payload), mode)
+
+
+def spawn_probe():
+    return "spawn-worker-ok"
 
 
 @unittest.skipUnless(os.getenv("DATABASE_URL"), "DATABASE_URL required")
@@ -122,6 +127,14 @@ class ScriptGenerationIntegrationTest(unittest.TestCase):
         job = self.client.get(f"/api/projects/{project_id}/script-generations/{response.json()['id']}")
         self.assertEqual(job.json()["state"], "COMPLETED", job.text)
         self.assertEqual(self.client.get(f"/api/projects/{project_id}/scripts/1").status_code, 200)
+
+    def test_host_worker_processes_a_real_redis_job(self):
+        redis = Redis.from_url(os.environ["REDIS_URL"])
+        queue = Queue("host-worker-test-" + uuid4().hex, connection=redis)
+        job = queue.enqueue("app.test_script_generation.spawn_probe", result_ttl=60)
+        host_worker_class()([queue], connection=redis).work(burst=True)
+        job.refresh()
+        self.assertEqual(job.return_value(), "spawn-worker-ok")
 
 
 class AntigravityBoundaryTest(unittest.TestCase):

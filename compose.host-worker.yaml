@@ -1,4 +1,4 @@
-# Remote-Testbetrieb: Antigravity-Worker läuft unter dem angemeldeten Host-Benutzer.
+# Installation auf einem Rechner: Antigravity-Worker läuft unter dessen angemeldetem Benutzer.
 services:
   worker:
     profiles: [container-worker]

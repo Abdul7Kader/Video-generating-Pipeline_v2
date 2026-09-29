@@ -22,7 +22,7 @@ def _safe_settings() -> None:
     except (OSError, ValueError) as exc:
         raise GenerationFailure(
             "CREDIT_GUARD_UNVERIFIED",
-            "Die Antigravity-Kostensperre ist nicht bestätigt. Auf dem Remote-Worker muss useG1Credits ausdrücklich false sein.",
+            "Die Antigravity-Kostensperre ist nicht bestätigt. Auf diesem Rechner muss useG1Credits ausdrücklich false sein.",
         ) from exc
     if not isinstance(settings, dict) or settings.get("useG1Credits") is not False:
         raise GenerationFailure(
@@ -39,7 +39,7 @@ def _safe_settings() -> None:
 def _failure_from_output(output: str) -> GenerationFailure:
     lower = output.lower()
     if any(word in lower for word in ("authentication required", "not authenticated", "sign in", "login required")):
-        return GenerationFailure("AUTH_REQUIRED", "Antigravity ist auf dem Remote-Worker nicht angemeldet.")
+        return GenerationFailure("AUTH_REQUIRED", "Antigravity ist auf diesem Rechner nicht angemeldet.")
     if any(word in lower for word in ("quota", "rate limit", "resource exhausted", "credits exhausted")):
         return GenerationFailure("QUOTA_EXHAUSTED", "Das Pro-Kontingent ist erschöpft. Bitte später bewusst erneut versuchen.")
     return GenerationFailure("AGY_FAILED", "Antigravity konnte das Skript nicht erstellen. Bitte später erneut versuchen.")
@@ -60,7 +60,7 @@ def generate(idea: str, mode: str) -> dict:
                 encoding="utf-8", timeout=210, check=False,
             )
     except FileNotFoundError as exc:
-        raise GenerationFailure("AGY_UNAVAILABLE", "Antigravity CLI ist auf dem Remote-Worker nicht installiert.") from exc
+        raise GenerationFailure("AGY_UNAVAILABLE", "Antigravity CLI ist auf diesem Rechner nicht installiert.") from exc
     except subprocess.TimeoutExpired as exc:
         raise GenerationFailure("AGY_TIMEOUT", "Antigravity hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.") from exc
     if result.returncode != 0:
