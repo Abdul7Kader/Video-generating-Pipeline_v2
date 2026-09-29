@@ -112,6 +112,7 @@ export default function Studio() {
       setGenerationError('')
       setIdea('')
       await loadProject(saved.id)
+      void startGeneration(saved.id)
       window.requestAnimationFrame(() => {
         document.getElementById('saved-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
@@ -146,15 +147,15 @@ export default function Studio() {
     return () => window.clearInterval(timer)
   }, [project?.id, scriptJob?.id, scriptJob?.state])
 
-  async function startGeneration() {
-    if (!project || startingGeneration) return
+  async function startGeneration(projectId = project?.id) {
+    if (!projectId || startingGeneration) return
     setStartingGeneration(true)
     setGenerationError('')
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(project.id)}/script-generations`, { method: 'POST' })
+      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/script-generations`, { method: 'POST' })
       if (!response.ok) throw new Error(await responseError(response))
       const job = await response.json() as ScriptJob
-      window.localStorage.setItem(`videostudio:script-job:${project.id}`, job.id)
+      window.localStorage.setItem(`videostudio:script-job:${projectId}`, job.id)
       setScriptJob(job)
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : 'Der Skriptauftrag konnte nicht gestartet werden.')
@@ -181,7 +182,7 @@ export default function Studio() {
           <div className="hero-copy">
             <p className="eyebrow"><span className="eyebrow-line" /> SCHRITT 09 · PROJEKT ANLEGEN</p>
             <h1 id="hero-title">Deine Idee.<br /><em>Ein echtes Projekt.</em></h1>
-            <p className="hero-description">Beschreibe dein Video und wähle die spätere Bildquelle. Nach dem Speichern kannst du die automatische Skripterstellung starten. Ein Video wird noch nicht produziert.</p>
+            <p className="hero-description">Beschreibe dein Video und wähle die spätere Bildquelle. Nach dem Speichern startet die Skripterstellung automatisch. Ein Video wird noch nicht produziert.</p>
             <div className="status-pill" role="status" aria-live="polite">
               <span className={`status-dot ${ready ? 'is-ready' : ''}`} aria-hidden="true" />
               {ready ? 'Technische Basis bereit' : reachable ? 'Dienste starten oder werden geprüft' : 'API derzeit nicht erreichbar'}
@@ -213,7 +214,7 @@ export default function Studio() {
             <button className="primary-button" type="submit" disabled={saving}>
               {saving ? 'Projekt wird gespeichert …' : 'Projekt speichern'}<span aria-hidden="true">→</span>
             </button>
-            <p className="form-footnote">Das Speichern startet noch keinen KI-Auftrag. Die Skripterstellung wird im Projekt bewusst gestartet; Modal wird nicht verwendet.</p>
+            <p className="form-footnote">Das Speichern startet einen Skriptauftrag über Antigravity. Modal wird nicht verwendet.</p>
           </form>
         </section>
 

@@ -1,6 +1,6 @@
 # Video-generating-Pipeline v2
 
-Stand: Schritt 9. Die Weboberfläche nimmt Videoidee und Modus entgegen, legt Projekte in PostgreSQL an und zeigt sie nach dem Neuladen wieder an. Automatische Skriptgenerierung, Videoproduktion und Veröffentlichung folgen in den nächsten Schritten.
+Stand: Schritt 10 in Arbeit. Die Weboberfläche legt Projekte in PostgreSQL an und startet nach dem Speichern automatisch einen Skriptauftrag über Redis/RQ. Kontrollierte Skriptantworten werden validiert und gespeichert; die echte Antigravity-Probe auf einem angemeldeten Remote-Worker ist noch offen. Videoproduktion und Veröffentlichung folgen später.
 
 **Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 10 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt die laufende Testoberfläche auf dem bisherigen Rechner; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
 
@@ -20,7 +20,7 @@ docker compose up --build -d --wait
 
 Falls `docker` auf Windows nicht im PATH liegt, den installierten Befehl direkt aufrufen: `& 'C:\Program Files\Docker\Docker\resources\bin\docker.exe' compose up --build -d --wait`.
 
-Danach [http://localhost:4177](http://localhost:4177) öffnen. Eine Videoidee eingeben, `LOKAL` oder `CLOUD` wählen und „Projekt speichern“ drücken. Die Seite zeigt das gespeicherte Projekt und den Status von PostgreSQL, Redis und RQ-Worker; das zuletzt angelegte Projekt wird nach dem Neuladen wieder angezeigt. Es entsteht in Schritt 9 noch kein Skript oder Video. Ein Healthcheck ist auch unter [http://localhost:4177/api/health/ready](http://localhost:4177/api/health/ready) erreichbar. Die API-Dokumentation liegt unter [http://localhost:4177/api/docs](http://localhost:4177/api/docs). Der Web-Port kann über `WEB_PORT` in der lokalen `.env` geändert werden.
+Danach [http://localhost:4177](http://localhost:4177) öffnen. Eine Videoidee eingeben, `LOKAL` oder `CLOUD` wählen und „Projekt speichern“ drücken. Die Seite startet den Skriptauftrag und zeigt seinen Status, das gespeicherte Skript oder einen Fehler mit bewusster Wiederholung. Ohne Antigravity-CLI, angemeldetes Pro-Konto und ausdrücklich deaktivierte AI-Credit-Überziehung auf dem Worker wird kein Modellaufruf gestartet. Es entsteht noch kein Video. Ein Healthcheck ist unter [http://localhost:4177/api/health/ready](http://localhost:4177/api/health/ready) erreichbar. Die API-Dokumentation liegt unter [http://localhost:4177/api/docs](http://localhost:4177/api/docs). Der Web-Port kann über `WEB_PORT` in der lokalen `.env` geändert werden.
 
 ```powershell
 docker compose ps
@@ -53,4 +53,4 @@ Für eine neue automatische Skriptprobe muss die offizielle Antigravity CLI (`ag
 python tasks/agy_script_probe.py --idea "Ein Regentag in der Stadt" --mode CLOUD --out tasks/neues-skript.json
 ```
 
-Die Einbindung in die Weboberfläche ist als Aufgabe 10 geplant. Für ihre echte Live-Prüfung benötigt ein erreichbarer Remote-Worker eine eigene Google-AI-Pro-/Antigravity-Anmeldung; die bisherige lokale Anmeldung wird nicht über GitHub übertragen.
+Für die echte Live-Prüfung von Aufgabe 10 benötigt ein erreichbarer Remote-Worker eine eigene [Antigravity-CLI-Installation und Anmeldung](https://antigravity.google/docs/cli/install/) mit Google AI Pro. Unter seinem Dienstkonto muss `~/.gemini/antigravity-cli/settings.json` ausdrücklich `"useG1Credits": false` enthalten; `modelProvider` darf nicht gesetzt sein. Der Worker muss `agy` im `PATH` und Zugriff auf PostgreSQL und Redis haben. Die derzeitige Compose-Worker-Umgebung enthält keine CLI oder Anmeldung und dient der kontrollierten Fehler- und Integrationprüfung. Keine Gemini API und kein API-Key als Ersatz. Die bisherige lokale Anmeldung wird nicht über GitHub übertragen.

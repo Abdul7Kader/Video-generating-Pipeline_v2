@@ -2,6 +2,8 @@
 
 import json
 import os
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 from uuid import uuid4
@@ -9,6 +11,8 @@ from uuid import uuid4
 import psycopg
 from fastapi.testclient import TestClient
 from psycopg import sql
+from redis import Redis
+from rq import Queue, SimpleWorker
 
 from app.antigravity import GenerationFailure, generate
 from app.main import app
@@ -106,8 +110,47 @@ class ScriptGenerationIntegrationTest(unittest.TestCase):
         self.assertEqual(retry.status_code, 202)
         self.assertNotEqual(retry.json()["id"], first["id"])
 
+    def test_real_redis_queue_runs_generation_and_persists_script(self):
+        project_id = self.project("LOKAL")
+        redis = Redis.from_url(os.environ["REDIS_URL"])
+        queue = Queue("generation-test-" + uuid4().hex, connection=redis)
+        with patch("app.api.Queue", side_effect=lambda name, connection: queue):
+            response = self.client.post(f"/api/projects/{project_id}/script-generations")
+        self.assertEqual(response.status_code, 202, response.text)
+        with patch("app.script_jobs.generate", return_value=sample_script("LOKAL")):
+            SimpleWorker([queue], connection=redis).work(burst=True)
+        job = self.client.get(f"/api/projects/{project_id}/script-generations/{response.json()['id']}")
+        self.assertEqual(job.json()["state"], "COMPLETED", job.text)
+        self.assertEqual(self.client.get(f"/api/projects/{project_id}/scripts/1").status_code, 200)
+
 
 class AntigravityBoundaryTest(unittest.TestCase):
+    def test_account_and_credit_guard_rejects_unsafe_settings(self):
+        with tempfile.TemporaryDirectory() as home:
+            settings_path = Path(home) / ".gemini" / "antigravity-cli" / "settings.json"
+            settings_path.parent.mkdir(parents=True)
+            with patch("app.antigravity.Path.home", return_value=Path(home)):
+                for settings in ({}, {"useG1Credits": True},
+                                 {"useG1Credits": False, "modelProvider": "gemini"}):
+                    settings_path.write_text(json.dumps(settings), encoding="utf-8")
+                    with self.assertRaises(GenerationFailure):
+                        generate("Idee", "LOKAL")
+
+    def test_pins_supported_pro_model_and_removes_api_credentials(self):
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = json.dumps({"status": "SUCCESS", "response": json.dumps(sample_script("LOKAL"))})
+
+        with patch("app.antigravity._safe_settings"), \
+             patch("app.antigravity.subprocess.run", return_value=Result()) as run, \
+             patch.dict(os.environ, {"GEMINI_API_KEY": "test-only", "GOOGLE_API_KEY": "test-only"}):
+            generate("Idee", "LOKAL")
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--model") + 1], "gemini-3.1-pro-high")
+        self.assertNotIn("GEMINI_API_KEY", run.call_args.kwargs["env"])
+        self.assertNotIn("GOOGLE_API_KEY", run.call_args.kwargs["env"])
+
     def test_invalid_response_is_rejected(self):
         class Result:
             returncode = 0

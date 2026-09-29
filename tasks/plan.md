@@ -1,7 +1,7 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
-Stand: 28. September 2026
-Status: Aufgaben 01–09 abgeschlossen. Datenmodell und API-Vertrag sind gegen PostgreSQL geprüft; das Idee- und Modusformular wurde im Browser gegen PostgreSQL geprüft. Entwicklung ab Aufgabe 10 soll in Codex Cloud am GitHub-Repository weitergehen. Verbindliche Übergabe: [STATE.md](../STATE.md).
+Stand: 29. September 2026
+Status: Aufgaben 01–09 abgeschlossen. Der Codepfad für Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL geprüft; die Live-Abnahme mit Antigravity auf einem angemeldeten Remote-Worker ist offen. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
