@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -13,6 +14,7 @@ from fastapi.testclient import TestClient
 from psycopg import sql
 from redis import Redis
 from rq import Queue, SimpleWorker
+from rq.timeouts import TimerDeathPenalty
 
 from app.antigravity import GenerationFailure, generate
 from app.main import app
@@ -44,6 +46,12 @@ def sample_script(mode):
 
 def spawn_probe():
     return "spawn-worker-ok"
+
+
+class ControlledWorker(SimpleWorker):
+    """Keep the mocked generator in-process with a timer that works on Windows."""
+
+    death_penalty_class = TimerDeathPenalty
 
 
 @unittest.skipUnless(os.getenv("DATABASE_URL"), "DATABASE_URL required")
@@ -123,7 +131,7 @@ class ScriptGenerationIntegrationTest(unittest.TestCase):
             response = self.client.post(f"/api/projects/{project_id}/script-generations")
         self.assertEqual(response.status_code, 202, response.text)
         with patch("app.script_jobs.generate", return_value=sample_script("LOKAL")):
-            SimpleWorker([queue], connection=redis).work(burst=True)
+            ControlledWorker([queue], connection=redis).work(burst=True)
         job = self.client.get(f"/api/projects/{project_id}/script-generations/{response.json()['id']}")
         self.assertEqual(job.json()["state"], "COMPLETED", job.text)
         self.assertEqual(self.client.get(f"/api/projects/{project_id}/scripts/1").status_code, 200)
@@ -212,6 +220,30 @@ class AntigravityBoundaryTest(unittest.TestCase):
             with self.assertRaises(GenerationFailure) as caught:
                 generate("Idee", "LOKAL")
         self.assertEqual(caught.exception.code, "QUOTA_EXHAUSTED")
+
+    def test_cli_start_and_timeout_errors_are_actionable(self):
+        for failure, expected in (
+            (FileNotFoundError("agy"), "AGY_UNAVAILABLE"),
+            (PermissionError("agy"), "AGY_UNAVAILABLE"),
+            (subprocess.TimeoutExpired("agy", 210), "AGY_TIMEOUT"),
+        ):
+            with self.subTest(failure=type(failure).__name__), \
+                 patch("app.antigravity._safe_settings"), \
+                 patch("app.antigravity.subprocess.run", side_effect=failure):
+                with self.assertRaises(GenerationFailure) as caught:
+                    generate("Idee", "LOKAL")
+                self.assertEqual(caught.exception.code, expected)
+
+    def test_json_error_envelope_is_classified(self):
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = json.dumps({"status": "ERROR", "error": "authentication required"})
+
+        with patch("app.antigravity._safe_settings"), patch("app.antigravity.subprocess.run", return_value=Result()):
+            with self.assertRaises(GenerationFailure) as caught:
+                generate("Idee", "LOKAL")
+        self.assertEqual(caught.exception.code, "AUTH_REQUIRED")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,10 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
-Stand: 29. September 2026
-Status: Aufgaben 01–09 abgeschlossen. Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL sowie im Browser für Start und Fehleranzeige geprüft; die Live-Abnahme bleibt offen. Die Entwicklung läuft derzeit am Windows-Rechner über GitHub. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist optional. Plattformneutrale Compose- und Worker-Vorbereitung sowie Betriebssystem-Startvorlagen liegen vor. Verbindlicher Stand: [STATE.md](../STATE.md).
+Stand: 30. September 2026
+
+Zwischenprüfung zu Aufgabe 10 am 30. September 2026: Der vollständige Browser- und Worker-Pfad wurde mit kontrollierter Modellantwort auf dem Windows-Entwicklungsrechner geprüft. Die fehlende Bestätigung der Antigravity-Kostensperre verhindert hier weiterhin einen echten Modelllauf; diese Prüfung ersetzt keine Live-Abnahme.
+
+Status: Aufgaben 01–09 abgeschlossen. Aufgabe 10 ist mit kontrollierten Antworten über Redis/RQ und PostgreSQL sowie im Browser für Start, Fehleranzeige und Skriptansicht geprüft; die Live-Abnahme bleibt offen. Die Entwicklung läuft derzeit am Windows-Rechner über GitHub. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist optional. Plattformneutrale Compose- und Worker-Vorbereitung sowie Betriebssystem-Startvorlagen liegen vor. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang

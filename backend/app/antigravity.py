@@ -61,6 +61,8 @@ def generate(idea: str, mode: str) -> dict:
             )
     except FileNotFoundError as exc:
         raise GenerationFailure("AGY_UNAVAILABLE", "Antigravity CLI ist auf diesem Rechner nicht installiert.") from exc
+    except OSError as exc:
+        raise GenerationFailure("AGY_UNAVAILABLE", "Antigravity CLI konnte auf diesem Rechner nicht gestartet werden.") from exc
     except subprocess.TimeoutExpired as exc:
         raise GenerationFailure("AGY_TIMEOUT", "Antigravity hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.") from exc
     if result.returncode != 0:
