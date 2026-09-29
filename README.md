@@ -2,7 +2,7 @@
 
 Stand: Schritt 10 in Arbeit. Die Weboberfläche legt Projekte in PostgreSQL an und startet nach dem Speichern automatisch einen Skriptauftrag über Redis/RQ. Kontrollierte Skriptantworten werden validiert und gespeichert; die echte Antigravity-Probe auf einem angemeldeten Remote-Worker ist noch offen. Videoproduktion und Veröffentlichung folgen später.
 
-**Weiterentwicklung in Codex Cloud:** Einstieg über [STATE.md](STATE.md). Dort stehen der geprüfte Stand, Aufgabe 10 als nächster Schritt, die Cloud-Einrichtung und die fehlenden Remote-Zugänge. [AGENTS.md](AGENTS.md) gibt Codex die Projektregeln automatisch mit. Der folgende `localhost`-Abschnitt beschreibt die laufende Testoberfläche auf dem bisherigen Rechner; neue Codearbeit soll ohne diesen Rechner am GitHub-Repository stattfinden.
+**Entwicklung auf Windows, Installation später auf Ubuntu:** Einstieg über [STATE.md](STATE.md). Code und kontrollierte Tests laufen zunächst am aktuellen Windows-Entwicklungsrechner über dieses GitHub-Repository. Der folgende `localhost`-Abschnitt beschreibt die dortige Testoberfläche. Ubuntu wird erst nach Entwicklung der Videofunktionen für Installation und echte Skript- und Videoproben benötigt. [AGENTS.md](AGENTS.md) enthält die Projektregeln.
 
 Die geplante Anwendung nimmt eine Videoidee und den Modus `LOKAL` oder `CLOUD` in einer Weboberfläche entgegen. Ein Hintergrundauftrag soll mit dem vorhandenen Google-AI-Pro-Konto über die offizielle Antigravity CLI ein Skript erzeugen, ohne Gemini Developer API und ohne Codex zur Laufzeit. Nach Prüfung und Freigabe wird das Video erstellt. Social-Media-Veröffentlichungen folgen erst nach der Videoabnahme.
 
