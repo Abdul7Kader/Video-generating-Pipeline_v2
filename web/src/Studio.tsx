@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import ScriptEditor, { type Script } from './ScriptEditor'
+import LoadingBar from './LoadingBar'
+import { request } from './request'
 
 type Mode = 'LOKAL' | 'CLOUD'
 type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
@@ -7,7 +9,7 @@ type Services = { database: boolean; redis: boolean; worker: boolean }
 type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null }
-type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null }
+type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
 const serviceLabels: Record<keyof Services, string> = {
@@ -42,17 +44,25 @@ export default function Studio() {
   const [startingGeneration, setStartingGeneration] = useState(false)
   const [approving, setApproving] = useState(false)
   const [approvalError, setApprovalError] = useState('')
+  const [checkingHealth, setCheckingHealth] = useState(true)
+  const [fetchingScript, setFetchingScript] = useState(false)
   const approvalInFlight = useRef(false)
+  const projectInFlight = useRef(false)
+  const generationInFlight = useRef(false)
+  const activeProjectId = useRef<string | null>(null)
+  const lastProjectId = useRef(window.localStorage.getItem(STORAGE_KEY))
 
   useEffect(() => {
     let active = true
     async function updateHealth() {
       try {
-        const response = await fetch('/api/health/ready', { cache: 'no-store' })
+        const response = await request('/api/health/ready', { cache: 'no-store' })
         const result: Health = await response.json()
         if (active) { setHealth(result); setReachable(true) }
       } catch {
         if (active) { setHealth(null); setReachable(false) }
+      } finally {
+        if (active) setCheckingHealth(false)
       }
     }
     void updateHealth()
@@ -64,20 +74,22 @@ export default function Studio() {
     setLoading(true)
     try {
       const [projectResponse, statusResponse] = await Promise.all([
-        fetch(`/api/projects/${encodeURIComponent(id)}`, { cache: 'no-store' }),
-        fetch(`/api/projects/${encodeURIComponent(id)}/status`, { cache: 'no-store' }),
+        request(`/api/projects/${encodeURIComponent(id)}`, { cache: 'no-store' }),
+        request(`/api/projects/${encodeURIComponent(id)}/status`, { cache: 'no-store' }),
       ])
       if (!projectResponse.ok || !statusResponse.ok) throw new Error()
       const loadedProject = await projectResponse.json() as Project
       const status = await statusResponse.json() as ProjectStatus
       let loadedScript: Script | null = null
       if (status.latest_script_version) {
-        const scriptResponse = await fetch(`/api/projects/${encodeURIComponent(id)}/scripts/${status.latest_script_version}`, { cache: 'no-store' })
+        const scriptResponse = await request(`/api/projects/${encodeURIComponent(id)}/scripts/${status.latest_script_version}`, { cache: 'no-store' })
         if (!scriptResponse.ok) throw new Error()
         loadedScript = await scriptResponse.json() as Script
       }
       // Never combine a newly loaded project with a script left from an earlier view.
       setProject(loadedProject)
+      activeProjectId.current = id
+      lastProjectId.current = id
       setProjectStatus(status)
       setScript(loadedScript)
       if (!status.latest_script_version) {
@@ -86,6 +98,7 @@ export default function Studio() {
       }
       setSaveError('')
       setApprovalError('')
+      setGenerationError('')
     } catch {
       setSaveError('Das gespeicherte Projekt konnte nicht geladen werden. Bitte versuche es erneut.')
     } finally {
@@ -100,20 +113,23 @@ export default function Studio() {
 
   async function createProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (saving) return
+    if (projectInFlight.current || loading || editing || approving || startingGeneration || fetchingScript) return
     const cleanedIdea = idea.trim()
     if (!cleanedIdea) { setIdeaError('Bitte beschreibe zuerst deine Videoidee.'); return }
     setIdeaError('')
     setSaveError('')
+    projectInFlight.current = true
     setSaving(true)
     try {
-      const response = await fetch('/api/projects', {
+      const response = await request('/api/projects', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idea: cleanedIdea, mode }),
       })
       if (!response.ok) throw new Error(await responseError(response))
       const saved = await response.json() as Project
       window.localStorage.setItem(STORAGE_KEY, saved.id)
+      activeProjectId.current = saved.id
+      lastProjectId.current = saved.id
       setProject(saved)
       setProjectStatus({ latest_script_version: null, script_approved: false, production_run_id: null, production_state: null, production_error: null })
       setScriptJob(null)
@@ -124,30 +140,40 @@ export default function Studio() {
       await loadProject(saved.id)
       void startGeneration(saved.id)
       window.requestAnimationFrame(() => {
-        document.getElementById('saved-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        document.getElementById('saved-title')?.focus()
       })
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Das Projekt konnte nicht gespeichert werden.')
     } finally {
+      projectInFlight.current = false
       setSaving(false)
     }
   }
 
   async function refreshGeneration(projectId: string, jobId: string) {
+    if (generationInFlight.current) return
+    generationInFlight.current = true
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/script-generations/${encodeURIComponent(jobId)}`, { cache: 'no-store' })
+      const response = await request(`/api/projects/${encodeURIComponent(projectId)}/script-generations/${encodeURIComponent(jobId)}`, { cache: 'no-store' })
       if (!response.ok) throw new Error(await responseError(response))
       const job = await response.json() as ScriptJob
+      if (activeProjectId.current !== projectId) return
       setScriptJob(job)
       if (job.state === 'COMPLETED' && job.script_version) {
-        const scriptResponse = await fetch(`/api/projects/${encodeURIComponent(projectId)}/scripts/${job.script_version}`, { cache: 'no-store' })
+        setFetchingScript(true)
+        const scriptResponse = await request(`/api/projects/${encodeURIComponent(projectId)}/scripts/${job.script_version}`, { cache: 'no-store' })
         if (!scriptResponse.ok) throw new Error('Das fertige Skript konnte nicht geladen werden.')
-        setScript(await scriptResponse.json() as Script)
+        const loaded = await scriptResponse.json() as Script
+        if (activeProjectId.current !== projectId) return
+        setScript(loaded)
         setProjectStatus((current) => current ? { ...current, latest_script_version: job.script_version } : current)
       }
       setGenerationError('')
     } catch (error) {
-      setGenerationError(error instanceof Error ? error.message : 'Der Skriptstatus konnte nicht geladen werden.')
+      if (activeProjectId.current === projectId) setGenerationError(error instanceof Error ? error.message : 'Der Skriptstatus konnte nicht geladen werden.')
+    } finally {
+      generationInFlight.current = false
+      if (activeProjectId.current === projectId) setFetchingScript(false)
     }
   }
 
@@ -162,7 +188,7 @@ export default function Studio() {
     setStartingGeneration(true)
     setGenerationError('')
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/script-generations`, { method: 'POST' })
+      const response = await request(`/api/projects/${encodeURIComponent(projectId)}/script-generations`, { method: 'POST' })
       if (!response.ok) throw new Error(await responseError(response))
       const job = await response.json() as ScriptJob
       window.localStorage.setItem(`videostudio:script-job:${projectId}`, job.id)
@@ -180,12 +206,12 @@ export default function Studio() {
     setApproving(true)
     setApprovalError('')
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(project.id)}/scripts/${script.version}/approval`, { method: 'POST' })
+      const response = await request(`/api/projects/${encodeURIComponent(project.id)}/scripts/${script.version}/approval`, { method: 'POST' })
       if (!response.ok) {
         if (response.status === 409) throw new Error('Es gibt eine neuere Skriptversion. Bitte lade das Projekt neu und prüfe sie vor der Freigabe.')
         throw new Error(await responseError(response))
       }
-      const status = await fetch(`/api/projects/${encodeURIComponent(project.id)}/status`, { cache: 'no-store' })
+      const status = await request(`/api/projects/${encodeURIComponent(project.id)}/status`, { cache: 'no-store' })
       if (!status.ok) throw new Error('Die Freigabe wurde gespeichert. Bitte lade den Status erneut.')
       setProjectStatus(await status.json() as ProjectStatus)
     } catch (error) {
@@ -201,7 +227,7 @@ export default function Studio() {
     let active = true
     const timer = window.setInterval(async () => {
       try {
-        const response = await fetch(`/api/projects/${encodeURIComponent(project.id)}/status`, { cache: 'no-store' })
+        const response = await request(`/api/projects/${encodeURIComponent(project.id)}/status`, { cache: 'no-store' })
         if (!response.ok) throw new Error()
         const status = await response.json() as ProjectStatus
         if (active) setProjectStatus(status)
@@ -217,6 +243,11 @@ export default function Studio() {
 
   const ready = reachable && health?.status === 'ready'
   const mediaType = mode === 'LOKAL' ? 'STOCK_VIDEO' : 'AI_GENERATED_VIDEO'
+  const creatingBlocked = saving || approving || loading || editing || startingGeneration || fetchingScript
+
+  function focusScript() {
+    window.requestAnimationFrame(() => document.getElementById('script-preview-title')?.focus())
+  }
 
   return (
     <div className="page-shell">
@@ -238,22 +269,23 @@ export default function Studio() {
               <span className={`status-dot ${ready ? 'is-ready' : ''}`} aria-hidden="true" />
               {ready ? 'Technische Basis bereit' : reachable ? 'Dienste starten oder werden geprüft' : 'API derzeit nicht erreichbar'}
             </div>
+            {checkingHealth && <LoadingBar label="Verbindung wird geprüft …" />}
           </div>
 
-          <form className="project-form panel" onSubmit={(event) => void createProject(event)} noValidate>
+          <form className="project-form panel" onSubmit={(event) => void createProject(event)} noValidate aria-busy={saving}>
             <div className="section-heading"><span className="section-index">01 / STARTEN</span><h2>Neues Projekt</h2></div>
             <label htmlFor="video-idea" className="field-label">Deine Videoidee</label>
             <textarea id="video-idea" className="idea-input" value={idea}
               onChange={(event) => { setIdea(event.target.value); if (ideaError) setIdeaError('') }}
               placeholder="Zum Beispiel: Ein bienenfreundlicher Stadtbalkon in fünf Schritten"
-              rows={5} aria-invalid={Boolean(ideaError)}
+              rows={5} disabled={creatingBlocked} aria-invalid={Boolean(ideaError)}
               aria-describedby={ideaError ? 'idea-error' : 'idea-hint'} />
             {ideaError
               ? <p className="field-error" id="idea-error" role="alert">{ideaError}</p>
               : <p className="field-hint" id="idea-hint">Ein kurzer Satz reicht für den ersten Test.</p>}
 
             <label htmlFor="video-mode" className="field-label mode-label">Bildquelle wählen</label>
-            <select id="video-mode" className="mode-select" value={mode}
+            <select id="video-mode" className="mode-select" value={mode} disabled={creatingBlocked}
               onChange={(event) => setMode(event.target.value as Mode)}>
               <option value="LOKAL">LOKAL · Pexels-Videos</option>
               <option value="CLOUD">CLOUD · KI-generierte Videos</option>
@@ -262,20 +294,21 @@ export default function Studio() {
               <strong>{mediaType} · {mode === 'LOKAL' ? 'Pexels' : 'Wan'}</strong>
               <span>{mode === 'LOKAL' ? 'Später ausschließlich Stockvideos von Pexels.' : 'Später ausschließlich Wan-Videos über Modal.'}</span>
             </div>
-            <button className="primary-button" type="submit" disabled={saving || approving}>
+            <button className="primary-button" type="submit" disabled={creatingBlocked} aria-busy={saving}>
               {saving ? 'Projekt wird gespeichert …' : 'Projekt speichern'}<span aria-hidden="true">→</span>
             </button>
+            {saving && <LoadingBar label="Projekt wird gespeichert …" />}
             <p className="form-footnote">Das Speichern startet einen Skriptauftrag über Antigravity. Modal wird nicht verwendet.</p>
           </form>
         </section>
 
         {(project || loading || saveError) && (
-          <section className="saved-project panel" aria-labelledby="saved-title">
+          <section className="saved-project panel" aria-labelledby="saved-title" aria-busy={loading}>
             <div className="saved-header">
-              <div className="section-heading"><span className="section-index">02 / ZULETZT GESPEICHERT</span><h2 id="saved-title">Projektansicht</h2></div>
-              {project && <button className="text-button" type="button" onClick={() => void loadProject(project.id)} disabled={loading || editing || approving}>Aus Datenbank neu laden</button>}
+              <div className="section-heading"><span className="section-index">02 / ZULETZT GESPEICHERT</span><h2 id="saved-title" tabIndex={-1}>Projektansicht</h2></div>
+              {(project || lastProjectId.current) && <button className="text-button" type="button" onClick={() => void loadProject(project?.id ?? lastProjectId.current!)} disabled={loading || editing || approving || saving} aria-busy={loading}>Neu laden</button>}
             </div>
-            {loading && <p className="saved-note" role="status">Gespeichertes Projekt wird geladen …</p>}
+            {loading && <LoadingBar label="Projekt und Skript werden geladen …" />}
             {saveError && <p className="notice-error" role="alert">{saveError}</p>}
             {project && <div className="project-data">
               <div><span className="data-label">IDEE</span><p className="saved-idea">{project.idea}</p></div>
@@ -288,27 +321,33 @@ export default function Studio() {
               <div className="generation-area">
                 <h3>Automatisches Skript</h3>
                 {!script && <p>Der Hintergrund-Worker verwendet Antigravity mit einem angemeldeten Google-AI-Pro-Konto. Ohne eingerichteten Worker auf diesem Rechner erscheint ein Fehler.</p>}
-                {!script && (!scriptJob || scriptJob.state === 'FAILED') && <button className="secondary-button" type="button" onClick={() => void startGeneration()} disabled={startingGeneration}>{startingGeneration ? 'Auftrag wird gestartet …' : scriptJob ? 'Skript erneut versuchen' : 'Skript automatisch erstellen'}</button>}
-                {scriptJob && ['QUEUED', 'RUNNING'].includes(scriptJob.state) && <p role="status">{scriptJob.state === 'QUEUED' ? 'Skriptauftrag wartet auf den Worker …' : 'Antigravity erstellt das Skript …'}</p>}
+                {!script && (!scriptJob || scriptJob.state === 'FAILED') && <button className="primary-button" type="button" onClick={() => void startGeneration()} disabled={startingGeneration || loading || saving} aria-busy={startingGeneration}>{startingGeneration ? 'Auftrag wird gestartet …' : scriptJob ? 'Skript erneut versuchen' : 'Skript automatisch erstellen'}</button>}
+                {startingGeneration && <LoadingBar label="Skriptauftrag wird gestartet …" />}
+                {!startingGeneration && !script && scriptJob && ['QUEUED', 'RUNNING'].includes(scriptJob.state) && <LoadingBar label={scriptJob.state === 'QUEUED' ? 'Skriptauftrag wartet auf den Worker …' : 'Antigravity erstellt das Skript …'} startedAt={scriptJob.created_at} />}
+                {fetchingScript && <LoadingBar label="Fertiges Skript wird geladen …" />}
                 {scriptJob?.state === 'FAILED' && <p className="notice-error" role="alert">{scriptJob.error_message}</p>}
                 {generationError && <p className="notice-error" role="alert">{generationError}</p>}
-                {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={approving || loading}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol>
+                {!script && scriptJob?.state === 'COMPLETED' && generationError && <button className="secondary-button" type="button" onClick={() => void loadProject(project.id)} disabled={loading}>Skript erneut laden</button>}
+                {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4 id="script-preview-title" tabIndex={-1}>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={approving || loading || saving}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol>
                   <div className="approval-area" aria-labelledby="approval-title">
                     <h4 id="approval-title">Skriptfreigabe · Version {script.version}</h4>
                     <p>Mit der Freigabe bestätigst du genau die angezeigte Version und legst ihren Produktionsauftrag an. Änderungen benötigen eine neue Freigabe. Die Videoerzeugung ist noch in Entwicklung.</p>
                     {newerScript && <p className="notice-error" role="alert">Eine neuere Version liegt vor. Bitte lade das Projekt neu.</p>}
-                    {!scriptApproved && <button className="secondary-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || Boolean(saveError) || newerScript}>{approving ? 'Freigabe wird gespeichert …' : `Skriptversion ${script.version} freigeben`}</button>}
+                    {!scriptApproved && <button className="primary-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || saving || Boolean(saveError) || newerScript} aria-busy={approving}>{approving ? 'Freigabe wird gespeichert …' : `Skriptversion ${script.version} freigeben`}</button>}
+                    {approving && <LoadingBar label="Freigabe und Auftragsübergabe werden bestätigt …" />}
                     {scriptApproved && <div role="status" aria-live="polite"><p className="script-success">Skriptversion {script.version} freigegeben.</p>
-                      <p>{projectStatus?.production_state === 'QUEUED' ? 'Produktionsauftrag wartet auf die Verarbeitung.' : projectStatus?.production_state === 'RUNNING' ? 'Video wird produziert …' : projectStatus?.production_state === 'FAILED' ? 'Produktionsauftrag gestoppt.' : 'Produktion abgeschlossen.'}</p>
+                      {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '')
+                        ? <LoadingBar label={projectStatus?.production_state === 'QUEUED' ? 'Produktionsauftrag wartet auf die Verarbeitung …' : 'Video wird produziert …'} />
+                        : <p>{projectStatus?.production_state === 'FAILED' ? 'Produktionsauftrag gestoppt.' : 'Produktion abgeschlossen.'}</p>}
                       {projectStatus?.production_error && <p className="notice-error">{projectStatus.production_error}</p>}
-                      {projectStatus?.production_state === 'QUEUED' && <button className="text-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || Boolean(saveError) || newerScript}>{approving ? 'Auftrag wird übergeben …' : 'Auftragsübergabe erneut versuchen'}</button>}
+                      {projectStatus?.production_state === 'QUEUED' && <button className="text-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || saving || Boolean(saveError) || newerScript} aria-busy={approving}>{approving ? 'Auftrag wird übergeben …' : 'Auftragsübergabe erneut versuchen'}</button>}
                     </div>}
                     {approvalError && <p className="notice-error" role="alert">{approvalError}</p>}
                   </div>
                 </div>}
                 {script && editing && <ScriptEditor projectId={project.id} mode={project.mode} script={script}
-                  onSaved={(saved) => { setScript(saved); setEditing(false); setApprovalError(''); setProjectStatus({ latest_script_version: saved.version, script_approved: false, production_run_id: null, production_state: null, production_error: null }) }}
-                  onCancel={() => setEditing(false)} onReload={() => { setEditing(false); void loadProject(project.id) }} />}
+                  onSaved={(saved) => { setScript(saved); setEditing(false); setApprovalError(''); setProjectStatus({ latest_script_version: saved.version, script_approved: false, production_run_id: null, production_state: null, production_error: null }); focusScript() }}
+                  onCancel={() => { setEditing(false); focusScript() }} onReload={() => { setEditing(false); void loadProject(project.id) }} />}
               </div>
             </div>}
           </section>
@@ -318,10 +357,10 @@ export default function Studio() {
           <div className="panel workflow-panel">
             <div className="section-heading"><span className="section-index">03 / ABLAUF</span><h2>Was schon möglich ist</h2></div>
             <ol className="workflow-list">
-              <li><span className="step-number">01</span><div><h3>Idee speichern</h3><p>Projekt und Modus werden in PostgreSQL gesichert.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Nach dem Speichern entsteht das Skript automatisch über dein angemeldetes Pro-Konto.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">03</span><div><h3>Skript bearbeiten</h3><p>Texte, Szenendauer und Bildvorgaben prüfen. Speichern erstellt eine neue Version.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available">Jetzt testen</span></li>
+              <li><span className="step-number">01</span><div><h3>Idee speichern</h3><p>Projekt und Modus werden in PostgreSQL gesichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Nach dem Speichern entsteht das Skript automatisch über dein angemeldetes Pro-Konto.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">03</span><div><h3>Skript bearbeiten</h3><p>Texte, Szenendauer und Bildvorgaben prüfen. Speichern erstellt eine neue Version.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">05</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>

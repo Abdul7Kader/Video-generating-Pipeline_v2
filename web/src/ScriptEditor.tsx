@@ -1,4 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import LoadingBar from './LoadingBar'
+import { request } from './request'
 
 export type ScriptScene = {
   position: number; narration: string; visual_description: string; duration_seconds: number | null;
@@ -22,6 +24,14 @@ export default function ScriptEditor({ projectId, mode, script, onSaved, onCance
   const [error, setError] = useState('')
   const [conflict, setConflict] = useState(false)
   const total = draft.scenes.reduce((sum, scene) => sum + (scene.duration_seconds ?? 0), 0)
+  const dirty = JSON.stringify(draft) !== JSON.stringify(script)
+  useEffect(() => { document.getElementById('script-title')?.focus() }, [])
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
 
   function updateScene(position: number, changes: Partial<ScriptScene>) {
     setDraft((current) => ({ ...current, scenes: current.scenes.map((scene) => scene.position === position ? { ...scene, ...changes } : scene) }))
@@ -29,7 +39,7 @@ export default function ScriptEditor({ projectId, mode, script, onSaved, onCance
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (saving) return
+    if (saving || !dirty) return
     setError('')
     setConflict(false)
     if (total < 30 || total > 60) { setError('Die Gesamtdauer muss zwischen 30 und 60 Sekunden liegen.'); return }
@@ -42,7 +52,7 @@ export default function ScriptEditor({ projectId, mode, script, onSaved, onCance
     }))
     setSaving(true)
     try {
-      const response = await fetch(`/api/projects/${encodeURIComponent(projectId)}/scripts`, {
+      const response = await request(`/api/projects/${encodeURIComponent(projectId)}/scripts`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ expected_version: draft.version, title: draft.title.trim(),
           narration: scenes.map((scene) => scene.narration).join(' '), language: draft.language,
@@ -64,7 +74,7 @@ export default function ScriptEditor({ projectId, mode, script, onSaved, onCance
     }
   }
 
-  return <form className="script-editor" onSubmit={(event) => void save(event)}>
+  return <form className="script-editor" onSubmit={(event) => void save(event)} aria-busy={saving}>
     <h4>Skript bearbeiten · Version {draft.version}</h4>
     <p>Speichern erstellt eine neue Version. {draft.scenes.length} Szenen · {total} Sekunden insgesamt.</p>
     <fieldset disabled={saving}>
@@ -94,8 +104,10 @@ export default function ScriptEditor({ projectId, mode, script, onSaved, onCance
         </>}
       </section>)}
       <div className="editor-actions">
-        <button className="secondary-button" type="submit">{saving ? 'Version wird gespeichert …' : 'Neue Version speichern'}</button>
+        <button className="primary-button" type="submit" disabled={!dirty || saving} aria-busy={saving}>{saving ? 'Version wird gespeichert …' : 'Neue Version speichern'}</button>
         <button className="text-button" type="button" onClick={onCancel}>Änderungen verwerfen</button>
+        <span className="editor-summary">{draft.scenes.length} Szenen · {total} s</span>
+        {saving && <LoadingBar label="Neue Skriptversion wird gespeichert …" />}
       </div>
     </fieldset>
     {error && <p className="notice-error" role="alert">{error}</p>}
