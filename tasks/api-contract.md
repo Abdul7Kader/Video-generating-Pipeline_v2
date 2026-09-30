@@ -1,4 +1,4 @@
-# API-Vertrag – Aufgaben 08, 10 und 11
+# API-Vertrag – Aufgaben 08, 10, 11 und 12
 
 Basis: `/api`; interaktive OpenAPI unter `/api/docs`, Schema unter `/api/openapi.json`. JSON wird mit UTF-8 übertragen. UUIDs sind Server-IDs. `LOKAL` führt ausschließlich zu `STOCK_VIDEO`, `CLOUD` ausschließlich zu `AI_GENERATED_VIDEO`.
 
@@ -11,11 +11,13 @@ Basis: `/api`; interaktive OpenAPI unter `/api/docs`, Schema unter `/api/openapi
 | `GET /api/projects/{id}/scripts` | Unveränderliche Skriptversionen absteigend auflisten. | `200` Liste |
 | `POST /api/projects/{id}/scripts` | Neue Version mit 6–10 geordneten Szenen speichern; `expected_version` muss der aktuellen Version entsprechen (`0` für die erste). Bearbeiten bedeutet, eine weitere Version anzulegen. | `201` Skript |
 | `GET /api/projects/{id}/scripts/{version}` | Version mit geordneten Szenen lesen. | `200` Skript |
-| `POST /api/projects/{id}/scripts/{version}/approval` | Nur aktuelle vollständige Version freigeben und genau einen `QUEUED`-Produktionslauf speichern; wiederholter Aufruf liefert denselben Lauf. | Erstes Mal `201`, danach `200` |
+| `POST /api/projects/{id}/scripts/{version}/approval` | Nur aktuelle vollständige Version freigeben, genau einen `QUEUED`-Produktionslauf speichern und nach Commit an RQ übergeben. Wiederholung liefert denselben Lauf; ältere Version `409`. Brokerfehler `503`, Freigabe bleibt gespeichert und dieselbe Version kann erneut übergeben werden. | Erstes Mal `201`, danach `200` |
 | `POST /api/projects/{id}/videos/{artifact_id}/approval` | Finale Datei mit passender SHA-256-Prüfsumme nach abgeschlossenem Produktionslauf freigeben; Wiederholung liefert dieselbe Freigabe. | Erstes Mal `201`, danach `200` |
-| `GET /api/projects/{id}/status` | Aktuelle Skriptversion, Freigabe, Produktionszustand und finales Artefakt lesen. | `200` Status |
+| `GET /api/projects/{id}/status` | Aktuelle Skriptversion, `script_approved`, `production_run_id`, `production_state`, sichere `production_error` (Text oder `null`) und finales Artefakt lesen. Eine neue Version beginnt ohne Freigabe und Lauf. | `200` Status |
 | `GET /api/artifacts/{id}` | Metadaten ohne internen Speicherpfad lesen. | `200` Artefakt |
 | `GET /api/artifacts/{id}/content` | Vertragsplatzhalter für Videowiedergabe. Existierendes Artefakt liefert bis Aufgabe 18 `501 MEDIA_NOT_AVAILABLE`. | Später Dateiantwort |
+
+Skriptfreigaben werden vor RQ-Übergabe in PostgreSQL bestätigt. Ein Projekt-Lock serialisiert die Übergabe, `job_id=production_run_id` und Prüfung eines vorhandenen Jobs verhindern doppelte Queue-Einträge bei wiederholten Requests. [RQ-Job-ID und `fetch_job`](https://python-rq.org/docs/), [Ergebnisaufbewahrung](https://python-rq.org/docs/results/). Der aktuelle Einstieg prüft die freigegebene Version und setzt fehlende Produktionsstufen sichtbar auf `FAILED`; erst Schritt 13 erweitert ihn zur Produktionskette. Wiederholte Freigabe eines bereits gestoppten Laufs startet diesen nicht neu. `production_error` enthält sichere Betriebsmeldungen ohne interne Zugangsdaten. Prozessabbruch vor Übergabe benötigt derzeit bewusste erneute Übergabe derselben Version; automatische Wiederaufnahme bleibt Schritt 13. [Abnahme und Grenzen](step12-acceptance.md).
 
 Beispiel für `POST /api/projects`:
 
@@ -101,4 +103,4 @@ Die Videofreigabe erwartet `{"checksum_sha256":"<64 kleine Hex-Zeichen>"}`. Eine
 
 **Prüfung:** `docker compose -p step8check up -d --build --wait api worker`; `docker compose -p step8check exec -T api python -m unittest app.test_api app.test_database -v`. `app.test_api` legt ein isoliertes PostgreSQL-Schema an und entfernt es nach den HTTP-/OpenAPI-Vertragstests.
 
-**Aktuelle Prüfung 30.09.:** Vier API-Vertragstests mit echter PostgreSQL-Datenbank, einschließlich vollständiger LOKAL-/CLOUD-Edits, Metadatenerhalt, alter Version und Validierungs-/Versionsfehler. Insgesamt 25 Backendtests mit Redis/RQ/PostgreSQL und acht Projekttests bestanden; Web-Build sowie echte Pro-Browserläufe erfolgreich. [Abnahmebericht](step10-acceptance.md).
+**Aktuelle Prüfung 30.09.:** Vier API-Vertragstests mit echter PostgreSQL-Datenbank, einschließlich vollständiger LOKAL-/CLOUD-Edits, Metadatenerhalt, alter Version und Validierungs-/Versionsfehler. Insgesamt 29 Backendtests mit Redis/RQ/PostgreSQL und acht Projekttests bestanden; Web-Build, echte Pro-Browserläufe und Freigabe-Browserabnahme erfolgreich. [Skript-/Editorabnahme](step10-acceptance.md), [Freigabeabnahme](step12-acceptance.md).

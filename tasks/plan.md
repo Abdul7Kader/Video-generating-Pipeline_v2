@@ -2,9 +2,11 @@
 
 Stand: 30. September 2026
 
-Abschluss am 30. September 2026: Aufgaben 01–11 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
+Abschluss am 30. September 2026: Aufgaben 01–12 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
 
-Nächste Aufgabe: **12 – Skriptfreigabe im Browser**, danach Produktionskette. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Die aktuelle Windows-Sitzung nutzt den geprüften Hintergrundstart; vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
+Schritt **12 – Skriptfreigabe** und M1 sind ebenfalls abgenommen: Browser bestätigt die angezeigte Version, neue Versionen verlangen neue Freigaben. Datenbank-Commit vor RQ-Übergabe, stabile Lauf-ID und Projekt-Sperren sichern wiederholte/gleichzeitige Aufrufe und Retry nach Brokerfehler. Beide Modi im echten Browser geprüft; 29 Backendtests, acht Projekttests und Web-Build bestehen. Zusätzlich wurde eine bereits live erzeugte und bearbeitete Pro-Version in der normalen Anwendung freigegeben und vom angemeldeten Host-Worker verarbeitet. [Prüfbericht](step12-acceptance.md).
+
+Nächste Aufgabe: **13 – Produktionskette mit RQ**. Der aktuelle Produktions-Einstieg prüft die Freigabe und blockiert fehlende Medienstufen sichtbar als `FAILED`; es existiert noch kein Videopfad. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Die aktuelle Windows-Sitzung nutzt den geprüften Hintergrundstart; vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
 
 ## 1. Ziel und verbindlicher Umfang
@@ -126,7 +128,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 09. [x] Idee- und Modusformular in React umsetzen; Browserprobe für beide Modi, Validierung und gespeicherte Projektansicht bestanden.
 10. [x] Automatischen Antigravity-Pro-Skriptauftrag samt Schema-Validierung und Fehlerbehandlung anbinden.
 11. [x] Skript- und Szeneneditor mit Versionierung umsetzen.
-12. [ ] Skriptfreigabe und automatische, eindeutige Produktionsauslösung umsetzen.
+12. [x] Skriptfreigabe und automatische, eindeutige Produktionsauslösung umsetzen. Browser-/Datenbank-/RQ-Abnahme bestanden; Medienstufen folgen ab 13. [Belege](step12-acceptance.md).
 
 ### M2 – Lokaler Produktionspfad
 

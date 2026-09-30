@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 29. September 2026:** Aufgaben 01–11 sind abgeschlossen; nächster Schritt ist 12 (Skriptfreigabe). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Fortsetzung ab 29. September 2026:** Aufgaben 01–12 und M1 sind abgeschlossen; nächster Schritt ist 13 (Produktionskette mit RQ). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -51,7 +51,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ### 08. API-Vertrag (S; abhängig von: 07)
 - [x] FastAPI-Schemas/Endpunkte für Anlegen, Lesen, Bearbeiten durch neue Skriptversion, Skript- und Videofreigabe, Status und Medienmetadaten/-abruf dokumentiert.
 - [x] Versionskonflikt, Validierungsfehler und wiederholte Freigabe haben definierte Antworten.
-- **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Ausführung folgt in Aufgabe 12/13. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
+- **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Übergabe ist seit Aufgabe 12 implementiert, Medienstufen folgen ab 13. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
 
 ### 09. Idee- und Modusformular (S; abhängig von: 08)
 - [x] React erfasst Idee und Dropdown `CLOUD`/`LOKAL` und zeigt den gewählten Medientyp an.
@@ -71,11 +71,11 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Abnahme 30.09.2026:** Für beide echten Pro-Ergebnisse Titel, Szenentext, Bildbeschreibung und Suchbegriffe/Wan-Prompt im Browser geändert; Version 2 gespeichert und neu geladen. Dauer und vollständige Szenenmetadaten bleiben erhalten, Version 1 unverändert. Parallel gespeicherte Version 3 erzeugt sichtbaren Konflikt und erhält den Entwurf. Doppelte Suchbegriffe werden sichtbar abgewiesen. API-Integration prüft zusätzlich inkonsistente Dauer, fehlende Metadaten und abweichenden Gesamttext. Der Editor wurde zur vollständigen bestehenden Abnahme von Schritt 10 ergänzt; keine Kriterien abgeschwächt.
 
 ### 12. Skriptfreigabe (S; abhängig von: 07, 11)
-- [ ] Freigabe referenziert eine unveränderliche Skriptversion und stößt genau einen Produktionslauf an.
-- [ ] Wiederholter Klick und spätere Bearbeitung umgehen die Freigabe nicht.
-- **Prüfung:** API- und Browserprobe mit Doppelklick und Versionswechsel.
+- [x] Freigabe referenziert eine unveränderliche Skriptversion und stößt genau einen Produktionslauf an.
+- [x] Wiederholter Klick und spätere Bearbeitung umgehen die Freigabe nicht.
+- **Prüfung 30.09.2026:** Vier neue PostgreSQL-/Redis-/Windows-Worker-Integrationstests einschließlich gleichzeitiger Klicks, Redis-Ausfall vor und nach Übergabe sowie Versionswechsel. Echte Chrome-Probe für LOKAL/CLOUD mit Doppelklick, Neuladen, Bearbeitung und neuer Freigabe; Datenbank und RQ bestätigen genau einen Lauf/Queue-Eintrag pro freigegebener Version. Ladefehler sperren Freigaben, veraltete Browseransicht zeigt 409-Konflikt. 29 Backendtests, acht Projekttests und Web-Build bestanden. [Prüfbericht](step12-acceptance.md). Der Worker blockiert die noch fehlenden Medienstufen sichtbar als `FAILED`, ohne Artefakte; Videoproduktion bleibt Aufgabe 13–18.
 
-**Checkpoint M1:** [ ] Idee → automatisch erzeugtes Gemini-Pro-Skript → Bearbeitung → Skriptfreigabe ist im Browser ohne Codex demonstrierbar.
+**Checkpoint M1:** [x] Idee → automatisch erzeugtes Gemini-Pro-Skript → Bearbeitung → Skriptfreigabe ist im Browser ohne Codex demonstrierbar. Live-Erstellung/Bearbeitung aus Schritt 10/11 und anschließende Browserfreigabe der bestehenden Pro-Version 2 mit normalem angemeldetem Host-Worker geprüft. Kein Video erzeugt. [Belege](step12-acceptance.md).
 
 ## M2 – Lokaler Produktionspfad
 
