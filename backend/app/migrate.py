@@ -19,14 +19,16 @@ def migrate(direction: str = "up") -> None:
         exists = conn.execute("SELECT to_regclass('schema_migrations')").fetchone()[0]
         versions = ({row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
                     if exists else set())
-        if versions not in (set(), {1}, {1, 2}):
+        if versions not in (set(), {1}, {1, 2}, {1, 2, 3}):
             raise RuntimeError(f"unexpected migration versions: {versions}")
         if direction == "up":
-            for version, filename in ((1, "0001_initial.sql"), (2, "0002_script_generation.sql")):
+            for version, filename in ((1, "0001_initial.sql"), (2, "0002_script_generation.sql"),
+                                      (3, "0003_production_steps.sql")):
                 if version not in versions:
                     conn.execute((MIGRATIONS / filename).read_text(encoding="utf-8"))
         else:
-            for version, filename in ((2, "0002_script_generation.down.sql"),
+            for version, filename in ((3, "0003_production_steps.down.sql"),
+                                      (2, "0002_script_generation.down.sql"),
                                       (1, "0001_initial.down.sql")):
                 if version in versions:
                     conn.execute((MIGRATIONS / filename).read_text(encoding="utf-8"))
