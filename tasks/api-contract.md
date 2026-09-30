@@ -1,6 +1,8 @@
-# API-Vertrag – Aufgaben 08, 10, 11, 12 und 13
+# API-Vertrag – Aufgaben 08, 10–14
 
 Basis: `/api`; interaktive OpenAPI unter `/api/docs`, Schema unter `/api/openapi.json`. JSON wird mit UTF-8 übertragen. UUIDs sind Server-IDs. `LOKAL` führt ausschließlich zu `STOCK_VIDEO`, `CLOUD` ausschließlich zu `AI_GENERATED_VIDEO`.
+
+Ab Schritt 14 enthält `GET /projects/{id}/production-runs/{run_id}` zusätzlich `sources`; Projektstatus enthält dieselben Metadaten als `production_sources`. Standard ist `[]`. Nach abgeschlossenem LOKAL-`SCENES` gibt es pro Szene `scene_position`, `artifact_key`, `media_type: STOCK_VIDEO`, `video_id`, `file_id`, `query`, `video_page`, `creator`, `creator_page`, `license_url`, `scene_duration_seconds`, `duration_seconds`, `width`, `height`, `fps`. Keine Keys, Downloadlinks oder internen Speicherpfade. Teilweise geladene Szenen bleiben vor Abschluss privat im Worker-Medienordner. Fehlender Treffer: `PEXELS_NO_MATCH` mit Szenennummer und Änderungsbedarf. Weitere Fehler: `PEXELS_KEY_REQUIRED`, `PEXELS_AUTH_FAILED`, `PEXELS_QUOTA_EXHAUSTED`, `PEXELS_UNAVAILABLE`, `FFPROBE_REQUIRED`, `MEDIA_STORAGE_FAILED`. Eine erfolgreiche Beschaffung bedeutet noch keinen finalen Produktionsabschluss. [Abnahme](step14-acceptance.md).
 
 | Methode und Pfad | Verhalten | Erfolg |
 | --- | --- | --- |

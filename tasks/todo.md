@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 30. September 2026:** Aufgaben 01–13 und M1 sind abgeschlossen; nächster Schritt ist 14 (Pexels-Szenenbeschaffung). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Fortsetzung ab 1. Oktober 2026:** Aufgaben 01–14 und M1 sind abgeschlossen; nächster Schritt ist 15 (Piper-Sprachsynthese). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -92,8 +92,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Abnahme 30.09.:** Migration, 37 Backendtests (einschließlich echtem Prozess-Kill/Neustart mit fünf eindeutigen Testdateien/-artefakten), acht Projekttests und Web-Build bestanden. Echte Browserproben LOKAL/CLOUD mit Wiederaufnahme/Abbruch, Ladebalken, Doppelklickschutz und Neuladen bestanden. 320/768/1200 Pixel einschließlich reservierter Scrollleisten ohne horizontalen Überlauf; normale Hostworker-Probe mit bestehender Pro-Freigabe zeigt korrekt den noch fehlenden Szenenadapter. Keine echte Videoerzeugung, Medienadapter folgen in 14–18/21. [Belege](step13-acceptance.md).
 
 ### 14. Pexels-Szenenbeschaffung (M; abhängig von: 04, 13)
-- [ ] Jede LOKAL-Szene erhält ausschließlich einen geeigneten Pexels-Clip samt Asset-ID und Herkunft.
-- [ ] Kein Treffer führt zu einem sichtbaren Fehler/Änderungsbedarf, nicht zu einem Wan-Aufruf.
+- **Abgeschlossen 01.10.2026:** 50 Backendtests, acht Projekttests, Web-Build, echte sechs-Szenen-/Kein-Treffer-Abnahme und Browser-Quellenanzeige bestanden. [Prüfbericht](step14-acceptance.md).
+- [x] Jede LOKAL-Szene erhält ausschließlich einen geeigneten Pexels-Clip samt Asset-ID und Herkunft.
+- [x] Kein Treffer führt zu einem sichtbaren Fehler/Änderungsbedarf, nicht zu einem Wan-Aufruf.
 - **Prüfung:** Erfolgs- und Kein-Treffer-Test; Manifest enthält nur `STOCK_VIDEO`.
 
 ### 15. Piper-Sprachsegmente (S; abhängig von: 13)

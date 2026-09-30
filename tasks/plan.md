@@ -1,13 +1,15 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
-Stand: 30. September 2026
+Stand: 1. Oktober 2026
 
-Abschluss am 30. September 2026: Aufgaben 01–13 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
+Stand am 1. Oktober 2026: Aufgaben 01–14 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
 
 Schritt **12 – Skriptfreigabe** und M1 sind ebenfalls abgenommen: Browser bestätigt die angezeigte Version, neue Versionen verlangen neue Freigaben. Datenbank-Commit vor RQ-Übergabe, stabile Lauf-ID und Projekt-Sperren sichern wiederholte/gleichzeitige Aufrufe und Retry nach Brokerfehler. Beide Modi im echten Browser geprüft; 29 Backendtests, acht Projekttests und Web-Build bestehen. Zusätzlich wurde eine bereits live erzeugte und bearbeitete Pro-Version in der normalen Anwendung freigegeben und vom angemeldeten Host-Worker verarbeitet. [Prüfbericht](step12-acceptance.md).
 
-Nächste Aufgabe: **14 – Pexels-Szenenbeschaffung**. Die Produktionskette aus Schritt 13 führt fünf wiederaufnehmbare Stufen; konkrete Medienadapter fehlen noch und scheitern sichtbar mit `STAGE_UNAVAILABLE`, ohne Video oder Artefakt zu behaupten. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
+Nächste Aufgabe: **15 – Piper-Sprachsynthese**. Die Produktionskette aus Schritt 13 führt fünf wiederaufnehmbare Stufen. Schritt 14 beschafft echte Pexels-Clips im LOKAL-Modus und speichert Quellenartefakte; die nächsten noch fehlenden Adapter scheitern sichtbar mit `STAGE_UNAVAILABLE`, ohne ein fertiges Video zu behaupten. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
+
+**Schritt 14 abgeschlossen (01.10.2026):** Native Pexels-Beschaffung, ffprobe-Prüfung, Quellenmanifest/-anzeige, atomare Downloads, 24-Stunden-Suchcache und Wiederaufnahme einzelner Szenen. 50 Backendtests, acht Projekttests, Web-Build und echte sechs-Szenen-/Kein-Treffer-/Browserabnahme bestanden. Das unveränderte Pro-Skript meldet korrekt Szene 6 als nicht auffindbar; das positive Testskript wurde nach visueller Prüfung als neue Version präzisiert. Keine automatische Bildanalyse. Die Quellen liegen vorläufig in `.data/media` oder einem absoluten `MEDIA_ROOT`; endgültige Ablage und Browserwiedergabe bleiben Schritt 18. [Abnahme](step14-acceptance.md).
 
 **Abschluss Schritt 13:** Fünf persistente RQ-Produktionsstufen, drei Versuche pro Stufe, unverlängerte Drei-Stunden-Gesamtgrenze, Prozesszeitlimits, automatische Zustellung/Wiederaufnahme und API-/UI-Abbruch implementiert. PostgreSQL-/Redis-/RQ-Abbruchprüfung ohne Artefaktdubletten, 37 Backendtests, acht Projekttests und Web-Build bestanden. Echte Chrome-Bedienabnahme für beide Modi, Neuladen und kleine Bildschirme erfolgreich. Medienadapter werden weiterhin in 14–18/21 umgesetzt; Abnahmekriterien unverändert. [Belege](step13-acceptance.md).
 
@@ -137,7 +139,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 ### M2 – Lokaler Produktionspfad
 
 13. [x] Robuste RQ-Produktionskette mit Status, Wiederholung und Abbruchgrenzen bauen. PostgreSQL-/Redis-/RQ-Neustartprobe und Browserbedienung bestanden; [Belege](step13-acceptance.md).
-14. [ ] Pexels-Suche, Auswahl und Download pro Szene implementieren.
+14. [x] Pexels-Suche, Auswahl und Download pro Szene implementieren ([Prüfbericht](step14-acceptance.md)).
 15. [ ] Piper-Sprechersegmente und Zeitdaten erzeugen.
 16. [ ] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern.
 17. [ ] FFmpeg/ffprobe-Normalisierung, Szenenschnitt, Audio und Encoding bauen.

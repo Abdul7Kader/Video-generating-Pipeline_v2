@@ -68,4 +68,16 @@ Die API muss Migration 0003 (`production_steps`/`production_attempts`) angewende
 
 Auf Windows läuft RQ weiterhin als `SimpleWorker`, doch jeder Produktionsschritt erhält nun einen eigenen begrenzten Medienprozess und eine Schrittsperre. Bei Elternprozess-Abbruch verhindert diese Sperre parallele Ausführung bis zum Ende oder eigenen Watchdog des Medienprozesses. Prozessbäume werden bei Timeout/Abbruch beendet. Auf Linux/macOS sind die entsprechenden Prozessgruppen implementiert; ihre vollständige Live-Abnahme bleibt Aufgabe 35.
 
-Die Oberfläche zeigt fünf Schrittzustände, Versuche, Fehler, Ladebalken sowie Wiederaufnahme/Abbruch. Höchstens drei Versuche pro Schritt und drei Stunden Gesamtlaufzeit ab erstem Start; Wiederaufnahme erweitert diese Grenzen nicht. Fehlende Medienadapter führen zu einem sichtbaren Fehler und werden nicht automatisch erneut gestartet. Sie und ihre Werkzeuge folgen in 14–18/21. [Windows-Abnahme der Produktionskette](step13-acceptance.md).
+Die Oberfläche zeigt fünf Schrittzustände, Versuche, Fehler, Ladebalken sowie Wiederaufnahme/Abbruch. Höchstens drei Versuche pro Schritt und drei Stunden Gesamtlaufzeit ab erstem Start; Wiederaufnahme erweitert diese Grenzen nicht. Fehlende Medienadapter führen zu einem sichtbaren Fehler und werden nicht automatisch erneut gestartet. Nach Pexels in Schritt 14 folgen weitere Medienadapter in 15–18/21. [Windows-Abnahme der Produktionskette](step13-acceptance.md).
+
+## 6. Pexels-Clips ab Schritt 14
+
+Auf dem **gewählten Installationsrechner** FFmpeg mit `ffprobe` installieren und im Worker-PATH bereitstellen. Alternativ `FFPROBE_PATH` als absoluten Pfad zur ausführbaren Datei in der privaten `worker.json` setzen. Der kostenlose Pexels-Key gehört dort als `PEXELS_API_KEY` hinein oder in die ignorierte Checkout-`.env`; nie in Git, Chat oder Web-Bundle. Diese optionalen Worker-Variablen können auch über die Umgebung gesetzt werden; vorhandene JSON-Werte haben Vorrang.
+
+| Variable | Bedeutung |
+| --- | --- |
+| `PEXELS_API_KEY` | Kostenloser privater Pexels-Key. Fallback nur zur lokalen `.env`, nie zu einem anderen Mediendienst. |
+| `MEDIA_ROOT` | Absoluter beschreibbarer Ordner. Standard: `<Checkout>/.data/media`, von Git ausgeschlossen. |
+| `FFPROBE_PATH` | Absoluter Pfad zu ffprobe; sonst Suche im PATH. |
+
+Hostworker nach Konfigurationsänderungen neu starten. Ohne Key/ffprobe meldet der Produktionslauf einen sichtbaren Einrichtungsfehler; die allgemeine `--check`-Prüfung bestätigt weiterhin ausschließlich CLI/Kostensperre/DB/Redis. Freigabe einer LOKAL-Version lädt pro Szene geeignete Hochformat-MP4s mit Mindestdauer und speichert Herkunft/Hash. Bei fehlendem Treffer Suchbegriffe/Bildbeschreibung bearbeiten und die neue Version bewusst freigeben. 24-Stunden-Suchcache berücksichtigt auch leere Treffer. Bereits geprüfte Clips werden beim Retry kontrolliert wiederverwendet. Nach erfolgreicher Beschaffung stoppt die aktuelle Kette bei der noch fehlenden Sprachsynthese (15). Kein fertiges Video oder Dateistream in Schritt 14. [Abnahme](step14-acceptance.md).
