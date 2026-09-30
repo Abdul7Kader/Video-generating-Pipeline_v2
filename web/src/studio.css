@@ -77,3 +77,5 @@ textarea.editor-input{resize:vertical;line-height:1.5}
 .editor-scene .field-label{margin:14px 0 8px}
 .duration-input{max-width:160px}
 .editor-actions{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:16px}
+.approval-area{border-top:1px solid #405058;padding-top:24px;margin-top:24px;max-width:900px}
+.approval-area>p{color:#a9b9bd;line-height:1.6}

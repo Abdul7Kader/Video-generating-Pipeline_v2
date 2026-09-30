@@ -126,6 +126,7 @@ class ProjectStatus(StrictModel):
     script_approved: bool
     production_run_id: UUID | None
     production_state: Literal["QUEUED", "RUNNING", "FAILED", "COMPLETED"] | None
+    production_error: str | None
     final_artifact_id: UUID | None
     video_approved: bool
 
@@ -390,7 +391,10 @@ def get_script(project_id: UUID, version: int):
     "/projects/{project_id}/scripts/{version}/approval",
     response_model=ScriptApprovalOutput,
     status_code=201,
-    responses={200: {"model": ScriptApprovalOutput, "description": "Existing approval"}},
+    responses={
+        200: {"model": ScriptApprovalOutput, "description": "Existing approval"},
+        503: {"model": ErrorEnvelope, "description": "Approval saved; retry dispatch with the same version"},
+    },
 )
 def approve_script(project_id: UUID, version: int, response: Response):
     with database() as conn:
@@ -409,21 +413,41 @@ def approve_script(project_id: UUID, version: int, response: Response):
         ).fetchone()
         if existing:
             response.status_code = 200
-            return existing
-        approval = conn.execute(
-            "INSERT INTO approvals (project_id, kind, script_version_id) "
-            "VALUES (%s, 'SCRIPT', %s) RETURNING id", (project_id, script["id"]),
-        ).fetchone()
-        run = conn.execute(
-            "INSERT INTO production_runs (project_id, script_version_id, script_approval_id) "
-            "VALUES (%s, %s, %s) RETURNING id, state",
-            (project_id, script["id"], approval["id"]),
-        ).fetchone()
-    return {
-        "id": approval["id"], "project_id": project_id,
-        "script_version_id": script["id"], "production_run_id": run["id"],
-        "production_state": run["state"],
-    }
+        else:
+            approval = conn.execute(
+                "INSERT INTO approvals (project_id, kind, script_version_id) "
+                "VALUES (%s, 'SCRIPT', %s) RETURNING id", (project_id, script["id"]),
+            ).fetchone()
+            run = conn.execute(
+                "INSERT INTO production_runs (project_id, script_version_id, script_approval_id) "
+                "VALUES (%s, %s, %s) RETURNING id, state",
+                (project_id, script["id"], approval["id"]),
+            ).fetchone()
+            existing = {
+                "id": approval["id"], "project_id": project_id,
+                "script_version_id": script["id"], "production_run_id": run["id"],
+                "production_state": run["state"],
+            }
+    # Commit first: a fast worker must be able to see the approval and its run.
+    # A second project lock serializes dispatch, including retries after Redis errors.
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        run = conn.execute("SELECT state FROM production_runs WHERE id = %s",
+                           (existing["production_run_id"],)).fetchone()
+        existing["production_state"] = run["state"]
+        if run["state"] == "QUEUED":
+            try:
+                connection = Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=3, socket_timeout=3)
+                queue = Queue("default", connection=connection)
+                job_id = str(existing["production_run_id"])
+                if queue.fetch_job(job_id) is None:
+                    queue.enqueue("app.production_jobs.run_production", job_id, job_id=job_id,
+                                  job_timeout=60, result_ttl=-1)
+            except (RedisError, OSError, KeyError) as exc:
+                raise problem(503, "QUEUE_UNAVAILABLE",
+                              "Freigabe gespeichert. Der Produktionsauftrag konnte noch nicht übergeben werden. "
+                              "Bitte dieselbe Version erneut freigeben.") from exc
+    return existing
 
 
 @router.post(
@@ -470,7 +494,7 @@ def get_status(project_id: UUID):
     with database() as conn:
         require_project(conn, project_id)
         row = conn.execute(
-            "SELECT s.id, s.version, a.id AS approval_id, r.id AS run_id, r.state, "
+            "SELECT s.id, s.version, a.id AS approval_id, r.id AS run_id, r.state, r.error_message, "
             "f.id AS final_id, va.id AS video_approval_id "
             "FROM script_versions s "
             "LEFT JOIN approvals a ON a.script_version_id = s.id AND a.kind = 'SCRIPT' "
@@ -485,6 +509,7 @@ def get_status(project_id: UUID):
         "script_approved": bool(row and row["approval_id"]),
         "production_run_id": row["run_id"] if row else None,
         "production_state": row["state"] if row else None,
+        "production_error": row["error_message"] if row else None,
         "final_artifact_id": row["final_id"] if row else None,
         "video_approved": bool(row and row["video_approval_id"]),
     }
