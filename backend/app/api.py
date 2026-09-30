@@ -2,7 +2,7 @@
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -120,6 +120,33 @@ class VideoApprovalOutput(StrictModel):
     checksum_sha256: str
 
 
+class ProductionStepOutput(StrictModel):
+    id: UUID
+    position: int
+    name: Literal['SCENES', 'SPEECH', 'GRAPHICS', 'ENCODING', 'STORAGE']
+    state: Literal['PENDING', 'RUNNING', 'FAILED', 'COMPLETED']
+    attempts: int
+    max_attempts: int
+    timeout_seconds: int
+    error_code: str | None
+    error_message: str | None
+    updated_at: datetime
+
+
+class ProductionRunOutput(StrictModel):
+    id: UUID
+    project_id: UUID
+    state: Literal['QUEUED', 'RUNNING', 'FAILED', 'COMPLETED']
+    error_code: str | None
+    error_message: str | None
+    cancel_requested: bool
+    can_resume: bool
+    started_at: datetime | None
+    deadline_at: datetime | None
+    available_at: datetime
+    steps: list[ProductionStepOutput]
+
+
 class ProjectStatus(StrictModel):
     project_id: UUID
     latest_script_version: int | None
@@ -129,6 +156,10 @@ class ProjectStatus(StrictModel):
     production_error: str | None
     final_artifact_id: UUID | None
     video_approved: bool
+    production_steps: list[ProductionStepOutput] = Field(default_factory=list)
+    production_error_code: str | None = None
+    production_can_resume: bool = False
+    production_cancel_requested: bool = False
 
 
 class ArtifactOutput(StrictModel):
@@ -423,6 +454,8 @@ def approve_script(project_id: UUID, version: int, response: Response):
                 "VALUES (%s, %s, %s) RETURNING id, state",
                 (project_id, script["id"], approval["id"]),
             ).fetchone()
+            from app.production_jobs import ensure_steps
+            ensure_steps(conn, run['id'])
             existing = {
                 "id": approval["id"], "project_id": project_id,
                 "script_version_id": script["id"], "production_run_id": run["id"],
@@ -432,17 +465,15 @@ def approve_script(project_id: UUID, version: int, response: Response):
     # A second project lock serializes dispatch, including retries after Redis errors.
     with database() as conn:
         require_project(conn, project_id, lock=True)
-        run = conn.execute("SELECT state FROM production_runs WHERE id = %s",
+        run = conn.execute("SELECT * FROM production_runs WHERE id = %s",
                            (existing["production_run_id"],)).fetchone()
         existing["production_state"] = run["state"]
         if run["state"] == "QUEUED":
             try:
                 connection = Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=3, socket_timeout=3)
                 queue = Queue("default", connection=connection)
-                job_id = str(existing["production_run_id"])
-                if queue.fetch_job(job_id) is None:
-                    queue.enqueue("app.production_jobs.run_production", job_id, job_id=job_id,
-                                  job_timeout=60, result_ttl=-1)
+                from app.production_dispatch import dispatch_locked
+                dispatch_locked(conn, run, queue)
             except (RedisError, OSError, KeyError) as exc:
                 raise problem(503, "QUEUE_UNAVAILABLE",
                               "Freigabe gespeichert. Der Produktionsauftrag konnte noch nicht übergeben werden. "
@@ -503,6 +534,7 @@ def get_status(project_id: UUID):
             "LEFT JOIN approvals va ON va.artifact_id = f.id AND va.kind = 'VIDEO' "
             "WHERE s.project_id = %s ORDER BY s.version DESC LIMIT 1", (project_id,),
         ).fetchone()
+        production = production_output(conn, project_id, row['run_id']) if row and row['run_id'] else None
     return {
         "project_id": project_id,
         "latest_script_version": row["version"] if row else None,
@@ -512,7 +544,82 @@ def get_status(project_id: UUID):
         "production_error": row["error_message"] if row else None,
         "final_artifact_id": row["final_id"] if row else None,
         "video_approved": bool(row and row["video_approval_id"]),
+        "production_steps": production['steps'] if production else [],
+        "production_error_code": production['error_code'] if production else None,
+        "production_can_resume": production['can_resume'] if production else False,
+        "production_cancel_requested": production['cancel_requested'] if production else False,
     }
+
+
+def production_output(conn, project_id, run_id):
+    run = conn.execute('SELECT * FROM production_runs WHERE id = %s AND project_id = %s',
+                       (run_id, project_id)).fetchone()
+    if run is None:
+        raise problem(404, 'RUN_NOT_FOUND', 'Produktionsauftrag nicht gefunden.')
+    steps = conn.execute('SELECT id, position, name, state, attempts, max_attempts, timeout_seconds, '
+                         'error_code, error_message, updated_at FROM production_steps '
+                         'WHERE production_run_id = %s ORDER BY position', (run_id,)).fetchall()
+    current = conn.execute('SELECT id FROM script_versions WHERE project_id = %s ORDER BY version DESC LIMIT 1',
+                           (project_id,)).fetchone()
+    can_resume = (run['state'] == 'FAILED' and not run['cancel_requested']
+                  and current['id'] == run['script_version_id']
+                  and (run['deadline_at'] is None or run['deadline_at'] > datetime.now(timezone.utc))
+                  and all(step['state'] == 'COMPLETED' or step['attempts'] < step['max_attempts'] for step in steps))
+    return {**{name: run[name] for name in ('id', 'project_id', 'state', 'error_code', 'error_message',
+                                           'cancel_requested', 'started_at', 'deadline_at', 'available_at')},
+            'can_resume': can_resume, 'steps': steps}
+
+
+@router.get('/projects/{project_id}/production-runs/{run_id}', response_model=ProductionRunOutput)
+def get_production(project_id: UUID, run_id: UUID):
+    with database() as conn:
+        require_project(conn, project_id)
+        return production_output(conn, project_id, run_id)
+
+
+@router.post('/projects/{project_id}/production-runs/{run_id}/resume', response_model=ProductionRunOutput,
+             responses={503: {'model': ErrorEnvelope, 'description': 'Resume saved; automatic dispatch pending'}})
+def resume_production(project_id: UUID, run_id: UUID):
+    from app.production_dispatch import dispatch_locked
+    from app.production_jobs import ensure_steps, try_lock
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        output = production_output(conn, project_id, run_id)
+        if not try_lock(conn, run_id):
+            raise problem(409, 'RUN_ACTIVE', 'Der Produktionsauftrag wird bereits verarbeitet.')
+        if output['state'] != 'QUEUED':
+            if not output['can_resume']:
+                raise problem(409, 'RESUME_NOT_ALLOWED', 'Dieser Auftrag kann nicht wiederaufgenommen werden. Bitte Status und Skriptversion prüfen.')
+            ensure_steps(conn, run_id)
+            conn.execute("UPDATE production_runs SET state = 'QUEUED', available_at = now(), "
+                         "error_code = NULL, error_message = NULL, dispatch_number = dispatch_number + 1 WHERE id = %s", (run_id,))
+    # Persist the requested resume before talking to Redis.
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        run = conn.execute('SELECT * FROM production_runs WHERE id = %s', (run_id,)).fetchone()
+        try:
+            queue = Queue('default', connection=Redis.from_url(os.environ['REDIS_URL'], socket_connect_timeout=3, socket_timeout=3))
+            dispatch_locked(conn, run, queue)
+        except (RedisError, OSError, KeyError) as exc:
+            raise problem(503, 'QUEUE_UNAVAILABLE', 'Wiederaufnahme gespeichert. Die Übergabe wird automatisch erneut versucht.') from exc
+        return production_output(conn, project_id, run_id)
+
+
+@router.post('/projects/{project_id}/production-runs/{run_id}/cancel', response_model=ProductionRunOutput)
+def cancel_production(project_id: UUID, run_id: UUID):
+    with database() as conn:
+        require_project(conn, project_id, lock=True)
+        output = production_output(conn, project_id, run_id)
+        if output['cancel_requested']:
+            return output
+        if output['state'] not in ('QUEUED', 'RUNNING'):
+            raise problem(409, 'CANCEL_NOT_ALLOWED', 'Dieser Produktionsauftrag ist bereits beendet.')
+        if output['state'] == 'QUEUED':
+            conn.execute("UPDATE production_runs SET state = 'FAILED', cancel_requested = true, "
+                         "error_code = 'CANCELLED', error_message = 'Die Videoproduktion wurde abgebrochen.' WHERE id = %s", (run_id,))
+        else:
+            conn.execute('UPDATE production_runs SET cancel_requested = true WHERE id = %s', (run_id,))
+        return production_output(conn, project_id, run_id)
 
 
 @router.get("/artifacts/{artifact_id}", response_model=ArtifactOutput)

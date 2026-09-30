@@ -23,7 +23,8 @@ def check_installation() -> None:
     _safe_settings()
     try:
         with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=3) as connection:
-            migrated = connection.execute("SELECT to_regclass('script_generation_jobs') IS NOT NULL").fetchone()[0]
+            migrated = connection.execute("SELECT to_regclass('script_generation_jobs') IS NOT NULL "
+                                          "AND to_regclass('production_steps') IS NOT NULL").fetchone()[0]
     except (psycopg.Error, OSError, ValueError) as exc:
         raise GenerationFailure("DATABASE_UNAVAILABLE", "Die konfigurierte PostgreSQL-Datenbank ist nicht erreichbar.") from exc
     if not migrated:
@@ -36,6 +37,20 @@ def check_installation() -> None:
 
 
 class RedisReconnectMixin:
+    def heartbeat(self, *args, **kwargs):
+        super().heartbeat(*args, **kwargs)
+        if not getattr(self, "production_recovery_enabled", False):
+            return
+        now = time.monotonic()
+        if now - getattr(self, "last_production_recovery", 0) < 5:
+            return
+        self.last_production_recovery = now
+        from app.production_dispatch import recover_productions
+        try:
+            recover_productions(self.queues[0])
+        except (psycopg.Error, RedisError, OSError):
+            self.log.warning("Produktions-Wiederaufnahme wartet auf Datenbank/Redis.")
+
     def dequeue_job_and_maintain_ttl(self, timeout, max_idle_time=None):
         # RQ 2.3.2 exits its work loop on Redis TimeoutError, even while idle.
         # Retry only waiting for work; model failures still require explicit UI retry.
@@ -96,7 +111,11 @@ def main() -> None:
 
     connection = Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=3)
     queue = Queue("default", connection=connection)
-    host_worker_class()([queue], connection=connection, name="pipeline-worker").work(burst=args.burst)
+    worker = host_worker_class()([queue], connection=connection, name="pipeline-worker")
+    worker.production_recovery_enabled = True
+    # RQ heartbeats on every dequeue loop, including an otherwise idle queue.
+    worker.worker_ttl = 20
+    worker.work(burst=args.burst)
 
 
 if __name__ == "__main__":
