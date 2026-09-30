@@ -1,4 +1,4 @@
-"""Small, dependency-free contract probe for the Gemini Pro copy/paste flow."""
+"""Dependency-free validation contract for generated and edited Gemini Pro scripts."""
 
 import argparse
 import json

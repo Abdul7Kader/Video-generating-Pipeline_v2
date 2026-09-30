@@ -4,25 +4,68 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
+import time
 
+import psycopg
 from redis import Redis
+from redis.exceptions import RedisError, TimeoutError as RedisTimeoutError
 from rq import Queue, SimpleWorker, SpawnWorker
 from rq.timeouts import TimerDeathPenalty
 
+from app.antigravity import GenerationFailure, _safe_settings
 
-class WindowsWorker(SimpleWorker):
+
+def check_installation() -> None:
+    """Check local prerequisites without a model call or exposing credentials."""
+    if shutil.which("agy") is None:
+        raise GenerationFailure("AGY_UNAVAILABLE", "Antigravity CLI fehlt im PATH des Worker-Benutzers.")
+    _safe_settings()
+    try:
+        with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=3) as connection:
+            migrated = connection.execute("SELECT to_regclass('script_generation_jobs') IS NOT NULL").fetchone()[0]
+    except (psycopg.Error, OSError, ValueError) as exc:
+        raise GenerationFailure("DATABASE_UNAVAILABLE", "Die konfigurierte PostgreSQL-Datenbank ist nicht erreichbar.") from exc
+    if not migrated:
+        raise GenerationFailure("MIGRATION_REQUIRED", "Die Datenbankmigrationen fehlen. Zuerst den Compose-API-Dienst starten.")
+    try:
+        with Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=3, socket_timeout=3) as connection:
+            connection.ping()
+    except (RedisError, OSError, ValueError) as exc:
+        raise GenerationFailure("REDIS_UNAVAILABLE", "Die konfigurierte Redis-Warteschlange ist nicht erreichbar.") from exc
+
+
+class RedisReconnectMixin:
+    def dequeue_job_and_maintain_ttl(self, timeout, max_idle_time=None):
+        # RQ 2.3.2 exits its work loop on Redis TimeoutError, even while idle.
+        # Retry only waiting for work; model failures still require explicit UI retry.
+        # https://github.com/rq/rq/blob/v2.3.2/rq/worker.py
+        while True:
+            try:
+                return super().dequeue_job_and_maintain_ttl(timeout, max_idle_time)
+            except RedisTimeoutError:
+                self.log.warning("Redis-Antwortzeit überschritten; Warteschlangenzugriff wird in 5 Sekunden wiederholt.")
+                time.sleep(5)
+
+
+class WindowsWorker(RedisReconnectMixin, SimpleWorker):
     """RQ 2.3.2 SpawnWorker still uses Unix signals and os.setpgrp on Windows."""
 
     death_penalty_class = TimerDeathPenalty
 
 
+class PosixWorker(RedisReconnectMixin, SpawnWorker):
+    """Keep the process isolation provided by SpawnWorker on Linux and macOS."""
+
+
 def host_worker_class():
-    return WindowsWorker if os.name == "nt" else SpawnWorker
+    return WindowsWorker if os.name == "nt" else PosixWorker
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--burst", action="store_true", help="Exit when the queue is empty")
+    parser.add_argument("--check", action="store_true", help="Check CLI, credit guard, database and Redis without a model call")
     parser.add_argument("--config", type=Path, default=Path.home() / ".config" / "video-pipeline" / "worker.json",
                         help="Private JSON file with DATABASE_URL and REDIS_URL")
     args = parser.parse_args()
@@ -43,7 +86,15 @@ def main() -> None:
         if not os.environ.get(name):
             parser.error(f"{name} is required in {args.config} or the environment")
 
-    connection = Redis.from_url(os.environ["REDIS_URL"])
+    try:
+        check_installation()
+    except GenerationFailure as exc:
+        parser.error(f"{exc.code}: {exc}")
+    if args.check:
+        print("CLI, Kostensperre, Datenbank und Redis geprüft. Anmeldung und Pro-Konto benötigen einen echten Skriptauftrag.")
+        return
+
+    connection = Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=3)
     queue = Queue("default", connection=connection)
     host_worker_class()([queue], connection=connection, name="pipeline-worker").work(burst=args.burst)
 

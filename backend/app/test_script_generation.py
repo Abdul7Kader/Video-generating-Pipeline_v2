@@ -13,15 +13,16 @@ import psycopg
 from fastapi.testclient import TestClient
 from psycopg import sql
 from redis import Redis
-from rq import Queue, SimpleWorker
+from redis.exceptions import TimeoutError as RedisTimeoutError
+from rq import Queue, SimpleWorker, Worker
 from rq.timeouts import TimerDeathPenalty
 
-from app.antigravity import GenerationFailure, generate
+from app.antigravity import GenerationFailure, _safe_settings, generate
 from app.main import app
 from app.migrate import migrate
 from app.script_contract import validate_script
 from app.script_jobs import run_generation
-from app.worker import host_worker_class
+from app.worker import check_installation, host_worker_class
 
 
 def sample_script(mode):
@@ -140,9 +141,31 @@ class ScriptGenerationIntegrationTest(unittest.TestCase):
         redis = Redis.from_url(os.environ["REDIS_URL"])
         queue = Queue("host-worker-test-" + uuid4().hex, connection=redis)
         job = queue.enqueue("app.test_script_generation.spawn_probe", result_ttl=60)
-        host_worker_class()([queue], connection=redis).work(burst=True)
+        dequeue = Worker.dequeue_job_and_maintain_ttl
+        attempts = 0
+
+        def interrupted_dequeue(worker, *args, **kwargs):
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise RedisTimeoutError("Controlled idle socket interruption")
+            return dequeue(worker, *args, **kwargs)
+
+        with patch.object(Worker, "dequeue_job_and_maintain_ttl", interrupted_dequeue), \
+             patch("app.worker.time.sleep") as retry_wait:
+            host_worker_class()([queue], connection=redis).work(burst=True)
+        retry_wait.assert_any_call(5)
+        self.assertGreaterEqual(attempts, 2)
         job.refresh()
         self.assertEqual(job.return_value(), "spawn-worker-ok")
+
+    def test_installation_check_uses_real_database_and_redis_without_a_model_call(self):
+        with patch("app.worker.shutil.which", return_value="agy"), \
+             patch("app.worker._safe_settings") as guard, \
+             patch("app.antigravity.subprocess.run") as model_call:
+            check_installation()
+        guard.assert_called_once()
+        model_call.assert_not_called()
 
 
 class AntigravityBoundaryTest(unittest.TestCase):
@@ -151,11 +174,22 @@ class AntigravityBoundaryTest(unittest.TestCase):
             settings_path = Path(home) / ".gemini" / "antigravity-cli" / "settings.json"
             settings_path.parent.mkdir(parents=True)
             with patch("app.antigravity.Path.home", return_value=Path(home)):
-                for settings in ({}, {"useG1Credits": True},
+                for settings in ({"useG1Credits": None}, {"useG1Credits": "false"}, {"useG1Credits": True},
                                  {"useG1Credits": False, "modelProvider": "gemini"}):
                     settings_path.write_text(json.dumps(settings), encoding="utf-8")
                     with self.assertRaises(GenerationFailure):
                         generate("Idee", "LOKAL")
+
+    def test_credit_guard_accepts_cli_sparse_false_but_rejects_missing_file(self):
+        with tempfile.TemporaryDirectory() as home:
+            path = Path(home) / ".gemini" / "antigravity-cli" / "settings.json"
+            with patch("app.antigravity.Path.home", return_value=Path(home)):
+                with self.assertRaises(GenerationFailure):
+                    _safe_settings()
+                path.parent.mkdir(parents=True)
+                for settings in ({"useG1Credits": False}, {}):
+                    path.write_text(json.dumps(settings), encoding="utf-8")
+                    _safe_settings()
 
     def test_pins_supported_pro_model_and_removes_api_credentials(self):
         class Result:
@@ -182,6 +216,35 @@ class AntigravityBoundaryTest(unittest.TestCase):
             returncode = 0
             stderr = ""
             stdout = json.dumps({"status": "SUCCESS", "response": "not a script"})
+
+        with patch("app.antigravity._safe_settings"), patch("app.antigravity.subprocess.run", return_value=Result()):
+            with self.assertRaises(GenerationFailure) as caught:
+                generate("Idee", "LOKAL")
+        self.assertEqual(caught.exception.code, "INVALID_SCRIPT")
+
+    def test_structured_output_is_validated_independently_of_response_text(self):
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = json.dumps({"status": "SUCCESS", "response": '{} {}',
+                                 "structured_output": sample_script("LOKAL")})
+
+        with patch("app.antigravity._safe_settings"), patch("app.antigravity.subprocess.run", return_value=Result()):
+            self.assertEqual(generate("Idee", "LOKAL")["mode"], "LOKAL")
+        invalid = sample_script("LOKAL")
+        invalid["scenes"][0]["media_type"] = "AI_GENERATED_VIDEO"
+        Result.stdout = json.dumps({"status": "SUCCESS", "response": json.dumps(sample_script("LOKAL")),
+                                    "structured_output": invalid})
+        with patch("app.antigravity._safe_settings"), patch("app.antigravity.subprocess.run", return_value=Result()):
+            with self.assertRaises(GenerationFailure) as caught:
+                generate("Idee", "LOKAL")
+        self.assertEqual(caught.exception.code, "INVALID_SCRIPT")
+
+    def test_duplicate_keys_in_structured_output_are_rejected(self):
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = '{"status":"SUCCESS","structured_output":{"mode":"CLOUD","mode":"LOKAL"}}'
 
         with patch("app.antigravity._safe_settings"), patch("app.antigravity.subprocess.run", return_value=Result()):
             with self.assertRaises(GenerationFailure) as caught:

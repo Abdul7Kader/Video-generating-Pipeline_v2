@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from app.script_contract import make_prompt, output_schema, validate_script
+from app.script_contract import _object_without_duplicates, make_prompt, output_schema, validate_script
 
 
 class GenerationFailure(Exception):
@@ -22,12 +22,14 @@ def _safe_settings() -> None:
     except (OSError, ValueError) as exc:
         raise GenerationFailure(
             "CREDIT_GUARD_UNVERIFIED",
-            "Die Antigravity-Kostensperre ist nicht bestätigt. Auf diesem Rechner muss useG1Credits ausdrücklich false sein.",
+            "Die Antigravity-Kostensperre ist nicht bestätigt. Bitte die CLI-Einrichtung und gültige Settings mit deaktivierten AI-Credits prüfen.",
         ) from exc
-    if not isinstance(settings, dict) or settings.get("useG1Credits") is not False:
+    # AGY saves only non-default settings; its documented credit default is false.
+    # https://antigravity.google/docs/cli/reference/#configuration-keys-settingsjson
+    if not isinstance(settings, dict) or settings.get("useG1Credits", False) is not False:
         raise GenerationFailure(
             "CREDIT_GUARD_UNVERIFIED",
-            "Antigravity darf keine zusätzlichen AI-Credits verwenden. useG1Credits muss false sein.",
+            "Antigravity darf keine zusätzlichen AI-Credits verwenden. Use AI Credits muss deaktiviert sein.",
         )
     if settings.get("modelProvider") is not None:
         raise GenerationFailure(
@@ -68,9 +70,16 @@ def generate(idea: str, mode: str) -> dict:
     if result.returncode != 0:
         raise _failure_from_output(result.stderr + "\n" + result.stdout)
     try:
-        envelope = json.loads(result.stdout)
+        envelope = json.loads(result.stdout, object_pairs_hook=_object_without_duplicates)
         if not isinstance(envelope, dict) or envelope.get("status") != "SUCCESS":
             raise _failure_from_output(result.stdout)
+        # The parsed schema result is authoritative, even if response has extra text.
+        # https://antigravity.google/docs/cli/headless/#structured-output-with-a-schema
+        if "structured_output" in envelope:
+            structured = envelope["structured_output"]
+            if not isinstance(structured, dict):
+                raise ValueError("Invalid structured output")
+            return validate_script(json.dumps(structured), mode)
         response = envelope.get("response")
         if not isinstance(response, str):
             raise ValueError("Missing response")
