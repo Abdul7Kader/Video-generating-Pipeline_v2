@@ -2,12 +2,14 @@
 
 Stand: 30. September 2026
 
-Abschluss am 30. September 2026: Aufgaben 01–12 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
+Abschluss am 30. September 2026: Aufgaben 01–13 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
 
 Schritt **12 – Skriptfreigabe** und M1 sind ebenfalls abgenommen: Browser bestätigt die angezeigte Version, neue Versionen verlangen neue Freigaben. Datenbank-Commit vor RQ-Übergabe, stabile Lauf-ID und Projekt-Sperren sichern wiederholte/gleichzeitige Aufrufe und Retry nach Brokerfehler. Beide Modi im echten Browser geprüft; 29 Backendtests, acht Projekttests und Web-Build bestehen. Zusätzlich wurde eine bereits live erzeugte und bearbeitete Pro-Version in der normalen Anwendung freigegeben und vom angemeldeten Host-Worker verarbeitet. [Prüfbericht](step12-acceptance.md).
 
-Nächste Aufgabe: **13 – Produktionskette mit RQ**. Der aktuelle Produktions-Einstieg prüft die Freigabe und blockiert fehlende Medienstufen sichtbar als `FAILED`; es existiert noch kein Videopfad. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Die aktuelle Windows-Sitzung nutzt den geprüften Hintergrundstart; vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
+Nächste Aufgabe: **14 – Pexels-Szenenbeschaffung**. Die Produktionskette aus Schritt 13 führt fünf wiederaufnehmbare Stufen; konkrete Medienadapter fehlen noch und scheitern sichtbar mit `STAGE_UNAVAILABLE`, ohne Video oder Artefakt zu behaupten. Die Entwicklung läuft am Windows-Rechner über GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. Ubuntu ist optional. Vollständige Installation, Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35. Verbindlicher Stand: [STATE.md](../STATE.md).
 Aufgabenliste: [todo.md](todo.md)
+
+**Abschluss Schritt 13:** Fünf persistente RQ-Produktionsstufen, drei Versuche pro Stufe, unverlängerte Drei-Stunden-Gesamtgrenze, Prozesszeitlimits, automatische Zustellung/Wiederaufnahme und API-/UI-Abbruch implementiert. PostgreSQL-/Redis-/RQ-Abbruchprüfung ohne Artefaktdubletten, 37 Backendtests, acht Projekttests und Web-Build bestanden. Echte Chrome-Bedienabnahme für beide Modi, Neuladen und kleine Bildschirme erfolgreich. Medienadapter werden weiterhin in 14–18/21 umgesetzt; Abnahmekriterien unverändert. [Belege](step13-acceptance.md).
 
 **UI-Nacharbeit auf Betreiberwunsch:** Bestehende Wartezeiten erhalten gemeinsame Ladebalken mit tatsächlicher Phase statt geschätztem Prozentfortschritt. Die Klickbarkeit wird durch einheitliche Buttonformen, Hover/Fokus und klar getrennte gesperrte/passive Zustände sichtbar, ohne zusätzliche Bedienhinweise. Speicherleiste und Fokus verbessern den Szeneneditor. Web-Build, acht Projekttests und echte Browserproben für beide Modi mit verzögerten Antworten/Fehlern, Timeout/Retry, Projektwechsel, Editor-Entwurfsschutz und responsive Gestaltung bestanden. [Prüfbericht](ui-interaction-acceptance.md). Umfang und Kriterien von Schritt 13 bleiben unverändert.
 
@@ -130,11 +132,11 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 09. [x] Idee- und Modusformular in React umsetzen; Browserprobe für beide Modi, Validierung und gespeicherte Projektansicht bestanden.
 10. [x] Automatischen Antigravity-Pro-Skriptauftrag samt Schema-Validierung und Fehlerbehandlung anbinden.
 11. [x] Skript- und Szeneneditor mit Versionierung umsetzen.
-12. [x] Skriptfreigabe und automatische, eindeutige Produktionsauslösung umsetzen. Browser-/Datenbank-/RQ-Abnahme bestanden; Medienstufen folgen ab 13. [Belege](step12-acceptance.md).
+12. [x] Skriptfreigabe und automatische, eindeutige Produktionsauslösung umsetzen. Browser-/Datenbank-/RQ-Abnahme bestanden; Produktionsstufen sind in 13 implementiert; konkrete Medienadapter folgen ab 14. [Belege](step12-acceptance.md).
 
 ### M2 – Lokaler Produktionspfad
 
-13. [ ] Robuste RQ-Produktionskette mit Status, Wiederholung und Abbruchgrenzen bauen.
+13. [x] Robuste RQ-Produktionskette mit Status, Wiederholung und Abbruchgrenzen bauen. PostgreSQL-/Redis-/RQ-Neustartprobe und Browserbedienung bestanden; [Belege](step13-acceptance.md).
 14. [ ] Pexels-Suche, Auswahl und Download pro Szene implementieren.
 15. [ ] Piper-Sprechersegmente und Zeitdaten erzeugen.
 16. [ ] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern.

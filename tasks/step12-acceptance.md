@@ -31,3 +31,5 @@ npm run build --prefix web
 ## Offen und nächster Schritt
 
 **13 – Produktionskette mit RQ:** wiederaufnehmbare Medienstufen, begrenzte Wiederholungen, Timeouts und Wiederaufnahme ohne doppelte Artefakte. Danach Pexels/Piper/Remotion/FFmpeg und Medienspeicher in 14–18. Ein gestoppter Lauf wird durch wiederholte Skriptfreigabe nicht automatisch neu gestartet; Wiederaufnahme ist Teil von 13. Prozessabbruch zwischen Commit und Übergabe kann durch bewusste erneute Übergabe derselben Version behoben werden; automatische Zustellung/Wiederaufnahme bleibt offen. Login-/Neustartbetrieb und macOS/Linux bleiben Aufgabe 35. Modal bleibt ohne Credits-/Nullkosten-Nachweis gesperrt. Diese Abnahme enthält keine neue Modell- oder GPU-Ausführung.
+
+**Fortschreibung nach Schritt 13 (30.09.2026):** Die oben für den Stand von Schritt 12 genannten Zustell-/Wiederaufnahme-Lücken sind inzwischen durch die persistente Produktionskette geschlossen. Echte Worker-Abbruchprüfung und Browserbedienung bestanden; Medienadapter bleiben offen. Nächster Schritt 14. [Aktuelle Abnahme](step13-acceptance.md).

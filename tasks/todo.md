@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 29. September 2026:** Aufgaben 01–12 und M1 sind abgeschlossen; nächster Schritt ist 13 (Produktionskette mit RQ). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Fortsetzung ab 30. September 2026:** Aufgaben 01–13 und M1 sind abgeschlossen; nächster Schritt ist 14 (Pexels-Szenenbeschaffung). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -51,7 +51,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ### 08. API-Vertrag (S; abhängig von: 07)
 - [x] FastAPI-Schemas/Endpunkte für Anlegen, Lesen, Bearbeiten durch neue Skriptversion, Skript- und Videofreigabe, Status und Medienmetadaten/-abruf dokumentiert.
 - [x] Versionskonflikt, Validierungsfehler und wiederholte Freigabe haben definierte Antworten.
-- **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Übergabe ist seit Aufgabe 12 implementiert, Medienstufen folgen ab 13. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
+- **Prüfung:** [API-Vertrag](api-contract.md) mit Beispielpayloads; OpenAPI- und HTTP-Vertragstests gegen isoliertes PostgreSQL-Schema bestanden (3 Tests), darunter idempotente Skript-/Videofreigaben; dazu 4 Datenbanktests, 8 bestehende Python-Tests, Web-Build und gesunder Compose-Stack. Produktionslauf wird als `QUEUED` gespeichert; RQ-Übergabe ist seit Aufgabe 12 implementiert, Produktionsstufen sind in 13 implementiert; konkrete Medienadapter folgen ab 14. Medieninhalt liefert bis Aufgabe 18 ausdrücklich `501`; Veröffentlichungsaufträge folgen in Aufgabe 26.
 
 ### 09. Idee- und Modusformular (S; abhängig von: 08)
 - [x] React erfasst Idee und Dropdown `CLOUD`/`LOKAL` und zeigt den gewählten Medientyp an.
@@ -83,12 +83,13 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 
 - [x] Alle bestehenden Wartezustände zeigen einen Ladebalken ohne erfundene Prozentwerte; Fehler beenden die zugehörige Anfrageanzeige und erlauben Wiederholung.
 - [x] Klickbare, deaktivierte und rein informative Elemente sind durch Gestaltung unterscheidbar; Editoraktionen, Fokus und kleine Bildschirme sind geprüft.
-- **Abnahme 30.09.2026:** Echte Chrome-Proben LOKAL/CLOUD mit allen Ladephasen, Ergebnis-Ladefehler und Retry, Anfragetimeout und Wiederholung, erstem Ladefehler, überholter Skriptantwort bei Projektwechsel, Tastaturfokus, sichtbarer Speicherleiste und Browser-Entwurfsschutz bestanden. 320/768/1024/1440 Pixel ohne Überlauf, Buttons mindestens 44 Pixel hoch, reduzierte Bewegung und keine JavaScript-Ausnahmen geprüft. Acht Projekttests und Web-Build bestanden. [Prüfbericht](ui-interaction-acceptance.md). Schritt 13 bleibt die nächste fachliche Produktionsaufgabe.
+- **Abnahme 30.09.2026:** Echte Chrome-Proben LOKAL/CLOUD mit allen Ladephasen, Ergebnis-Ladefehler und Retry, Anfragetimeout und Wiederholung, erstem Ladefehler, überholter Skriptantwort bei Projektwechsel, Tastaturfokus, sichtbarer Speicherleiste und Browser-Entwurfsschutz bestanden. 320/768/1024/1440 Pixel ohne Überlauf, Buttons mindestens 44 Pixel hoch, reduzierte Bewegung und keine JavaScript-Ausnahmen geprüft. Acht Projekttests und Web-Build bestanden. [Prüfbericht](ui-interaction-acceptance.md). Die Produktionssteuerung wurde inzwischen in Schritt 13 ergänzt.
 
 ### 13. Produktionskette mit RQ (M; abhängig von: 07, 12)
-- [ ] Szenenbeschaffung, Sprachsynthese, Grafik, Encoding und Ablage sind getrennte, wiederaufnehmbare Schritte.
-- [ ] Status, begrenzte Wiederholungen, Timeouts und Fehlerursachen werden in PostgreSQL geführt.
+- [x] Szenenbeschaffung, Sprachsynthese, Grafik, Encoding und Ablage sind getrennte, wiederaufnehmbare Schritte.
+- [x] Status, begrenzte Wiederholungen, Timeouts und Fehlerursachen werden in PostgreSQL geführt.
 - **Prüfung:** Worker während eines Testlaufs stoppen und ohne doppelte Artefakte fortsetzen.
+- **Abnahme 30.09.:** Migration, 37 Backendtests (einschließlich echtem Prozess-Kill/Neustart mit fünf eindeutigen Testdateien/-artefakten), acht Projekttests und Web-Build bestanden. Echte Browserproben LOKAL/CLOUD mit Wiederaufnahme/Abbruch, Ladebalken, Doppelklickschutz und Neuladen bestanden. 320/768/1200 Pixel einschließlich reservierter Scrollleisten ohne horizontalen Überlauf; normale Hostworker-Probe mit bestehender Pro-Freigabe zeigt korrekt den noch fehlenden Szenenadapter. Keine echte Videoerzeugung, Medienadapter folgen in 14–18/21. [Belege](step13-acceptance.md).
 
 ### 14. Pexels-Szenenbeschaffung (M; abhängig von: 04, 13)
 - [ ] Jede LOKAL-Szene erhält ausschließlich einen geeigneten Pexels-Clip samt Asset-ID und Herkunft.
