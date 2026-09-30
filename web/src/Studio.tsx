@@ -8,10 +8,13 @@ type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
 type Services = { database: boolean; redis: boolean; worker: boolean }
 type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null }
+type ProductionStep = { id: string; name: string; state: string; attempts: number; max_attempts: number }
+type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
+const productionLabels: Record<string, string> = { SCENES: 'Szenen beschaffen', SPEECH: 'Sprache erzeugen', GRAPHICS: 'Grafik rendern', ENCODING: 'Video encodieren', STORAGE: 'Video ablegen' }
+const stepStates: Record<string, string> = { PENDING: 'Wartet', RUNNING: 'Läuft', FAILED: 'Gestoppt', COMPLETED: 'Fertig' }
 const serviceLabels: Record<keyof Services, string> = {
   database: 'Datenbank', redis: 'Warteschlange', worker: 'Hintergrund-Worker',
 }
@@ -46,6 +49,8 @@ export default function Studio() {
   const [approvalError, setApprovalError] = useState('')
   const [checkingHealth, setCheckingHealth] = useState(true)
   const [fetchingScript, setFetchingScript] = useState(false)
+  const [productionAction, setProductionAction] = useState<'resume' | 'cancel' | null>(null)
+  const productionInFlight = useRef(false)
   const approvalInFlight = useRef(false)
   const projectInFlight = useRef(false)
   const generationInFlight = useRef(false)
@@ -222,17 +227,44 @@ export default function Studio() {
     }
   }
 
+  async function changeProduction(action: 'resume' | 'cancel') {
+    if (!project || !projectStatus?.production_run_id || productionInFlight.current || loading || editing) return
+    const id = project.id
+    const run = projectStatus.production_run_id
+    productionInFlight.current = true
+    setProductionAction(action)
+    setApprovalError('')
+    try {
+      const response = await request(`/api/projects/${encodeURIComponent(id)}/production-runs/${encodeURIComponent(run)}/${action}`, { method: 'POST' })
+      const error = response.ok ? '' : await responseError(response)
+      const status = await request(`/api/projects/${encodeURIComponent(id)}/status`, { cache: 'no-store' })
+      if (!status.ok) throw new Error('Der Produktionsstatus konnte nicht geladen werden. Bitte lade das Projekt erneut.')
+      if (activeProjectId.current === id) setProjectStatus(await status.json() as ProjectStatus)
+      if (error) throw new Error(error)
+    } catch (error) {
+      if (activeProjectId.current === id) setApprovalError(error instanceof Error ? error.message : 'Die Produktionsaktion ist fehlgeschlagen.')
+    } finally {
+      productionInFlight.current = false
+      setProductionAction(null)
+    }
+  }
+
   useEffect(() => {
     if (!project || !projectStatus?.script_approved || !['QUEUED', 'RUNNING'].includes(projectStatus.production_state ?? '')) return
     let active = true
+    let polling = false
     const timer = window.setInterval(async () => {
+      if (polling || productionInFlight.current) return
+      polling = true
       try {
         const response = await request(`/api/projects/${encodeURIComponent(project.id)}/status`, { cache: 'no-store' })
         if (!response.ok) throw new Error()
         const status = await response.json() as ProjectStatus
-        if (active) setProjectStatus(status)
+        if (active && !productionInFlight.current) { setProjectStatus(status); setApprovalError('') }
       } catch {
         if (active) setApprovalError('Der Produktionsstatus ist derzeit nicht erreichbar. Bitte lade das Projekt erneut.')
+      } finally {
+        polling = false
       }
     }, 3000)
     return () => { active = false; window.clearInterval(timer) }
@@ -243,7 +275,8 @@ export default function Studio() {
 
   const ready = reachable && health?.status === 'ready'
   const mediaType = mode === 'LOKAL' ? 'STOCK_VIDEO' : 'AI_GENERATED_VIDEO'
-  const creatingBlocked = saving || approving || loading || editing || startingGeneration || fetchingScript
+  const creatingBlocked = saving || approving || loading || editing || startingGeneration || fetchingScript || Boolean(productionAction)
+  const runningStep = projectStatus?.production_steps?.find(step => step.state === 'RUNNING')
 
   function focusScript() {
     window.requestAnimationFrame(() => document.getElementById('script-preview-title')?.focus())
@@ -306,7 +339,7 @@ export default function Studio() {
           <section className="saved-project panel" aria-labelledby="saved-title" aria-busy={loading}>
             <div className="saved-header">
               <div className="section-heading"><span className="section-index">02 / ZULETZT GESPEICHERT</span><h2 id="saved-title" tabIndex={-1}>Projektansicht</h2></div>
-              {(project || lastProjectId.current) && <button className="text-button" type="button" onClick={() => void loadProject(project?.id ?? lastProjectId.current!)} disabled={loading || editing || approving || saving} aria-busy={loading}>Neu laden</button>}
+              {(project || lastProjectId.current) && <button className="text-button" type="button" onClick={() => void loadProject(project?.id ?? lastProjectId.current!)} disabled={loading || editing || approving || saving || Boolean(productionAction)} aria-busy={loading}>Neu laden</button>}
             </div>
             {loading && <LoadingBar label="Projekt und Skript werden geladen …" />}
             {saveError && <p className="notice-error" role="alert">{saveError}</p>}
@@ -328,7 +361,7 @@ export default function Studio() {
                 {scriptJob?.state === 'FAILED' && <p className="notice-error" role="alert">{scriptJob.error_message}</p>}
                 {generationError && <p className="notice-error" role="alert">{generationError}</p>}
                 {!script && scriptJob?.state === 'COMPLETED' && generationError && <button className="secondary-button" type="button" onClick={() => void loadProject(project.id)} disabled={loading}>Skript erneut laden</button>}
-                {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4 id="script-preview-title" tabIndex={-1}>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={approving || loading || saving}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol>
+                {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4 id="script-preview-title" tabIndex={-1}>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={approving || loading || saving || Boolean(productionAction)}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol>
                   <div className="approval-area" aria-labelledby="approval-title">
                     <h4 id="approval-title">Skriptfreigabe · Version {script.version}</h4>
                     <p>Mit der Freigabe bestätigst du genau die angezeigte Version und legst ihren Produktionsauftrag an. Änderungen benötigen eine neue Freigabe. Die Videoerzeugung ist noch in Entwicklung.</p>
@@ -337,10 +370,15 @@ export default function Studio() {
                     {approving && <LoadingBar label="Freigabe und Auftragsübergabe werden bestätigt …" />}
                     {scriptApproved && <div role="status" aria-live="polite"><p className="script-success">Skriptversion {script.version} freigegeben.</p>
                       {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '')
-                        ? <LoadingBar label={projectStatus?.production_state === 'QUEUED' ? 'Produktionsauftrag wartet auf die Verarbeitung …' : 'Video wird produziert …'} />
+                        ? <LoadingBar label={projectStatus?.production_cancel_requested ? 'Produktion wird abgebrochen …' : projectStatus?.production_state === 'QUEUED' ? 'Produktionsauftrag wartet auf die Verarbeitung …' : `${runningStep ? productionLabels[runningStep.name] : 'Videoproduktion'} …`} />
                         : <p>{projectStatus?.production_state === 'FAILED' ? 'Produktionsauftrag gestoppt.' : 'Produktion abgeschlossen.'}</p>}
                       {projectStatus?.production_error && <p className="notice-error">{projectStatus.production_error}</p>}
-                      {projectStatus?.production_state === 'QUEUED' && <button className="text-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || saving || Boolean(saveError) || newerScript} aria-busy={approving}>{approving ? 'Auftrag wird übergeben …' : 'Auftragsübergabe erneut versuchen'}</button>}
+                      {Boolean(projectStatus?.production_steps?.length) && <ul className="production-step-list" aria-label="Produktionsschritte">{projectStatus!.production_steps!.map(step => <li key={step.id} className={`production-step ${step.state.toLowerCase()}`}><span>{productionLabels[step.name]}</span><span>{stepStates[step.state]}{step.attempts > 0 ? ` · Versuch ${step.attempts}/${step.max_attempts}` : ''}</span></li>)}</ul>}
+                      <div className="production-actions">
+                        {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
+                        {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
+                      </div>
+                      {productionAction && <LoadingBar label={productionAction === 'resume' ? 'Wiederaufnahme wird gespeichert …' : 'Abbruch wird gespeichert …'} />}
                     </div>}
                     {approvalError && <p className="notice-error" role="alert">{approvalError}</p>}
                   </div>
