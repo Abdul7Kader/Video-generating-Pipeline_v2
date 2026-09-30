@@ -79,6 +79,12 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 
 ## M2 – Lokaler Produktionspfad
 
+### UI-Nacharbeit nach M1 (Betreiberwunsch)
+
+- [x] Alle bestehenden Wartezustände zeigen einen Ladebalken ohne erfundene Prozentwerte; Fehler beenden die zugehörige Anfrageanzeige und erlauben Wiederholung.
+- [x] Klickbare, deaktivierte und rein informative Elemente sind durch Gestaltung unterscheidbar; Editoraktionen, Fokus und kleine Bildschirme sind geprüft.
+- **Abnahme 30.09.2026:** Echte Chrome-Proben LOKAL/CLOUD mit allen Ladephasen, Ergebnis-Ladefehler und Retry, Anfragetimeout und Wiederholung, erstem Ladefehler, überholter Skriptantwort bei Projektwechsel, Tastaturfokus, sichtbarer Speicherleiste und Browser-Entwurfsschutz bestanden. 320/768/1024/1440 Pixel ohne Überlauf, Buttons mindestens 44 Pixel hoch, reduzierte Bewegung und keine JavaScript-Ausnahmen geprüft. Acht Projekttests und Web-Build bestanden. [Prüfbericht](ui-interaction-acceptance.md). Schritt 13 bleibt die nächste fachliche Produktionsaufgabe.
+
 ### 13. Produktionskette mit RQ (M; abhängig von: 07, 12)
 - [ ] Szenenbeschaffung, Sprachsynthese, Grafik, Encoding und Ablage sind getrennte, wiederaufnehmbare Schritte.
 - [ ] Status, begrenzte Wiederholungen, Timeouts und Fehlerursachen werden in PostgreSQL geführt.

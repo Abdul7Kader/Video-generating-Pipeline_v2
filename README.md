@@ -10,6 +10,8 @@ Der Prototyp unter [`tasks/`](tasks/) enthält den [Umsetzungsplan](tasks/plan.m
 
 Der [API-Vertrag](tasks/api-contract.md) beschreibt die Endpunkte und Beispielpayloads. Die OpenAPI-Dokumentation liegt bei gestartetem Compose-Stack unter `/api/docs`. Bei Skriptfreigabe speichert die API einen `QUEUED`-Produktionslauf und übergibt ihn an RQ; der Status zeigt Freigabe und sichere Fehlerursache. Dateiabruf und Publikationsaufträge folgen später.
 
+Die Oberfläche zeigt Wartezeiten durch Ladebalken und unterscheidet Aktionen, deaktivierte Buttons und Statusanzeigen durch ihre Gestaltung. Der Editor bietet eine mitlaufende Speicherleiste, Tastaturfokus und Schutz ungespeicherter Änderungen beim Neuladen. Langsame oder fehlgeschlagene Anfragen bleiben erneut ladbar. [UI-Prüfbericht](tasks/ui-interaction-acceptance.md).
+
 ## Webanwendung lokal starten
 
 Für echte Skripte zuerst die [Host-Worker-Installation](tasks/install-on-computer.md) mit CLI-Anmeldung und privater Konfiguration abschließen. Danach die Dienste mit `docker compose -f compose.yaml -f compose.host-worker.yaml up -d --build --wait db redis api web` starten und den angemeldeten Host-Worker ausführen. Auf Windows steht dafür `deploy/start-worker.ps1` bereit. Der Hintergrundstart ist für die aktuelle Windows-Sitzung geprüft; Login-/Neustartverhalten und weitere Betriebssysteme bleiben Aufgabe 35.
