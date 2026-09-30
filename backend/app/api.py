@@ -1,5 +1,6 @@
 """HTTP contract for projects, immutable scripts, approvals and status."""
 
+import json
 import os
 from datetime import datetime
 from typing import Annotated, Literal
@@ -11,9 +12,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from psycopg.rows import dict_row
+from psycopg.types.json import Jsonb
 from redis import Redis
 from redis.exceptions import RedisError
 from rq import Queue
+
+from app.script_contract import validate_script
 
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -43,6 +47,8 @@ class SceneInput(StrictModel):
     visual_description: Text
     pexels_query: Text | None = None
     wan_prompt: Text | None = None
+    duration_seconds: int | None = Field(default=None, ge=3, le=12)
+    pexels_queries: list[Text] | None = Field(default=None, min_length=2, max_length=4)
 
 
 class ScriptInput(StrictModel):
@@ -50,6 +56,8 @@ class ScriptInput(StrictModel):
     title: Text
     narration: Text
     scenes: list[SceneInput] = Field(min_length=6, max_length=10)
+    language: Literal["de-DE"] = "de-DE"
+    target_duration_seconds: int | None = Field(default=None, ge=30, le=60)
 
 
 class SceneOutput(StrictModel):
@@ -308,24 +316,53 @@ def create_script(project_id: UUID, body: ScriptInput):
         if body.expected_version != current:
             raise problem(409, "VERSION_CONFLICT", "Script version changed; reload the project")
         for scene in body.scenes:
-            if project["mode"] == "LOKAL" and (scene.pexels_query is None or scene.wan_prompt is not None):
+            if project["mode"] == "LOKAL" and ((scene.pexels_query is None and scene.pexels_queries is None) or scene.wan_prompt is not None):
                 raise problem(422, "MODE_MISMATCH", "LOKAL scenes need a Pexels query only")
-            if project["mode"] == "CLOUD" and (scene.wan_prompt is None or scene.pexels_query is not None):
+            if project["mode"] == "CLOUD" and (scene.wan_prompt is None or scene.pexels_query is not None or scene.pexels_queries is not None):
                 raise problem(422, "MODE_MISMATCH", "CLOUD scenes need a Wan prompt only")
+        if current and body.target_duration_seconds is None:
+            latest = conn.execute(
+                "SELECT target_duration_seconds FROM script_versions WHERE project_id = %s AND version = %s",
+                (project_id, current),
+            ).fetchone()
+            if latest["target_duration_seconds"] is not None:
+                raise problem(422, "INVALID_SCRIPT", "Bitte Dauer und vollständige Szenenfelder beim Bearbeiten erhalten.")
+        if body.target_duration_seconds is not None:
+            payload = {
+                "title": body.title, "language": body.language, "mode": project["mode"],
+                "target_duration_seconds": body.target_duration_seconds,
+                "scenes": [
+                    {"index": position, "duration_seconds": scene.duration_seconds,
+                     "narration": scene.narration, "visual_description": scene.visual_description,
+                     "media_type": project["media_type"],
+                     **({"pexels_queries": scene.pexels_queries} if project["mode"] == "LOKAL"
+                        else {"wan_prompt": scene.wan_prompt})}
+                    for position, scene in enumerate(body.scenes, 1)
+                ],
+            }
+            try:
+                validate_script(json.dumps(payload), project["mode"])
+            except ValueError as exc:
+                raise problem(422, "INVALID_SCRIPT", f"Bitte Skript prüfen: {exc}") from exc
+            if body.narration != " ".join(scene.narration for scene in body.scenes):
+                raise problem(422, "INVALID_SCRIPT", "Der gesamte Sprechertext muss den Szenentexten entsprechen.")
+            if any(scene.pexels_queries and scene.pexels_query not in (None, scene.pexels_queries[0]) for scene in body.scenes):
+                raise problem(422, "INVALID_SCRIPT", "Der erste Pexels-Suchbegriff muss mit der Suchliste übereinstimmen.")
         script = conn.execute(
-            "INSERT INTO script_versions (project_id, version, title, narration) "
-            "VALUES (%s, %s, %s, %s) RETURNING *",
-            (project_id, current + 1, body.title, body.narration),
+            "INSERT INTO script_versions (project_id, version, title, narration, language, target_duration_seconds) "
+            "VALUES (%s, %s, %s, %s, %s, %s) RETURNING *",
+            (project_id, current + 1, body.title, body.narration, body.language, body.target_duration_seconds),
         ).fetchone()
         scenes = []
         for position, scene in enumerate(body.scenes, 1):
             saved = conn.execute(
                 "INSERT INTO scenes (project_id, script_version_id, position, narration, "
-                "visual_description, media_type, pexels_query, wan_prompt) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
-                "RETURNING position, narration, visual_description, media_type, pexels_query, wan_prompt",
+                "visual_description, media_type, pexels_query, wan_prompt, duration_seconds, pexels_queries) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "RETURNING position, narration, visual_description, media_type, pexels_query, wan_prompt, duration_seconds, pexels_queries",
                 (project_id, script["id"], position, scene.narration, scene.visual_description,
-                 project["media_type"], scene.pexels_query, scene.wan_prompt),
+                 project["media_type"], scene.pexels_queries[0] if scene.pexels_queries else scene.pexels_query,
+                 scene.wan_prompt, scene.duration_seconds, Jsonb(scene.pexels_queries) if scene.pexels_queries else None),
             ).fetchone()
             scenes.append(saved)
     return {**script, "scenes": scenes}

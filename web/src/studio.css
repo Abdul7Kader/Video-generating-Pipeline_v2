@@ -65,3 +65,15 @@ button:disabled{cursor:wait;opacity:.66}
 .site-footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #34414a;padding:24px 0 34px;color:#81949a}
 @media(max-width:900px){.hero{grid-template-columns:1fr;padding:52px 0 44px}.project-form{box-shadow:none}.content-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.site-header{height:72px}.header-note{display:none}.hero{gap:32px}.hero h1{font-size:clamp(43px,11vw,58px)}.hero-description{font-size:15px}.panel{padding:22px}.workflow-list li{gap:12px}.workflow-list p{max-width:215px}.saved-header{flex-direction:column}.text-button{margin-bottom:18px}.site-footer{font-size:9px}}
+.script-editor{margin-top:24px;max-width:900px}
+.script-editor h4{font-size:20px;margin:0 0 10px}
+.script-editor>p{color:#a9b9bd;line-height:1.6}
+.script-editor fieldset{padding:0;border:0;min-width:0}
+.editor-input{width:100%;color:#eef4f1;background:#101b22;border:1px solid #617078;border-radius:8px;padding:12px 14px;font:inherit}
+.editor-input:focus{outline:2px solid #b6e7d3;outline-offset:2px}
+textarea.editor-input{resize:vertical;line-height:1.5}
+.editor-scene{border-top:1px solid #405058;padding:20px 0}
+.editor-scene h5{font-size:17px;margin:0 0 16px}
+.editor-scene .field-label{margin:14px 0 8px}
+.duration-input{max-width:160px}
+.editor-actions{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:16px}

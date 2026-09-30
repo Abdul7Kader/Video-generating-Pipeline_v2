@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import ScriptEditor, { type Script } from './ScriptEditor'
 
 type Mode = 'LOKAL' | 'CLOUD'
 type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
@@ -7,8 +8,6 @@ type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProjectStatus = { latest_script_version: number | null; production_state: string | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null }
-type ScriptScene = { position: number; narration: string; visual_description: string; duration_seconds: number | null; pexels_queries: string[] | null; wan_prompt: string | null }
-type Script = { title: string; version: number; target_duration_seconds: number | null; scenes: ScriptScene[] }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
 const serviceLabels: Record<keyof Services, string> = {
@@ -38,6 +37,7 @@ export default function Studio() {
   const [projectStatus, setProjectStatus] = useState<ProjectStatus | null>(null)
   const [scriptJob, setScriptJob] = useState<ScriptJob | null>(null)
   const [script, setScript] = useState<Script | null>(null)
+  const [editing, setEditing] = useState(false)
   const [generationError, setGenerationError] = useState('')
   const [startingGeneration, setStartingGeneration] = useState(false)
 
@@ -109,6 +109,7 @@ export default function Studio() {
       setProjectStatus({ latest_script_version: null, production_state: null })
       setScriptJob(null)
       setScript(null)
+      setEditing(false)
       setGenerationError('')
       setIdea('')
       await loadProject(saved.id)
@@ -180,8 +181,8 @@ export default function Studio() {
       <main>
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="eyebrow"><span className="eyebrow-line" /> SCHRITT 09 · PROJEKT ANLEGEN</p>
-            <h1 id="hero-title">Deine Idee.<br /><em>Ein echtes Projekt.</em></h1>
+            <p className="eyebrow"><span className="eyebrow-line" /> IDEE → SKRIPT</p>
+            <h1 id="hero-title">Deine Idee.<br /><em>Ein prüfbares Skript.</em></h1>
             <p className="hero-description">Beschreibe dein Video und wähle die spätere Bildquelle. Nach dem Speichern startet die Skripterstellung automatisch. Ein Video wird noch nicht produziert.</p>
             <div className="status-pill" role="status" aria-live="polite">
               <span className={`status-dot ${ready ? 'is-ready' : ''}`} aria-hidden="true" />
@@ -222,7 +223,7 @@ export default function Studio() {
           <section className="saved-project panel" aria-labelledby="saved-title">
             <div className="saved-header">
               <div className="section-heading"><span className="section-index">02 / ZULETZT GESPEICHERT</span><h2 id="saved-title">Projektansicht</h2></div>
-              {project && <button className="text-button" type="button" onClick={() => void loadProject(project.id)} disabled={loading}>Aus Datenbank neu laden</button>}
+              {project && <button className="text-button" type="button" onClick={() => void loadProject(project.id)} disabled={loading || editing}>Aus Datenbank neu laden</button>}
             </div>
             {loading && <p className="saved-note" role="status">Gespeichertes Projekt wird geladen …</p>}
             {saveError && <p className="notice-error" role="alert">{saveError}</p>}
@@ -241,7 +242,10 @@ export default function Studio() {
                 {scriptJob && ['QUEUED', 'RUNNING'].includes(scriptJob.state) && <p role="status">{scriptJob.state === 'QUEUED' ? 'Skriptauftrag wartet auf den Worker …' : 'Antigravity erstellt das Skript …'}</p>}
                 {scriptJob?.state === 'FAILED' && <p className="notice-error" role="alert">{scriptJob.error_message}</p>}
                 {generationError && <p className="notice-error" role="alert">{generationError}</p>}
-                {script && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Bearbeiten und Freigeben folgen in den nächsten Schritten.</p><h4>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small></li>)}</ol></div>}
+                {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol></div>}
+                {script && editing && <ScriptEditor projectId={project.id} mode={project.mode} script={script}
+                  onSaved={(saved) => { setScript(saved); setEditing(false); setProjectStatus((current) => current ? { ...current, latest_script_version: saved.version } : current) }}
+                  onCancel={() => setEditing(false)} onReload={() => { setEditing(false); void loadProject(project.id) }} />}
               </div>
             </div>}
           </section>
@@ -252,8 +256,9 @@ export default function Studio() {
             <div className="section-heading"><span className="section-index">03 / ABLAUF</span><h2>Was schon möglich ist</h2></div>
             <ol className="workflow-list">
               <li><span className="step-number">01</span><div><h3>Idee speichern</h3><p>Projekt und Modus werden in PostgreSQL gesichert.</p></div><span className="step-tag available">Jetzt testen</span></li>
-              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Der Auftrag läuft über Antigravity auf einem angemeldeten Worker. Die Live-Abnahme auf einem vollständig eingerichteten Rechner ist noch offen.</p></div><span className="step-tag available">Auftrag testen</span></li>
-              <li><span className="step-number">03</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Nach dem Speichern entsteht das Skript automatisch über dein angemeldetes Pro-Konto.</p></div><span className="step-tag available">Jetzt testen</span></li>
+              <li><span className="step-number">03</span><div><h3>Skript bearbeiten</h3><p>Texte, Szenendauer und Bildvorgaben prüfen. Speichern erstellt eine neue Version.</p></div><span className="step-tag available">Jetzt testen</span></li>
+              <li><span className="step-number">04</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">
@@ -269,7 +274,7 @@ export default function Studio() {
           </div>
         </section>
       </main>
-      <footer className="site-footer"><span>VIDEOSTUDIO / V2</span><span>Entwicklungsstand · Schritt 10</span></footer>
+      <footer className="site-footer"><span>VIDEOSTUDIO / V2</span><span>Skripterstellung und Bearbeitung</span></footer>
     </div>
   )
 }

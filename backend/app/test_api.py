@@ -1,6 +1,7 @@
 """HTTP/OpenAPI contract checks against an isolated PostgreSQL schema."""
 
 import os
+import copy
 import unittest
 from uuid import uuid4
 
@@ -164,6 +165,55 @@ class ApiContractTest(unittest.TestCase):
         with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
             publications = conn.execute("SELECT count(*) FROM platform_publications").fetchone()[0]
         self.assertEqual(publications, 0)
+
+    def test_complete_edits_preserve_metadata_and_old_versions(self):
+        source = self.script_payload()
+        source["target_duration_seconds"] = 36
+        for mode in ("LOKAL", "CLOUD"):
+            with self.subTest(mode=mode):
+                project_id = self.project(mode)["id"]
+                url = f"/api/projects/{project_id}/scripts"
+                scenes = []
+                for original in source["scenes"]:
+                    scene = {key: original[key] for key in ("narration", "visual_description")}
+                    scene["duration_seconds"] = 6
+                    scene.update({"pexels_queries": [original["pexels_query"], "urban balcony"]} if mode == "LOKAL" else {"wan_prompt": "A peaceful urban balcony with flowers, natural light, slow camera movement."})
+                    scenes.append(scene)
+                payload = {"expected_version": 0, "title": source["title"], "language": "de-DE",
+                           "narration": " ".join(scene["narration"] for scene in scenes),
+                           "target_duration_seconds": source["target_duration_seconds"], "scenes": scenes}
+                first = self.client.post(url, json=payload)
+                self.assertEqual(first.status_code, 201, first.text)
+                edited = copy.deepcopy(payload)
+                edited.update(expected_version=1, title="Geprüfte neue Version")
+                edited["scenes"][0]["narration"] = "Unser Balkon wird zum Lebensraum für Bienen."
+                edited["narration"] = " ".join(scene["narration"] for scene in edited["scenes"])
+                second = self.client.post(url, json=edited)
+                self.assertEqual(second.status_code, 201, second.text)
+                stored = self.client.get(url + "/2").json()
+                self.assertEqual(stored["target_duration_seconds"], source["target_duration_seconds"])
+                self.assertEqual(stored["scenes"][0]["duration_seconds"], scenes[0]["duration_seconds"])
+                self.assertEqual(stored["narration"], edited["narration"])
+                field = "pexels_queries" if mode == "LOKAL" else "wan_prompt"
+                self.assertEqual(stored["scenes"][0][field], scenes[0][field])
+                self.assertEqual(self.client.get(url + "/1").json(), first.json())
+                self.assertEqual(self.client.post(url, json=edited).status_code, 409)
+                invalid = copy.deepcopy(edited)
+                invalid["expected_version"] = 2
+                invalid["target_duration_seconds"] += 1
+                self.assertEqual(self.client.post(url, json=invalid).status_code, 422)
+                invalid["target_duration_seconds"] = None
+                self.assertEqual(self.client.post(url, json=invalid).status_code, 422)
+                invalid = copy.deepcopy(edited)
+                invalid["expected_version"] = 2
+                invalid["narration"] = "Unvollständiger Gesamttext"
+                self.assertEqual(self.client.post(url, json=invalid).status_code, 422)
+                if mode == "LOKAL":
+                    invalid = copy.deepcopy(edited)
+                    invalid["expected_version"] = 2
+                    invalid["scenes"][0]["pexels_queries"] = ["flowers", "flowers"]
+                    self.assertEqual(self.client.post(url, json=invalid).status_code, 422)
+                self.assertEqual(len(self.client.get(url).json()), 2)
 
 
 if __name__ == "__main__":
