@@ -1,4 +1,4 @@
-# API-Vertrag – Aufgabe 08
+# API-Vertrag – Aufgaben 08, 10 und 11
 
 Basis: `/api`; interaktive OpenAPI unter `/api/docs`, Schema unter `/api/openapi.json`. JSON wird mit UTF-8 übertragen. UUIDs sind Server-IDs. `LOKAL` führt ausschließlich zu `STOCK_VIDEO`, `CLOUD` ausschließlich zu `AI_GENERATED_VIDEO`.
 
@@ -6,6 +6,8 @@ Basis: `/api`; interaktive OpenAPI unter `/api/docs`, Schema unter `/api/openapi
 | --- | --- | --- |
 | `POST /api/projects` | Idee und Modus speichern; Medientyp wird serverseitig abgeleitet. | `201` Projekt |
 | `GET /api/projects/{id}` | Projekt lesen. | `200` Projekt |
+| `POST /api/projects/{id}/script-generations` | Ersten Antigravity-Skriptauftrag in Redis/RQ anlegen; laufender Auftrag wird wiederverwendet, nach Fehler bewusst erneut aufrufen. Bei vorhandener Skriptversion `409`. | Neuer Job `202`, aktiver Job `200` |
+| `GET /api/projects/{id}/script-generations/{job_id}` | `QUEUED`, `RUNNING`, `FAILED` oder `COMPLETED`, sichere Fehlermeldung und gespeicherte Skriptversion lesen. | `200` Job |
 | `GET /api/projects/{id}/scripts` | Unveränderliche Skriptversionen absteigend auflisten. | `200` Liste |
 | `POST /api/projects/{id}/scripts` | Neue Version mit 6–10 geordneten Szenen speichern; `expected_version` muss der aktuellen Version entsprechen (`0` für die erste). Bearbeiten bedeutet, eine weitere Version anzulegen. | `201` Skript |
 | `GET /api/projects/{id}/scripts/{version}` | Version mit geordneten Szenen lesen. | `200` Skript |
@@ -27,24 +29,76 @@ Beispiel für `POST /api/projects/{id}/scripts`:
 {
   "expected_version": 0,
   "title": "Bienenfreundlicher Balkon",
-  "narration": "Ein kurzer Film über einen bienenfreundlichen Balkon.",
+  "language": "de-DE",
+  "target_duration_seconds": 36,
+  "narration": "Szene 1 zeigt unseren Balkon. Szene 2 zeigt unseren Balkon. Szene 3 zeigt unseren Balkon. Szene 4 zeigt unseren Balkon. Szene 5 zeigt unseren Balkon. Szene 6 zeigt unseren Balkon.",
   "scenes": [
-    {"narration":"Ein leerer Balkon.","visual_description":"Karger Stadtbalkon","pexels_query":"empty city balcony"},
-    {"narration":"Wir wählen Blüten.","visual_description":"Blühpflanzen im Laden","pexels_query":"flower plants shop"},
-    {"narration":"Jetzt wird gepflanzt.","visual_description":"Hände pflanzen Blumen","pexels_query":"planting balcony flowers"},
-    {"narration":"Wasser hilft beim Anwachsen.","visual_description":"Pflanzen werden gegossen","pexels_query":"watering balcony plants"},
-    {"narration":"Die erste Biene kommt.","visual_description":"Biene auf Blüte","pexels_query":"bee on flower"},
-    {"narration":"Der Balkon blüht.","visual_description":"Bunter Balkon","pexels_query":"flowering city balcony"}
+    {
+      "narration": "Szene 1 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 1.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 1",
+        "urban garden scene 1"
+      ]
+    },
+    {
+      "narration": "Szene 2 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 2.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 2",
+        "urban garden scene 2"
+      ]
+    },
+    {
+      "narration": "Szene 3 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 3.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 3",
+        "urban garden scene 3"
+      ]
+    },
+    {
+      "narration": "Szene 4 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 4.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 4",
+        "urban garden scene 4"
+      ]
+    },
+    {
+      "narration": "Szene 5 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 5.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 5",
+        "urban garden scene 5"
+      ]
+    },
+    {
+      "narration": "Szene 6 zeigt unseren Balkon.",
+      "visual_description": "Blühender Balkon, Einstellung 6.",
+      "duration_seconds": 6,
+      "pexels_queries": [
+        "balcony flowers scene 6",
+        "urban garden scene 6"
+      ]
+    }
   ]
 }
 ```
 
-Bei `CLOUD` steht in jeder Szene `wan_prompt` anstelle von `pexels_query`. Die API weist gemischte oder fehlende modusspezifische Angaben mit `422 MODE_MISMATCH` ab. Leere Texte, falsche Moduswerte, zusätzliche Felder und Szenenzahlen außerhalb von 6–10 ergeben `422 VALIDATION_ERROR`.
+Bei `CLOUD` steht in jeder Szene `wan_prompt` anstelle von `pexels_queries`. Vollständige Skripte enthalten `language=de-DE`, Gesamtdauer 30–60 Sekunden und Szenendauer 3–12 Sekunden; die Summe muss passen. Der gesamte Sprechertext entspricht den geordneten Szenentexten. LOKAL braucht 2–4 unterschiedliche Suchbegriffe pro Szene; gemischte Quellen bleiben gesperrt. Fehler im vollständigen Skript ergeben `422 INVALID_SCRIPT`. Ein bereits vollständig erzeugtes Skript darf beim Bearbeiten keine Metadaten verlieren. Für alte Aufgabe-08-Clients bleibt die Erstversion mit einem einzelnen `pexels_query` ohne Dauer kompatibel; der aktuelle Editor sendet stets den vollständigen Vertrag. Die API weist gemischte oder fehlende modusspezifische Angaben mit `422 MODE_MISMATCH` ab. Leere Texte, falsche Moduswerte, zusätzliche Felder und Szenenzahlen außerhalb von 6–10 ergeben `422 VALIDATION_ERROR`.
 
 Fehler haben die Form `{"error":{"code":"VERSION_CONFLICT","message":"..."}}`. `404` bedeutet unbekanntes Projekt/Skript/Artefakt. `409 VERSION_CONFLICT` bedeutet überholte `expected_version` oder Freigabe einer alten Version. Datenbank-Konflikte geben `409 CONFLICT` beziehungsweise `409 STATE_CONFLICT` zurück. Wiederholte aktuelle Skriptfreigaben sind idempotent und behalten Freigabe- und Produktionslauf-ID.
 
 Die Videofreigabe erwartet `{"checksum_sha256":"<64 kleine Hex-Zeichen>"}`. Eine abweichende Prüfsumme oder eine nicht finale Datei führt zu `409 ARTIFACT_CONFLICT`; ein noch nicht abgeschlossener Produktionslauf zu `409 STATE_CONFLICT`. Wiederholtes Freigeben derselben Datei liefert dieselbe Freigabe-ID. Veröffentlichungsaufträge entstehen erst in Aufgabe 26.
 
-**Umsetzungsgrenze:** Der Vertragsendpunkt speichert den Produktionslauf als `QUEUED`, startet aber noch keinen RQ-Produktionsjob. Das geschieht in Aufgabe 12/13. Die Skriptversion-Route ist die Speichergrenze für späteren Worker und Editor; automatische Gemini-Pro-Erzeugung folgt in Aufgabe 10. Der Dateiabruf und berechtigtes Playback folgen mit persistentem Remote-Medienspeicher in Aufgabe 18. Die aktuelle Compose-Konfiguration bindet die Weboberfläche nur an Loopback; Authentifizierung und ein öffentlicher Remote-Betrieb sind noch nicht implementiert und dürfen nicht als abgeschlossen gelten.
+**Umsetzungsgrenze:** Der Vertragsendpunkt speichert den Produktionslauf als `QUEUED`, startet aber noch keinen RQ-Produktionsjob. Das geschieht in Aufgabe 12/13. Automatische Gemini-Pro-Erzeugung und vollständiger versionierter Browsereditor sind in Aufgaben 10/11 implementiert und auf Windows live geprüft. Alte Skriptversionen bleiben beim Bearbeiten unverändert; der Editor erhält den Entwurf bei `409` und bietet bewusstes Neuladen an. Der Dateiabruf und berechtigtes Playback folgen mit persistentem konfigurierbarem Medienspeicher in Aufgabe 18. Die aktuelle Compose-Konfiguration bindet die Weboberfläche nur an Loopback; Authentifizierung und ein öffentlicher Remote-Betrieb sind noch nicht implementiert und dürfen nicht als abgeschlossen gelten.
 
 **Prüfung:** `docker compose -p step8check up -d --build --wait api worker`; `docker compose -p step8check exec -T api python -m unittest app.test_api app.test_database -v`. `app.test_api` legt ein isoliertes PostgreSQL-Schema an und entfernt es nach den HTTP-/OpenAPI-Vertragstests.
+
+**Aktuelle Prüfung 30.09.:** Vier API-Vertragstests mit echter PostgreSQL-Datenbank, einschließlich vollständiger LOKAL-/CLOUD-Edits, Metadatenerhalt, alter Version und Validierungs-/Versionsfehler. Insgesamt 25 Backendtests mit Redis/RQ/PostgreSQL und acht Projekttests bestanden; Web-Build sowie echte Pro-Browserläufe erfolgreich. [Abnahmebericht](step10-acceptance.md).

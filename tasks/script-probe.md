@@ -8,7 +8,7 @@
 4. Die beiden repräsentativen Probeaufträge liegen in `prompt-balkon-lokal.txt` und `prompt-regen-cloud.txt`.
 
 Es wird kein Gemini-API-Key benötigt und kein Aufruf der Gemini Developer API ausgelöst. Zum Zeitpunkt dieser Probe war die Webanwendung noch nicht implementiert; die automatische CLI-Ausführung und Schema-Prüfung sind als Prototyp belegt. Die einmalige Anmeldung des Host-Workers auf jedem gewählten Installationsrechner ist in Aufgabe 10 und bei der Installation zu prüfen.
-Der Prototyp entfernt mögliche API-Key-Umgebungsvariablen und startet ohne pauschale Werkzeugfreigabe. Laut [Antigravity-Dokumentation](https://antigravity.google/docs/cli/credits/) kann `useG1Credits` zusätzliche Credits nach Ausschöpfen der Basisquote verbrauchen. Diese Einstellung ist hier nicht aktiv (die CLI-Konfigurationsdatei fehlt, dokumentierter Standard ist `false`); bei einer vorhandenen Konfiguration verlangt der Prototyp explizit `false` und bricht sonst ab.
+Der historische Prototyp entfernte mögliche API-Key-Umgebungsvariablen und startete ohne pauschale Werkzeugfreigabe. Laut [Antigravity-Dokumentation](https://antigravity.google/docs/cli/credits/) kann `useG1Credits` zusätzliche Credits nach Ausschöpfen der Basisquote verbrauchen. Beim damaligen Test fehlte die Konfigurationsdatei, der dokumentierte Standard war `false`. **Aktueller Stand 30.09.:** Die ausführbare Probe verwendet dieselbe Kostensperre, das Modell und die Schemaauswertung wie der Host-Worker. Eine gültige Settings-Datei ist erforderlich; ein weggelassener Credit-Schlüssel zählt gemäß dokumentierter Sparse Persistence als Standard `false`. Aktive Credits und API-Provider werden abgewiesen. Aktuelle Nachweise: [Schritt 10](step10-acceptance.md).
 
 ## V1-Datenvertrag
 

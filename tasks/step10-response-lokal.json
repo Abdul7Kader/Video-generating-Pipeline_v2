@@ -1,0 +1,92 @@
+{
+  "language": "de-DE",
+  "mode": "LOKAL",
+  "scenes": [
+    {
+      "duration_seconds": 5,
+      "index": 1,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Mach deinen Balkon zum Bienenparadies! Hier sind fünf einfache Schritte für eine summende Oase.",
+      "pexels_queries": [
+        "balkon blumen",
+        "city balcony flowers",
+        "bees flying"
+      ],
+      "visual_description": "Ein grauer Balkon verwandelt sich in einen blühenden, grünen Balkon mit fliegenden Bienen."
+    },
+    {
+      "duration_seconds": 6,
+      "index": 2,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schritt 1: Wähle heimische Blüten. Lavendel, Thymian oder Glockenblumen sind echte Bienenmagneten.",
+      "pexels_queries": [
+        "lavendel topf",
+        "lavender balcony",
+        "thyme plant close up"
+      ],
+      "visual_description": "Nahaufnahme von blühendem Lavendel und Thymian in Töpfen, die sich leicht im Wind wiegen."
+    },
+    {
+      "duration_seconds": 6,
+      "index": 3,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schritt 2: Achte auf ungefüllte Blüten. Nur in einfachen Blüten finden Insekten den lebenswichtigen Nektar.",
+      "pexels_queries": [
+        "biene blüte nektar",
+        "bee pollinating flower",
+        "single flower macro"
+      ],
+      "visual_description": "Eine Biene sammelt emsig Nektar in einer weit geöffneten, einfachen Blüte. Makroaufnahme."
+    },
+    {
+      "duration_seconds": 6,
+      "index": 4,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schritt 3: Biete eine Wasserstelle an. Eine flache Schale mit Steinen hilft den Bienen beim sicheren Trinken.",
+      "pexels_queries": [
+        "wasserschale insekten",
+        "bee drinking water stones",
+        "bird bath balcony"
+      ],
+      "visual_description": "Eine flache Wasserschale mit einigen Kieselsteinen steht zwischen den Pflanzen. Klares Wasser glitzert."
+    },
+    {
+      "duration_seconds": 6,
+      "index": 5,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schritt 4: Verzichte komplett auf Pestizide. Nutze lieber natürliche Mittel für gesunde Pflanzen.",
+      "pexels_queries": [
+        "pflanzen sprühen",
+        "spraying plants leaves",
+        "gardening spray bottle"
+      ],
+      "visual_description": "Jemand besprüht Pflanzen sanft mit einer klaren Wasserlösung aus einer umweltfreundlichen Sprühflasche."
+    },
+    {
+      "duration_seconds": 6,
+      "index": 6,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schritt 5: Lass es etwas wild! Verblühtes darf stehen bleiben, das bietet Schutz und eine Überwinterungshilfe.",
+      "pexels_queries": [
+        "wildblumen balkon",
+        "wildflowers gardening",
+        "dry plant stems"
+      ],
+      "visual_description": "Ein leicht wildes Blumenarrangement auf dem Balkon. Einige trockene Stängel und bunte Blüten sind gemischt."
+    },
+    {
+      "duration_seconds": 5,
+      "index": 7,
+      "media_type": "STOCK_VIDEO",
+      "narration": "Schon kleine Töpfe machen einen großen Unterschied. Startest du dein Bienen-Projekt noch heute?",
+      "pexels_queries": [
+        "person gießt blumen",
+        "watering plants balcony",
+        "happy urban gardening"
+      ],
+      "visual_description": "Eine lächelnde Person gießt zufrieden die Blumenkästen am Balkongeländer vor einer Stadtkulisse."
+    }
+  ],
+  "target_duration_seconds": 40,
+  "title": "Bienenfreundlicher Stadtbalkon in 5 Schritten"
+}
