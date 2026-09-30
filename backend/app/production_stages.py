@@ -1,8 +1,10 @@
-"""Isolated media-stage boundary. Actual adapters arrive in tasks 14-18/21."""
+"""Isolated media-stage boundary with Pexels; remaining adapters in 15-18/21."""
 
 import json
 import os
 from pathlib import PurePosixPath
+from typing import Literal
+from urllib.parse import urlparse
 import signal
 import subprocess
 import sys
@@ -39,13 +41,44 @@ class StageArtifact(BaseModel):
         return value
 
 
+class PexelsSource(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scene_position: int = Field(ge=1, le=20)
+    artifact_key: str = Field(pattern=r"^scene_[0-9]+$")
+    media_type: Literal["STOCK_VIDEO"] = "STOCK_VIDEO"
+    video_id: int = Field(gt=0)
+    file_id: int = Field(gt=0)
+    query: str = Field(min_length=1, max_length=1000)
+    video_page: str
+    creator: str = Field(min_length=1, max_length=300)
+    creator_page: str
+    license_url: Literal["https://www.pexels.com/license/"] = "https://www.pexels.com/license/"
+    scene_duration_seconds: float = Field(gt=0, le=60)
+    duration_seconds: float = Field(gt=0, le=86400)
+    width: int = Field(ge=720)
+    height: int = Field(ge=1280)
+    fps: float = Field(gt=0, le=240)
+
+    @field_validator("video_page", "creator_page")
+    @classmethod
+    def pexels_page(cls, value):
+        url = urlparse(value)
+        if url.scheme != "https" or url.hostname not in ("pexels.com", "www.pexels.com") or url.port not in (None, 443) or url.username or url.password:
+            raise ValueError("Pexels HTTPS page required")
+        return value
+
+
 class StageResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
     artifacts: list[StageArtifact] = Field(max_length=100)
+    sources: list[PexelsSource] = Field(default_factory=list, max_length=20)
 
 
 def execute_stage(name, context):
-    # No fixture switch, external calls, source fallback or simulated media in production.
+    if name == "SCENES" and context["mode"] == "LOKAL":
+        from app.pexels import collect_scenes
+        return collect_scenes(context)
+    # No source fallback or simulated media in production.
     labels = {"SCENES": "Szenenbeschaffung", "SPEECH": "Sprachsynthese", "GRAPHICS": "Grafikerstellung",
               "ENCODING": "Video-Encoding", "STORAGE": "Medienablage"}
     raise StageFailure("STAGE_UNAVAILABLE", f"{labels[name]} ist noch nicht verfügbar. Deine Skriptfreigabe bleibt gespeichert.")
@@ -64,7 +97,7 @@ def kill_process_tree(pid):
 
 
 def main():
-    from app.api import database
+    from app.database import database
     payload = json.loads(sys.stdin.readline())
     context = payload["context"]
     # An orphaned child is bounded even if its RQ parent is killed.
@@ -91,4 +124,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # Keep adapter exceptions identical when invoked directly via python -m.
+    from app.production_stages import main as canonical_main
+    canonical_main()

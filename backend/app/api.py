@@ -11,13 +11,14 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
-from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from redis import Redis
 from redis.exceptions import RedisError
 from rq import Queue
 
 from app.script_contract import validate_script
+from app.production_stages import PexelsSource
+from app.database import database
 
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -145,6 +146,7 @@ class ProductionRunOutput(StrictModel):
     deadline_at: datetime | None
     available_at: datetime
     steps: list[ProductionStepOutput]
+    sources: list[PexelsSource] = Field(default_factory=list)
 
 
 class ProjectStatus(StrictModel):
@@ -160,6 +162,7 @@ class ProjectStatus(StrictModel):
     production_error_code: str | None = None
     production_can_resume: bool = False
     production_cancel_requested: bool = False
+    production_sources: list[PexelsSource] = Field(default_factory=list)
 
 
 class ArtifactOutput(StrictModel):
@@ -190,10 +193,6 @@ router = APIRouter(
         422: {"model": ErrorEnvelope, "description": "Invalid request"},
     },
 )
-
-
-def database():
-    return psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row)
 
 
 def problem(status: int, code: str, message: str) -> HTTPException:
@@ -548,6 +547,7 @@ def get_status(project_id: UUID):
         "production_error_code": production['error_code'] if production else None,
         "production_can_resume": production['can_resume'] if production else False,
         "production_cancel_requested": production['cancel_requested'] if production else False,
+        "production_sources": production['sources'] if production else [],
     }
 
 
@@ -561,13 +561,16 @@ def production_output(conn, project_id, run_id):
                          'WHERE production_run_id = %s ORDER BY position', (run_id,)).fetchall()
     current = conn.execute('SELECT id FROM script_versions WHERE project_id = %s ORDER BY version DESC LIMIT 1',
                            (project_id,)).fetchone()
+    manifest = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
+                            "AND name = 'SCENES' AND state = 'COMPLETED'", (run_id,)).fetchone()
+    sources = manifest['result'].get('sources', []) if manifest else []
     can_resume = (run['state'] == 'FAILED' and not run['cancel_requested']
                   and current['id'] == run['script_version_id']
                   and (run['deadline_at'] is None or run['deadline_at'] > datetime.now(timezone.utc))
                   and all(step['state'] == 'COMPLETED' or step['attempts'] < step['max_attempts'] for step in steps))
     return {**{name: run[name] for name in ('id', 'project_id', 'state', 'error_code', 'error_message',
                                            'cancel_requested', 'started_at', 'deadline_at', 'available_at')},
-            'can_resume': can_resume, 'steps': steps}
+            'can_resume': can_resume, 'steps': steps, 'sources': sources}
 
 
 @router.get('/projects/{project_id}/production-runs/{run_id}', response_model=ProductionRunOutput)

@@ -82,7 +82,7 @@ def main() -> None:
     parser.add_argument("--burst", action="store_true", help="Exit when the queue is empty")
     parser.add_argument("--check", action="store_true", help="Check CLI, credit guard, database and Redis without a model call")
     parser.add_argument("--config", type=Path, default=Path.home() / ".config" / "video-pipeline" / "worker.json",
-                        help="Private JSON file with DATABASE_URL and REDIS_URL")
+                        help="Private JSON file with database, queue and optional Pexels/media configuration")
     args = parser.parse_args()
 
     if args.config.exists():
@@ -94,6 +94,11 @@ def main() -> None:
                 if not isinstance(settings.get(name), str) or not settings[name]:
                     raise ValueError(f"{name} is missing")
                 os.environ[name] = settings[name]
+            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH"):
+                if name in settings:
+                    if not isinstance(settings[name], str) or not settings[name]:
+                        raise ValueError(f"{name} must be a nonempty string")
+                    os.environ[name] = settings[name]
         except (OSError, ValueError) as exc:
             parser.error(f"Invalid worker configuration: {exc}")
 

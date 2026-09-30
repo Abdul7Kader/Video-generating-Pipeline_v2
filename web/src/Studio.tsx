@@ -9,7 +9,8 @@ type Services = { database: boolean; redis: boolean; worker: boolean }
 type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProductionStep = { id: string; name: string; state: string; attempts: number; max_attempts: number }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean }
+type PexelsSource = { scene_position: number; video_id: number; video_page: string; creator: string; creator_page: string; width: number; height: number; duration_seconds: number }
+type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[] }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -374,6 +375,15 @@ export default function Studio() {
                         : <p>{projectStatus?.production_state === 'FAILED' ? 'Produktionsauftrag gestoppt.' : 'Produktion abgeschlossen.'}</p>}
                       {projectStatus?.production_error && <p className="notice-error">{projectStatus.production_error}</p>}
                       {Boolean(projectStatus?.production_steps?.length) && <ul className="production-step-list" aria-label="Produktionsschritte">{projectStatus!.production_steps!.map(step => <li key={step.id} className={`production-step ${step.state.toLowerCase()}`}><span>{productionLabels[step.name]}</span><span>{stepStates[step.state]}{step.attempts > 0 ? ` · Versuch ${step.attempts}/${step.max_attempts}` : ''}</span></li>)}</ul>}
+                      {Boolean(projectStatus?.production_sources?.length) && <section className="scene-sources" aria-label="Szenenquellen">
+                        <h3>Clips von <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer">Pexels</a></h3>
+                        <ul>{projectStatus!.production_sources!.map(source => <li key={source.scene_position}>
+                          <span>Szene {source.scene_position}</span>
+                          <a href={source.video_page} target="_blank" rel="noopener noreferrer">Clip {source.video_id} ↗</a>
+                          <span>von <a href={source.creator_page} target="_blank" rel="noopener noreferrer">{source.creator}</a></span>
+                          <small>{source.width} × {source.height} · {source.duration_seconds.toFixed(1)} s</small>
+                        </li>)}</ul>
+                      </section>}
                       <div className="production-actions">
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
@@ -399,7 +409,8 @@ export default function Studio() {
               <li><span className="step-number">02</span><div><h3>Skript erzeugen</h3><p>Nach dem Speichern entsteht das Skript automatisch über dein angemeldetes Pro-Konto.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">03</span><div><h3>Skript bearbeiten</h3><p>Texte, Szenendauer und Bildvorgaben prüfen. Speichern erstellt eine neue Version.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">05</span><div><h3>Video ansehen</h3><p>Produktion und Vorschau sind noch nicht aktiv.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">06</span><div><h3>Video ansehen</h3><p>Vertonung, fertiges Video und Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">
@@ -411,7 +422,7 @@ export default function Studio() {
                 return <li key={key}><span className="service-name"><span className={`service-indicator ${online ? 'online' : ''}`} aria-hidden="true" />{serviceLabels[key]}</span><span className={`service-state ${online ? 'online' : ''}`}>{online ? 'Bereit' : 'Wartet'}</span></li>
               })}
             </ul>
-            <p className="panel-footnote">LOKAL und CLOUD wählen derzeit nur die spätere Bildquelle. Es wird noch kein Video erzeugt.</p>
+            <p className="panel-footnote">LOKAL beschafft Pexels-Clips. Die CLOUD-Beschaffung und fertige Videos folgen.</p>
           </div>
         </section>
       </main>

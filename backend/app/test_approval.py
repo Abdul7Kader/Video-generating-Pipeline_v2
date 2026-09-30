@@ -17,6 +17,7 @@ from app.main import app
 from app.migrate import migrate
 from app.test_script_generation import sample_script
 from app.worker import host_worker_class
+from app.production_stages import StageFailure
 
 
 @unittest.skipUnless(os.getenv("DATABASE_URL") and os.getenv("REDIS_URL"), "PostgreSQL and Redis required")
@@ -111,7 +112,9 @@ class ApprovalIntegrationTest(unittest.TestCase):
                 project_id, _ = self.complete_project(mode)
                 approved = self.approve(project_id)
                 self.assertEqual(approved.status_code, 201, approved.text)
-                host_worker_class()([self.queue], connection=self.redis).work(burst=True)
+                # Approval is independent of installation secrets and live media services.
+                with patch('app.production_jobs.run_stage', side_effect=StageFailure('STAGE_UNAVAILABLE', 'Medienadapter ist noch nicht verfügbar.')):
+                    host_worker_class()([self.queue], connection=self.redis).work(burst=True)
                 status = self.client.get(f"/api/projects/{project_id}/status").json()
                 self.assertEqual(status["production_state"], "FAILED")
                 self.assertIn("noch nicht", status["production_error"])

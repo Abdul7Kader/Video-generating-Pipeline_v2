@@ -61,7 +61,7 @@ def fail_run(conn, run_id, failure, step=None):
 
 
 def stage_command():
-    return [sys.executable, "-m", "app.production_stages"]
+    return [sys.executable, "-m", "app.production_stage_runner"]
 
 
 def run_stage(conn, step, context, timeout):
@@ -101,6 +101,15 @@ def run_stage(conn, step, context, timeout):
                     raise StageFailure('MODE_MISMATCH', 'Die Szenenquelle passt nicht zum freigegebenen Videomodus.')
                 if artifact.kind == 'FINAL' and step['name'] != 'STORAGE':
                     raise ValueError('only the storage checkpoint publishes final artifacts')
+            if result.sources:
+                if step['name'] != 'SCENES' or context['mode'] != 'LOKAL':
+                    raise ValueError('Pexels manifest outside LOKAL scenes')
+                expected = {s['position']: s['duration_seconds'] for s in context['scenes']}
+                actual = {s.scene_position: s.scene_duration_seconds for s in result.sources}
+                source_keys = {s.artifact_key for s in result.sources}
+                if (expected != actual or len(actual) != len(result.sources) or source_keys != set(keys)
+                        or len(source_keys) != len(result.sources) or any(a.kind != 'SOURCE' for a in result.artifacts)):
+                    raise ValueError('incomplete scene manifest')
             return result
         except (ValueError, KeyError, TypeError) as exc:
             raise StageFailure("INVALID_STAGE_RESULT", "Der Produktionsschritt hat ein ungültiges Ergebnis geliefert.") from exc

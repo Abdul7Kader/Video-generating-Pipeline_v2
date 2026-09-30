@@ -50,6 +50,10 @@ class ProductionIntegrationTest(unittest.TestCase):
             conn.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier(cls.schema)))
 
     def setUp(self):
+        # Recovery scans the entire schema. An earlier failed case must not
+        # enqueue its unfinished run into the next case's private queue.
+        with database() as conn:
+            conn.execute('TRUNCATE projects CASCADE')
         self.redis = Redis.from_url(os.environ['REDIS_URL'])
         self.queue = Queue('production-test-' + uuid4().hex, connection=self.redis)
         self.queue_patch = patch('app.api.Queue', return_value=self.queue)

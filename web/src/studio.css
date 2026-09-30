@@ -112,3 +112,12 @@ input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;color:#81929
 .script-preview li,.loading-heading p,.editor-summary{overflow-wrap:anywhere}
 @media(max-width:520px){.editor-actions{bottom:8px;padding:12px;gap:8px}.editor-actions button{flex:1 1 100%}.editor-summary{margin-left:0}.workflow-list li{display:grid;grid-template-columns:24px minmax(0,1fr)}.step-tag{grid-column:2;margin-left:0;padding-top:0}.workflow-list p{max-width:none}}
 @media(prefers-reduced-motion:reduce){button,.idea-input,.mode-select,.editor-input{transition:none}.primary-button:hover:not(:disabled),.secondary-button:hover:not(:disabled),.text-button:hover:not(:disabled){transform:none}}
+/* Source details are passive; only the underlined links are interactive. */
+.scene-sources { margin-top: 1rem; }
+.scene-sources h3 { font-size: 1rem; }
+.scene-sources ul { list-style: none; padding: 0; margin: 0; }
+.scene-sources li { display: flex; flex-wrap: wrap; gap: .35rem .8rem; padding: .7rem 0; border-bottom: 1px solid #35434b; }
+.scene-sources a { color: #b5e8d6; text-decoration: underline; text-underline-offset: .2em; border-radius: 3px; }
+.scene-sources a:hover { color: #eef4f1; }
+.scene-sources a:focus-visible { outline: 3px solid #b5e8d6; outline-offset: 3px; }
+.scene-sources small { flex-basis: 100%; color: #a9b9bd; }
