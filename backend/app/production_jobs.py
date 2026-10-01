@@ -118,6 +118,15 @@ def run_stage(conn, step, context, timeout):
                         or any(a.kind != 'INTERMEDIATE' or a.media_type != 'SPEECH_AUDIO' for a in result.artifacts)
                         or any(abs(s.duration_seconds - s.frames / s.sample_rate) > 1 / s.sample_rate for s in result.speech)):
                     raise ValueError('incomplete or inconsistent speech manifest')
+            if result.graphics is not None:
+                from app.graphics import build_plan
+                expected_graphics = build_plan(context)
+                if (step['name'] != 'GRAPHICS' or result.graphics != expected_graphics
+                        or set(keys) != {expected_graphics.title_artifact_key, *(s.artifact_key for s in expected_graphics.scenes)}
+                        or any(a.kind != 'INTERMEDIATE' or a.media_type != 'GRAPHICS_OVERLAY' for a in result.artifacts)):
+                    raise ValueError('incomplete or inconsistent graphics manifest')
+            elif any(a.media_type == 'GRAPHICS_OVERLAY' for a in result.artifacts):
+                raise ValueError('graphics artifacts without timing manifest')
             return result
         except (ValueError, KeyError, TypeError) as exc:
             raise StageFailure("INVALID_STAGE_RESULT", "Der Produktionsschritt hat ein ungültiges Ergebnis geliefert.") from exc

@@ -14,5 +14,6 @@ coverage/
 .pytest_cache/
 tasks/pexels-probe-output/
 .data/
+.remotion/
 *.onnx
 *.onnx.json

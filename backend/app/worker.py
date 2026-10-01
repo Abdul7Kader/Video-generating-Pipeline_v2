@@ -26,7 +26,7 @@ def check_installation() -> None:
             migrated = connection.execute("SELECT to_regclass('script_generation_jobs') IS NOT NULL "
                                           "AND to_regclass('production_steps') IS NOT NULL").fetchone()[0]
             if migrated:
-                migrated = connection.execute('SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = 4)').fetchone()[0]
+                migrated = connection.execute('SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = 5)').fetchone()[0]
     except (psycopg.Error, OSError, ValueError) as exc:
         raise GenerationFailure("DATABASE_UNAVAILABLE", "Die konfigurierte PostgreSQL-Datenbank ist nicht erreichbar.") from exc
     if not migrated:
@@ -96,7 +96,7 @@ def main() -> None:
                 if not isinstance(settings.get(name), str) or not settings[name]:
                     raise ValueError(f"{name} is missing")
                 os.environ[name] = settings[name]
-            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "PIPER_MODEL_PATH"):
+            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "PIPER_MODEL_PATH", "REMOTION_NODE_PATH", "REMOTION_BROWSER_EXECUTABLE"):
                 if name in settings:
                     if not isinstance(settings[name], str) or not settings[name]:
                         raise ValueError(f"{name} must be a nonempty string")

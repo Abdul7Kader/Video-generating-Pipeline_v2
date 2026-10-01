@@ -1,4 +1,4 @@
-"""Isolated media-stage boundary with Pexels/Piper; remaining adapters in 16-18/21."""
+"""Isolated Pexels/Piper/Remotion stages; encoding and storage follow in 17-18."""
 
 import json
 import os
@@ -28,7 +28,7 @@ class StageArtifact(BaseModel):
     model_config = ConfigDict(extra="forbid")
     key: str = Field(min_length=1, max_length=100, pattern=r"^[a-zA-Z0-9_-]+$")
     kind: str = Field(pattern=r"^(SOURCE|INTERMEDIATE|FINAL)$")
-    media_type: str = Field(pattern=r"^(STOCK_VIDEO|AI_GENERATED_VIDEO|FINAL_VIDEO|SPEECH_AUDIO)$")
+    media_type: str = Field(pattern=r"^(STOCK_VIDEO|AI_GENERATED_VIDEO|FINAL_VIDEO|SPEECH_AUDIO|GRAPHICS_OVERLAY)$")
     storage_path: str = Field(min_length=1, max_length=1000)
     checksum_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -85,11 +85,41 @@ class SpeechSegment(BaseModel):
     channels: Literal[1] = 1
 
 
+class GraphicsScene(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    scene_position: int = Field(ge=1, le=20)
+    artifact_key: str = Field(pattern=r'^caption_[0-9]+$')
+    text: str = Field(min_length=1, max_length=400)
+    start_frame: int = Field(ge=0)
+    duration_frames: int = Field(gt=0, le=1440)
+    caption_frames: int = Field(gt=0, le=1440)
+    audio_duration_seconds: float = Field(gt=0, le=120)
+
+
+class GraphicsManifest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    width: Literal[720] = 720
+    height: Literal[1280] = 1280
+    fps: Literal[24] = 24
+    duration_frames: int = Field(ge=720, le=1440)
+    title: str = Field(min_length=1, max_length=120)
+    title_artifact_key: Literal['graphics_title'] = 'graphics_title'
+    title_frames: int = Field(gt=0, le=96)
+    safe_left: Literal[64] = 64
+    safe_right: Literal[112] = 112
+    safe_top: Literal[96] = 96
+    safe_bottom: Literal[240] = 240
+    renderer_version: Literal['4.0.532'] = '4.0.532'
+    template_version: Literal['v1'] = 'v1'
+    scenes: list[GraphicsScene] = Field(min_length=6, max_length=10)
+
+
 class StageResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
     artifacts: list[StageArtifact] = Field(max_length=100)
     sources: list[PexelsSource] = Field(default_factory=list, max_length=20)
     speech: list[SpeechSegment] = Field(default_factory=list, max_length=20)
+    graphics: GraphicsManifest | None = None
 
 
 def execute_stage(name, context):
@@ -99,6 +129,9 @@ def execute_stage(name, context):
     if name == 'SPEECH':
         from app.speech import synthesize_scenes
         return synthesize_scenes(context)
+    if name == 'GRAPHICS':
+        from app.graphics import render_graphics
+        return render_graphics(context)
     # No source fallback or simulated media in production.
     labels = {"SCENES": "Szenenbeschaffung", "SPEECH": "Sprachsynthese", "GRAPHICS": "Grafikerstellung",
               "ENCODING": "Video-Encoding", "STORAGE": "Medienablage"}

@@ -11,6 +11,8 @@ real_stage = production_stages.execute_stage
 def speech_fixture(name, context):
     if name == 'SCENES':
         return fixture_stage(name, context)
+    if name == 'GRAPHICS':
+        raise production_stages.StageFailure('STAGE_UNAVAILABLE', 'Grafikstufe in isolierter Sprachprüfung deaktiviert.')
     scenario = context['script']['title']
     if name == 'SPEECH' and scenario in ('silent-speech', 'failed-speech', 'empty-speech'):
         voice = ControlledVoice()

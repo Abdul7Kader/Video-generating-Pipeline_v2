@@ -43,7 +43,7 @@ class SpeechProductionTest(unittest.TestCase):
             project, run = self.project(mode=mode, payload=payload)
             self.work()
             result = self.output(project, run)
-            self.assertEqual(result['error_code'], 'STAGE_UNAVAILABLE')  # GRAPHICS remains step 16
+            self.assertEqual(result['error_code'], 'STAGE_UNAVAILABLE')  # isolate speech from graphics
             self.assertEqual([s['state'] for s in result['steps']], ['COMPLETED', 'COMPLETED', 'FAILED', 'PENDING', 'PENDING'])
             self.assertEqual(len(result['speech']), 6)
             self.assertEqual(self.client.get(f'/api/projects/{project}/status').json()['production_speech'], result['speech'])
@@ -82,7 +82,7 @@ class SpeechProductionTest(unittest.TestCase):
     def test_migration_roundtrip_and_audio_kind_guards(self):
         migrate('down'); migrate('up')
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4])
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4, 5])
             for mode, media in [('LOKAL', 'STOCK_VIDEO'), ('CLOUD', 'AI_GENERATED_VIDEO')]:
                 project, run = self.project(mode=mode)
                 insert = "INSERT INTO artifacts (project_id,production_run_id,kind,media_type,storage_path,checksum_sha256) VALUES (%s,%s,%s,%s,'audio.wav',%s)"
@@ -94,7 +94,7 @@ class SpeechProductionTest(unittest.TestCase):
         with self.assertRaises(psycopg.Error):
             migrate('down')
         with database() as conn:
-            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 4)
+            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 5)
             self.assertEqual(conn.execute("SELECT count(*) AS n FROM artifacts WHERE media_type = 'SPEECH_AUDIO'").fetchone()['n'], 2)
 
 

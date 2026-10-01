@@ -11,7 +11,8 @@ type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; cr
 type ProductionStep = { id: string; name: string; state: string; attempts: number; max_attempts: number }
 type PexelsSource = { scene_position: number; video_id: number; video_page: string; creator: string; creator_page: string; width: number; height: number; duration_seconds: number }
 type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[] }
+type GraphicsManifest = { width: number; height: number; fps: number; duration_frames: number; scenes: { scene_position: number; start_frame: number; caption_frames: number }[] }
+type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -393,6 +394,15 @@ export default function Studio() {
                           <strong>{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(segment.duration_seconds)} s</strong>
                         </li>)}</ul>
                       </section>}
+                      {projectStatus?.production_graphics && <section className="speech-segments graphics-summary" aria-label="Gerenderte Grafiken">
+                        <h3>Titel und Untertitel gerendert</h3>
+                        <p>1 Titel · {projectStatus.production_graphics.scenes.length} Untertitel · {projectStatus.production_graphics.width} × {projectStatus.production_graphics.height} · {projectStatus.production_graphics.fps} fps</p>
+                        <p>{new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(projectStatus.production_graphics.duration_frames / projectStatus.production_graphics.fps)} s geplante Videolänge</p>
+                        <ul>{projectStatus.production_graphics.scenes.map(scene => <li key={scene.scene_position}>
+                          <span>Untertitel {scene.scene_position}</span>
+                          <strong>{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(scene.start_frame / projectStatus.production_graphics!.fps)}–{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((scene.start_frame + scene.caption_frames) / projectStatus.production_graphics!.fps)} s</strong>
+                        </li>)}</ul>
+                      </section>}
                       <div className="production-actions">
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
@@ -420,7 +430,8 @@ export default function Studio() {
               <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">06</span><div><h3>Sprache erzeugen</h3><p>Deutsche Sprechertexte werden szenenweise vertont; die gemessenen Dauern bleiben gespeichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">07</span><div><h3>Video ansehen</h3><p>Grafiken, fertiges Video und Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">07</span><div><h3>Titel und Untertitel rendern</h3><p>Grafiken erhalten sichere Ränder und Zeitdaten passend zu den Sprachsegmenten.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Videoschnitt und abspielbare Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">

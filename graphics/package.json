@@ -1,0 +1,16 @@
+{
+  "name": "video-pipeline-graphics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"install-browser": "node install-browser.mjs"},
+  "overrides": {"baseline-browser-mapping": "2.11.26"},
+  "dependencies": {
+    "@remotion/bundler": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "remotion": "4.0.532",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "@fontsource/noto-sans": "5.2.10"
+  }
+}
