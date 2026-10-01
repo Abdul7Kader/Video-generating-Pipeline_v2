@@ -110,6 +110,14 @@ def run_stage(conn, step, context, timeout):
                 if (expected != actual or len(actual) != len(result.sources) or source_keys != set(keys)
                         or len(source_keys) != len(result.sources) or any(a.kind != 'SOURCE' for a in result.artifacts)):
                     raise ValueError('incomplete scene manifest')
+            if result.speech:
+                expected = {s['position']: s['narration'].strip() for s in context['scenes']}
+                actual = {s.scene_position: s.text for s in result.speech}
+                if (step['name'] != 'SPEECH' or expected != actual or len(actual) != len(result.speech)
+                        or {s.artifact_key for s in result.speech} != set(keys) or len(keys) != len(result.speech)
+                        or any(a.kind != 'INTERMEDIATE' or a.media_type != 'SPEECH_AUDIO' for a in result.artifacts)
+                        or any(abs(s.duration_seconds - s.frames / s.sample_rate) > 1 / s.sample_rate for s in result.speech)):
+                    raise ValueError('incomplete or inconsistent speech manifest')
             return result
         except (ValueError, KeyError, TypeError) as exc:
             raise StageFailure("INVALID_STAGE_RESULT", "Der Produktionsschritt hat ein ungültiges Ergebnis geliefert.") from exc

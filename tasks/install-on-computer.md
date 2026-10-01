@@ -24,7 +24,7 @@ Im Checkout eine Python-3.12-Umgebung und die Backend-Abhängigkeiten installier
 | Windows PowerShell | macOS / Linux |
 | --- | --- |
 | `py -3.12 -m venv .venv` | `python3.12 -m venv .venv` |
-| `.venv\Scripts\python.exe -m pip install -r backend/requirements.txt` | `.venv/bin/python -m pip install -r backend/requirements.txt` |
+| `.venv\Scripts\python.exe -m pip install -r backend/requirements-worker.txt` | `.venv/bin/python -m pip install -r backend/requirements-worker.txt` |
 
 Die Vorlage [`deploy/worker.example.json`](../deploy/worker.example.json) als `~/.config/video-pipeline/worker.json` **außerhalb des Checkouts** ablegen (Windows: `$HOME\.config\video-pipeline\worker.json`). `CHANGE_ME` durch das URL-kodierte Passwort aus `.env` ersetzen; bei geänderten Host-Ports die URLs anpassen. Die Datei nur für den angemeldeten Benutzer lesbar machen. `DATABASE_URL` und `REDIS_URL` können stattdessen als Umgebungsvariablen gesetzt werden; eine vorhandene private JSON-Datei hat Vorrang. Auf Linux/macOS nutzt der Worker RQs `SpawnWorker`. Auf Windows nutzt er wegen Fehlern des `SpawnWorker` in der festgelegten RQ-Version einen `SimpleWorker` mit Timer für Jobgrenzen. Dadurch gibt es dort keine Isolation durch einen separaten RQ-Kindprozess; der Antigravity-Aufruf selbst hat weiterhin einen eigenen Prozess und ein Zeitlimit.
 
@@ -64,7 +64,7 @@ Auf demselben Rechner `http://127.0.0.1:4177/` (oder den konfigurierten Web-Port
 
 ## 5. Produktionskette ab Schritt 13
 
-Die API muss Migration 0003 (`production_steps`/`production_attempts`) angewendet haben, bevor der aktualisierte Hostworker startet. `--check` prüft auch diese Voraussetzung. Der normale Start über `python -m app.worker` prüft die persistente Zustellliste beim Start und im Leerlauf ungefähr alle fünf Sekunden. PostgreSQL speichert den fachlichen Zustand und erfolgreiche Checkpoints; Redis/RQ transportiert die Aufträge. Der bisherige unveränderte `rq worker` im Container ist eine Entwicklungsvariante und stellt diese Hostworker-Wiederaufnahme nicht bereit.
+Die API muss die Migrationen einschließlich 0003 (`production_steps`/`production_attempts`) und 0004 (`SPEECH_AUDIO`) angewendet haben, bevor der aktualisierte Hostworker startet. `--check` prüft auch diese Voraussetzung. Der normale Start über `python -m app.worker` prüft die persistente Zustellliste beim Start und im Leerlauf ungefähr alle fünf Sekunden. PostgreSQL speichert den fachlichen Zustand und erfolgreiche Checkpoints; Redis/RQ transportiert die Aufträge. Der bisherige unveränderte `rq worker` im Container ist eine Entwicklungsvariante und stellt diese Hostworker-Wiederaufnahme nicht bereit.
 
 Auf Windows läuft RQ weiterhin als `SimpleWorker`, doch jeder Produktionsschritt erhält nun einen eigenen begrenzten Medienprozess und eine Schrittsperre. Bei Elternprozess-Abbruch verhindert diese Sperre parallele Ausführung bis zum Ende oder eigenen Watchdog des Medienprozesses. Prozessbäume werden bei Timeout/Abbruch beendet. Auf Linux/macOS sind die entsprechenden Prozessgruppen implementiert; ihre vollständige Live-Abnahme bleibt Aufgabe 35.
 
@@ -80,4 +80,22 @@ Auf dem **gewählten Installationsrechner** FFmpeg mit `ffprobe` installieren un
 | `MEDIA_ROOT` | Absoluter beschreibbarer Ordner. Standard: `<Checkout>/.data/media`, von Git ausgeschlossen. |
 | `FFPROBE_PATH` | Absoluter Pfad zu ffprobe; sonst Suche im PATH. |
 
-Hostworker nach Konfigurationsänderungen neu starten. Ohne Key/ffprobe meldet der Produktionslauf einen sichtbaren Einrichtungsfehler; die allgemeine `--check`-Prüfung bestätigt weiterhin ausschließlich CLI/Kostensperre/DB/Redis. Freigabe einer LOKAL-Version lädt pro Szene geeignete Hochformat-MP4s mit Mindestdauer und speichert Herkunft/Hash. Bei fehlendem Treffer Suchbegriffe/Bildbeschreibung bearbeiten und die neue Version bewusst freigeben. 24-Stunden-Suchcache berücksichtigt auch leere Treffer. Bereits geprüfte Clips werden beim Retry kontrolliert wiederverwendet. Nach erfolgreicher Beschaffung stoppt die aktuelle Kette bei der noch fehlenden Sprachsynthese (15). Kein fertiges Video oder Dateistream in Schritt 14. [Abnahme](step14-acceptance.md).
+Hostworker nach Konfigurationsänderungen neu starten. Ohne Key/ffprobe meldet der Produktionslauf einen sichtbaren Einrichtungsfehler; die allgemeine `--check`-Prüfung bestätigt weiterhin ausschließlich CLI/Kostensperre/DB/Redis. Freigabe einer LOKAL-Version lädt pro Szene geeignete Hochformat-MP4s mit Mindestdauer und speichert Herkunft/Hash. Bei fehlendem Treffer Suchbegriffe/Bildbeschreibung bearbeiten und die neue Version bewusst freigeben. 24-Stunden-Suchcache berücksichtigt auch leere Treffer. Bereits geprüfte Clips werden beim Retry kontrolliert wiederverwendet. Die Beschaffung übergibt an die Sprachsynthese aus Schritt 15. Kein fertiges Video oder Dateistream in Schritt 14. [Abnahme](step14-acceptance.md).
+
+## 7. Piper-Sprachsynthese ab Schritt 15
+
+Im Checkout die Host-Abhängigkeiten aus `backend/requirements-worker.txt` installieren (Piper **1.8.0**); der API-Container benötigt kein Stimmenmodell. Danach die deutsche Standardstimme installieren:
+
+| Windows PowerShell | macOS / Linux |
+| --- | --- |
+| `.venv\Scripts\python.exe deploy/install-piper.py` | `.venv/bin/python deploy/install-piper.py` |
+
+Der Installer lädt `de_DE-thorsten-high.onnx`, dessen Konfiguration und die Modellkarte aus einer festgelegten Revision der offiziellen Piper-Stimmenablage. Er prüft SHA-256 vor dem atomaren Speichern; eine erneute Installation mit unveränderten Dateien benötigt keinen Download. Standardordner: `<Checkout>/.data/models`, etwa 114 MB. Gewichte und erzeugte Audiodateien gehören nicht in Git. Ein alternativer Ordner wird mit `--model-dir` eingerichtet; anschließend `PIPER_MODEL_PATH` als absoluten Pfad zur `.onnx` in der privaten `worker.json` oder Umgebung setzen. Die passende `.onnx.json` muss unmittelbar daneben liegen.
+
+Piper verarbeitet deutsche Skripte (`de-DE`) vollständig lokal auf der **CPU**, ohne Konto, API oder GPU. Pro Szene entsteht eine Mono-PCM-WAV-Datei mit 22.050 Hz für die Standardstimme. WAV-Frames und ffprobe bestimmen die tatsächliche Dauer; Stimme, Modell-/Konfigurationshash und Engineversion bleiben in den Segmentdaten. Die Oberfläche zeigt nach erfolgreichem Sprachschritt die gemessenen Szenendauern und ihre Summe. Diese Summe ist noch keine fertige Videolänge; Bildanpassung und Zusammensetzung folgen in Schritt 17. Audio ist ein Zwischenartefakt für beide Modi und verändert deren visuelle Quellenregel nicht.
+
+Leere Texte, stille/beschädigte Audiodateien, fehlendes Modell und Synthesefehler stoppen die Produktion sichtbar vor der Grafikstufe. Wiederaufnahme prüft vorhandene Audiosegmente; beschädigte Segmente werden einzeln erneut erzeugt, abgeschlossene Sprachschritte bleiben erhalten. Nach erfolgreicher Sprache bleibt die Grafikstufe (16) noch offen. Browserwiedergabe und persistente Medienauslieferung folgen in Schritt 18. Die allgemeine Workerprüfung führt keine Synthese aus; fehlende Medienvoraussetzungen erscheinen am betroffenen Produktionsschritt.
+
+Das feste Sprechtempo ist gegenüber dem Modellstandard reduziert (`length_scale=1.15`) und Teil der Segmentmetadaten. Medienprozesse verwenden ausdrücklich UTF-8, auch auf Windows mit älterer Systemkodierung. Nach einem Update müssen API und Hostworker denselben Code-/Metadatenvertrag verwenden: Compose-API aktualisieren, anschließend den ruhenden Hostworker neu starten.
+
+Quellen: [Piper Python-API](https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_PYTHON.md), [Piper-Paket und unterstützte Wheels](https://pypi.org/project/piper-tts/), [Stimmen-Modellkarte](https://huggingface.co/rhasspy/piper-voices/blob/c10ece1aade47bb51c153c893d14e5bf8e5b7117/de/de_DE/thorsten/high/MODEL_CARD). Piper steht unter **GPL-3.0-or-later**; die Thorsten-Sprachdaten sind laut Modellkarte **CC0**. Diese unterschiedlichen Lizenzen bei späterer Weitergabe berücksichtigen. Windows ist mit normaler Audioproduktion geprüft; vollständige macOS-/Linux-Installation bleibt Aufgabe 35. [Stand der Abnahme](step15-acceptance.md).

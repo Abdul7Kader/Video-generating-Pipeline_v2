@@ -17,7 +17,7 @@ from redis.exceptions import RedisError
 from rq import Queue
 
 from app.script_contract import validate_script
-from app.production_stages import PexelsSource
+from app.production_stages import PexelsSource, SpeechSegment
 from app.database import database
 
 
@@ -147,6 +147,7 @@ class ProductionRunOutput(StrictModel):
     available_at: datetime
     steps: list[ProductionStepOutput]
     sources: list[PexelsSource] = Field(default_factory=list)
+    speech: list[SpeechSegment] = Field(default_factory=list)
 
 
 class ProjectStatus(StrictModel):
@@ -163,13 +164,14 @@ class ProjectStatus(StrictModel):
     production_can_resume: bool = False
     production_cancel_requested: bool = False
     production_sources: list[PexelsSource] = Field(default_factory=list)
+    production_speech: list[SpeechSegment] = Field(default_factory=list)
 
 
 class ArtifactOutput(StrictModel):
     id: UUID
     project_id: UUID
     kind: Literal["SOURCE", "INTERMEDIATE", "FINAL"]
-    media_type: Literal["STOCK_VIDEO", "AI_GENERATED_VIDEO", "FINAL_VIDEO"]
+    media_type: Literal["STOCK_VIDEO", "AI_GENERATED_VIDEO", "FINAL_VIDEO", "SPEECH_AUDIO"]
     checksum_sha256: str
     created_at: datetime
     content_available: bool = False
@@ -548,6 +550,7 @@ def get_status(project_id: UUID):
         "production_can_resume": production['can_resume'] if production else False,
         "production_cancel_requested": production['cancel_requested'] if production else False,
         "production_sources": production['sources'] if production else [],
+        "production_speech": production['speech'] if production else [],
     }
 
 
@@ -564,13 +567,16 @@ def production_output(conn, project_id, run_id):
     manifest = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
                             "AND name = 'SCENES' AND state = 'COMPLETED'", (run_id,)).fetchone()
     sources = manifest['result'].get('sources', []) if manifest else []
+    audio = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
+                         "AND name = 'SPEECH' AND state = 'COMPLETED'", (run_id,)).fetchone()
+    speech = audio['result'].get('speech', []) if audio else []
     can_resume = (run['state'] == 'FAILED' and not run['cancel_requested']
                   and current['id'] == run['script_version_id']
                   and (run['deadline_at'] is None or run['deadline_at'] > datetime.now(timezone.utc))
                   and all(step['state'] == 'COMPLETED' or step['attempts'] < step['max_attempts'] for step in steps))
     return {**{name: run[name] for name in ('id', 'project_id', 'state', 'error_code', 'error_message',
                                            'cancel_requested', 'started_at', 'deadline_at', 'available_at')},
-            'can_resume': can_resume, 'steps': steps, 'sources': sources}
+            'can_resume': can_resume, 'steps': steps, 'sources': sources, 'speech': speech}
 
 
 @router.get('/projects/{project_id}/production-runs/{run_id}', response_model=ProductionRunOutput)

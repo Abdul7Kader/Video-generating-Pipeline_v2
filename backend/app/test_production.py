@@ -74,9 +74,9 @@ class ProductionIntegrationTest(unittest.TestCase):
             if job:
                 job.delete()
 
-    def project(self, scenario='success', mode='LOKAL', approve=True):
+    def project(self, scenario='success', mode='LOKAL', approve=True, payload=None):
         project = self.client.post('/api/projects', json={'idea': 'Controlled step 13', 'mode': mode}).json()
-        body = test_api.ApiContractTest.script_payload(mode)
+        body = payload or test_api.ApiContractTest.script_payload(mode)
         body['title'] = scenario
         self.assertEqual(self.client.post(f"/api/projects/{project['id']}/scripts", json=body).status_code, 201)
         if not approve:

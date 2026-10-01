@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 1. Oktober 2026:** Aufgaben 01–14 und M1 sind abgeschlossen; nächster Schritt ist 15 (Piper-Sprachsynthese). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Fortsetzung ab 1. Oktober 2026:** Aufgaben 01–15 und M1 sind abgeschlossen; nächster Schritt ist 16 (Remotion-Grafikvorlagen). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -98,8 +98,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Erfolgs- und Kein-Treffer-Test; Manifest enthält nur `STOCK_VIDEO`.
 
 ### 15. Piper-Sprachsegmente (S; abhängig von: 13)
-- [ ] Sprechertext wird satz- oder szenenweise in Audio umgewandelt; Dauer je Segment wird erfasst.
-- [ ] Leere oder fehlgeschlagene Sprachausgabe blockiert den Renderjob nachvollziehbar.
+- **Abgeschlossen (01.10.2026):** 58 Backendtests, zehn Projekttests, Web-Build, echte Migration/Piper-/RQ-Produktion und Browserprüfung bestanden. Nach Tempoanpassung bestätigt der Betreiber die zweite Hörprobe einschließlich des Anfangs als verständlich. [Prüfbericht](step15-acceptance.md).
+- [x] Sprechertext wird satz- oder szenenweise in Audio umgewandelt; Dauer je Segment wird erfasst.
+- [x] Leere oder fehlgeschlagene Sprachausgabe blockiert den Renderjob nachvollziehbar.
 - **Prüfung:** Testtext anhören und Dauer per ffprobe mit Segmentdaten vergleichen.
 
 ### 16. Remotion-Grafikvorlagen (M; abhängig von: 01, 15)

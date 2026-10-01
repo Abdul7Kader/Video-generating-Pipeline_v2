@@ -10,7 +10,8 @@ type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProductionStep = { id: string; name: string; state: string; attempts: number; max_attempts: number }
 type PexelsSource = { scene_position: number; video_id: number; video_page: string; creator: string; creator_page: string; width: number; height: number; duration_seconds: number }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[] }
+type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
+type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[] }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -384,6 +385,14 @@ export default function Studio() {
                           <small>{source.width} × {source.height} · {source.duration_seconds.toFixed(1)} s</small>
                         </li>)}</ul>
                       </section>}
+                      {Boolean(projectStatus?.production_speech?.length) && <section className="speech-segments" aria-label="Sprachsegmente">
+                        <h3>Sprachsegmente</h3>
+                        <p>{projectStatus!.production_speech![0].voice} · {new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(projectStatus!.production_speech!.reduce((total, segment) => total + segment.duration_seconds, 0))} s Sprache</p>
+                        <ul>{projectStatus!.production_speech!.map(segment => <li key={segment.scene_position}>
+                          <span>Szene {segment.scene_position}</span>
+                          <strong>{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(segment.duration_seconds)} s</strong>
+                        </li>)}</ul>
+                      </section>}
                       <div className="production-actions">
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
@@ -410,7 +419,8 @@ export default function Studio() {
               <li><span className="step-number">03</span><div><h3>Skript bearbeiten</h3><p>Texte, Szenendauer und Bildvorgaben prüfen. Speichern erstellt eine neue Version.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">06</span><div><h3>Video ansehen</h3><p>Vertonung, fertiges Video und Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">06</span><div><h3>Sprache erzeugen</h3><p>Deutsche Sprechertexte werden szenenweise vertont; die gemessenen Dauern bleiben gespeichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">07</span><div><h3>Video ansehen</h3><p>Grafiken, fertiges Video und Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">

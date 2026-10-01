@@ -121,3 +121,8 @@ input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;color:#81929
 .scene-sources a:hover { color: #eef4f1; }
 .scene-sources a:focus-visible { outline: 3px solid #b5e8d6; outline-offset: 3px; }
 .scene-sources small { flex-basis: 100%; color: #a9b9bd; }
+.speech-segments { margin-top: 1rem; }
+.speech-segments h3 { font-size: 1rem; }
+.speech-segments p { color: #a9b9bd; overflow-wrap: anywhere; }
+.speech-segments ul { list-style: none; padding: 0; margin: 0; }
+.speech-segments li { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid #35434b; }

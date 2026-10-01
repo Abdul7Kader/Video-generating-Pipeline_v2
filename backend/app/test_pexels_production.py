@@ -52,6 +52,10 @@ class PexelsProductionTest(unittest.TestCase):
 
     def setUp(self):
         test_pexels.PexelsTest.setUp(self)
+        # This suite isolates stock sourcing from an installed speech model.
+        model = patch.dict(os.environ, {'PIPER_MODEL_PATH': str(self.root / 'missing.onnx')})
+        model.start()
+        self.addCleanup(model.stop)
         self.redis = Redis.from_url(os.environ['REDIS_URL'])
         self.queue = Queue('pexels-test-' + uuid4().hex, connection=self.redis)
         override = patch('app.api.Queue', return_value=self.queue)
@@ -102,7 +106,7 @@ class PexelsProductionTest(unittest.TestCase):
         self.work()  # actual app.production_stages subprocess verifies all scene files
         output = self.output(project, run)
         self.assertEqual(output['state'], 'FAILED')
-        self.assertEqual(output['error_code'], 'STAGE_UNAVAILABLE')  # next adapter, not SCENES
+        self.assertEqual(output['error_code'], 'PIPER_MODEL_REQUIRED')  # next stage, not SCENES
         self.assertEqual([s['state'] for s in output['steps']], ['COMPLETED', 'FAILED', 'PENDING', 'PENDING', 'PENDING'])
         self.assertEqual(output['sources'], prepared['sources'])
         status = self.api.get(f'/api/projects/{project}/status').json()
