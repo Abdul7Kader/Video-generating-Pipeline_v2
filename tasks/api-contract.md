@@ -109,3 +109,9 @@ Die Videofreigabe erwartet `{"checksum_sha256":"<64 kleine Hex-Zeichen>"}`. Eine
 **Prüfung:** `docker compose -p step8check up -d --build --wait api worker`; `docker compose -p step8check exec -T api python -m unittest app.test_api app.test_database -v`. `app.test_api` legt ein isoliertes PostgreSQL-Schema an und entfernt es nach den HTTP-/OpenAPI-Vertragstests.
 
 **Aktuelle Prüfung 30.09.:** 37 Backendtests mit echter PostgreSQL-/Redis-/RQ-Integration und acht Projekttests bestanden; Web-Build, Worker-Kill/Neustart ohne doppelte Testartefakte und echte Chrome-Bedienabnahme für beide Modi mit Wiederaufnahme/Abbruch erfolgreich. [Produktionsketten-Abnahme](step13-acceptance.md). Frühere echte Pro-Browserläufe und Freigabeabnahme: [Skript-/Editorabnahme](step10-acceptance.md), [Freigabeabnahme](step12-acceptance.md).
+
+## Grafikmanifest ab Schritt 16
+
+`GET /api/projects/{id}/production-runs/{run_id}` ergänzt `graphics`, `GET /api/projects/{id}/status` ergänzt `production_graphics`. Beide sind `null`, solange kein abgeschlossener GRAPHICS-Checkpoint vorliegt. Bei Erfolg: Breite 720, Höhe 1280, fps 24, Gesamtdauer in Frames, Titel, Titelartefaktschlüssel/-dauer, sichere Ränder, Renderer-/Vorlagenversion und geordnete Szenen mit Text, Artefaktschlüssel, Startframe, Szenen-/Untertitelframes und gemessener Audiodauer. Positions-/Text-/Zeitdaten müssen zur freigegebenen Version und SPEECH passen; keine Wort-für-Wort-Zusage.
+
+Grafiken erscheinen in Artefaktmetadaten als `INTERMEDIATE / GRAPHICS_OVERLAY`; `content_available` bleibt bis zur Medienauslieferung in 18 false. Kein finaler Videostatus oder Videoartefakt aus dieser Stufe. Sichtbare Fehler: `GRAPHICS_SPEECH_REQUIRED`, `GRAPHICS_TIMELINE_INVALID`, `REMOTION_REQUIRED`, `GRAPHICS_RENDER_FAILED`, `GRAPHICS_OUTPUT_INVALID`, `GRAPHICS_STORAGE_FAILED`; vorhandene Schritt-/Laufzeitgrenzen bleiben unverändert. [Prüfstand](step16-acceptance.md).

@@ -104,6 +104,8 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Testtext anhören und Dauer per ffprobe mit Segmentdaten vergleichen.
 
 ### 16. Remotion-Grafikvorlagen (M; abhängig von: 01, 15)
+- **PAUSIERT auf Betreiberwunsch (01.10.2026):** Entwicklung stoppen. Implementierung als Code-Commit `271c323` auf GitHub gesichert; Fortsetzung und offene Prüfungen im [Wiedereinstieg](../STATE.md#pause-und-genauer-wiedereinstieg). Abschlusskriterien bleiben offen.
+- **Zwischenstand 01.10.2026:** Vier Grafiktests mit tatsächlichem lokalem Rendern, Cache-/Beschädigungsprüfung und deutsche Kurz-/Langtext-Sichtprüfung bestanden. Web-Build und zehn Projekttests erfolgreich. Dienst-/Browserabnahme noch offen wegen Docker-Startfehler; [Prüfstand](step16-acceptance.md).
 - [ ] Titel, satz-/szenengenaue Untertitel und grafische Elemente werden aus gespeicherten Daten gerendert.
 - [ ] Vorlagen funktionieren für gewähltes Format, sichere Ränder und Sonderzeichen.
 - **Prüfung:** Render-Beispiele für kurze/lange Zeilen und deutsche Umlaute visuell prüfen.

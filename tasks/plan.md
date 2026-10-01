@@ -2,6 +2,10 @@
 
 Stand: 1. Oktober 2026
 
+**Entwicklung pausiert auf Betreiberwunsch. Aktuell Schritt 16, implementiert und lokal geprüft, aber noch nicht vollständig abgenommen.** Dienst-/Browserprüfung fehlt wegen Docker-Startfehler. Keine Arbeit an 17 beginnen. [Wiedereinstieg mit konkreten nächsten Aktionen](../STATE.md#pause-und-genauer-wiedereinstieg).
+
+**Git-Sicherung 01.10.2026:** Code-Zwischenstand `271c323` nach GitHub gepusht; `pull --ff-only` war bereits aktuell. Pausen-/Fortsetzungsdokumentation separat versioniert. Dieser Abgleich setzt die Entwicklung nicht fort und schließt Schritt 16 nicht ab.
+
 Stand am 1. Oktober 2026: Aufgaben 01–15 sind abgeschlossen. Schritt 10 wurde mit zwei echten Browseraufträgen über das bestätigte Google-AI-Pro-Konto des Windows-Host-Workers abgenommen (LOKAL sieben Szenen/45 Sekunden, CLOUD sieben Szenen/42 Sekunden). Der für dessen Bearbeitungs-Prüfung erforderliche Szeneneditor aus Schritt 11 ist ebenfalls implementiert und live geprüft. Gespeicherte neue Versionen, unveränderte alte Versionen, sichtbare Validierung und Entwurfserhalt bei Konflikten sind nachgewiesen. Kontrollierte Fehlerfälle prüfen bewusste Wiederholung. [Prüfbericht](step10-acceptance.md).
 
 Schritt **12 – Skriptfreigabe** und M1 sind ebenfalls abgenommen: Browser bestätigt die angezeigte Version, neue Versionen verlangen neue Freigaben. Datenbank-Commit vor RQ-Übergabe, stabile Lauf-ID und Projekt-Sperren sichern wiederholte/gleichzeitige Aufrufe und Retry nach Brokerfehler. Beide Modi im echten Browser geprüft; 29 Backendtests, acht Projekttests und Web-Build bestehen. Zusätzlich wurde eine bereits live erzeugte und bearbeitete Pro-Version in der normalen Anwendung freigegeben und vom angemeldeten Host-Worker verarbeitet. [Prüfbericht](step12-acceptance.md).
@@ -142,8 +146,8 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 
 13. [x] Robuste RQ-Produktionskette mit Status, Wiederholung und Abbruchgrenzen bauen. PostgreSQL-/Redis-/RQ-Neustartprobe und Browserbedienung bestanden; [Belege](step13-acceptance.md).
 14. [x] Pexels-Suche, Auswahl und Download pro Szene implementieren ([Prüfbericht](step14-acceptance.md)).
-15. [ ] Piper-Sprechersegmente und Zeitdaten erzeugen.
-16. [ ] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern.
+15. [x] Piper-Sprechersegmente und Zeitdaten erzeugen; Betreiber bestätigt verständliche Hörprobe ([Belege](step15-acceptance.md)).
+16. [ ] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern; pausiert; implementiert und lokal geprüft, Dienst-/Browserabnahme wartet auf Docker ([Prüfstand](step16-acceptance.md)).
 17. [ ] FFmpeg/ffprobe-Normalisierung, Szenenschnitt, Audio und Encoding bauen.
 18. [ ] Portablen persistenten Medienspeicher, Manifest und sicheren Videoabruf einrichten.
 19. [ ] Produktionsstatus und Videoprüfung in React bereitstellen.
