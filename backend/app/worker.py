@@ -96,7 +96,7 @@ def main() -> None:
                 if not isinstance(settings.get(name), str) or not settings[name]:
                     raise ValueError(f"{name} is missing")
                 os.environ[name] = settings[name]
-            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "PIPER_MODEL_PATH", "REMOTION_NODE_PATH", "REMOTION_BROWSER_EXECUTABLE"):
+            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "FFMPEG_PATH", "PIPER_MODEL_PATH", "REMOTION_NODE_PATH", "REMOTION_BROWSER_EXECUTABLE"):
                 if name in settings:
                     if not isinstance(settings[name], str) or not settings[name]:
                         raise ValueError(f"{name} must be a nonempty string")

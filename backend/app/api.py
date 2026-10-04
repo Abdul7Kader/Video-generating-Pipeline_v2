@@ -17,7 +17,7 @@ from redis.exceptions import RedisError
 from rq import Queue
 
 from app.script_contract import validate_script
-from app.production_stages import PexelsSource, SpeechSegment, GraphicsManifest
+from app.production_stages import PexelsSource, SpeechSegment, GraphicsManifest, EncodingManifest
 from app.database import database
 
 
@@ -149,6 +149,7 @@ class ProductionRunOutput(StrictModel):
     sources: list[PexelsSource] = Field(default_factory=list)
     speech: list[SpeechSegment] = Field(default_factory=list)
     graphics: GraphicsManifest | None = None
+    encoding: EncodingManifest | None = None
 
 
 class ProjectStatus(StrictModel):
@@ -167,6 +168,7 @@ class ProjectStatus(StrictModel):
     production_sources: list[PexelsSource] = Field(default_factory=list)
     production_speech: list[SpeechSegment] = Field(default_factory=list)
     production_graphics: GraphicsManifest | None = None
+    production_encoding: EncodingManifest | None = None
 
 
 class ArtifactOutput(StrictModel):
@@ -554,6 +556,7 @@ def get_status(project_id: UUID):
         "production_sources": production['sources'] if production else [],
         "production_speech": production['speech'] if production else [],
         "production_graphics": production['graphics'] if production else None,
+        "production_encoding": production['encoding'] if production else None,
     }
 
 
@@ -576,13 +579,16 @@ def production_output(conn, project_id, run_id):
     overlay = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
                            "AND name = 'GRAPHICS' AND state = 'COMPLETED'", (run_id,)).fetchone()
     graphics = overlay['result'].get('graphics') if overlay else None
+    encoded = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
+                           "AND name = 'ENCODING' AND state = 'COMPLETED'", (run_id,)).fetchone()
+    encoding = encoded['result'].get('encoding') if encoded else None
     can_resume = (run['state'] == 'FAILED' and not run['cancel_requested']
                   and current['id'] == run['script_version_id']
                   and (run['deadline_at'] is None or run['deadline_at'] > datetime.now(timezone.utc))
                   and all(step['state'] == 'COMPLETED' or step['attempts'] < step['max_attempts'] for step in steps))
     return {**{name: run[name] for name in ('id', 'project_id', 'state', 'error_code', 'error_message',
                                            'cancel_requested', 'started_at', 'deadline_at', 'available_at')},
-            'can_resume': can_resume, 'steps': steps, 'sources': sources, 'speech': speech, 'graphics': graphics}
+            'can_resume': can_resume, 'steps': steps, 'sources': sources, 'speech': speech, 'graphics': graphics, 'encoding': encoding}
 
 
 @router.get('/projects/{project_id}/production-runs/{run_id}', response_model=ProductionRunOutput)

@@ -109,3 +109,16 @@ Optional `REMOTION_NODE_PATH` oder `REMOTION_BROWSER_EXECUTABLE` als absolute Da
 Die Grafiken erhalten den Typ `INTERMEDIATE / GRAPHICS_OVERLAY` und liegen unter `<MEDIA_ROOT>/graphics/<run-id>/`. Titel, Untertitel und Szenenzähler verwenden 720 × 1280 bei 24 fps und sichere Ränder. Untertitelzeiten folgen den geprüften Sprachsegmenten; die Oberfläche zeigt nach Abschluss Anzahl, Format und Zeitbereiche. Noch keine finale MP4 oder Wiedergabe aus Schritt 16. [Rendervertrag und Lizenz](../graphics/README.md), [Prüfstand](step16-acceptance.md).
 
 Windows-Abnahme am 04.10.2026: Migration 0005, normaler nativer Worker mit Node/ffprobe, echte Pexels-/Piper-/Remotion-Produktion und Browserstatus erfolgreich geprüft. Das ist keine vollständige Installationsabnahme für macOS/Linux oder den Login-/Neustartbetrieb; diese bleibt Aufgabe 35. [Prüfbericht](step16-acceptance.md).
+
+
+## 9. FFmpeg-Schnitt und Encoding ab Schritt 17
+
+FFmpeg und ffprobe aus einer geeigneten Distribution installieren; der FFmpeg-Build benötigt `libx264` und den AAC-Encoder sowie scale/crop/fps/overlay/aresample/apad/atrim/concat. Beide Programme müssen im PATH des Hostworkers liegen. Optional absolute Pfade `FFMPEG_PATH` und `FFPROBE_PATH` in der privaten `worker.json` setzen, danach den Worker neu starten. `ffmpeg -version` und `ffprobe -version` lokal prüfen. Die allgemeine Workerprüfung prüft die Dienste/CLI; eine tatsächliche Medienprobe ist zusätzlich nötig.
+
+Die CPU-Pipeline schneidet und normalisiert jede Szene auf 720 × 1280 / 24 fps, legt die gespeicherten Remotion-PNGs zeitlich darüber und encodiert H.264 (`libx264`, CRF 20, preset veryfast, zwei Threads). Audio wird separat szenenweise auf 48 kHz gebracht, bis zum geplanten Szenenende mit Stille ergänzt und einmal kontinuierlich in AAC mono / 128 kbit/s encodiert. Ton aus Quellenclips wird nicht übernommen. Die endgültige MP4 erhält `faststart`; jedes Ergebnis wird mit ffprobe und vollständigem Decode geprüft.
+
+Zwischenclips, Prüfsummencheckpoints, Fehlerlog und `master.mp4` liegen unter `<MEDIA_ROOT>/encoding/<run-id>/`. Die Stufe behält ihr 30-Minuten-Limit innerhalb der unverlängerten Drei-Stunden-Gesamtfrist; Abbruch/Timeout beendet den gesamten Medienprozessbaum. Lokale Medien, private Pfade und Logdateien bleiben ignoriert. Dauer/Format sind im Browser sichtbar; persistente Endablage und berechtigter Videoabruf bleiben Schritt 18. macOS-/Linux-Installation bleibt Aufgabe 35.
+
+Referenzen: [FFmpeg-Filter](https://ffmpeg.org/ffmpeg-filters.html), [MP4/faststart und concat](https://ffmpeg.org/ffmpeg-formats.html), [ffprobe](https://ffmpeg.org/ffprobe.html). Lizenzen des gewählten FFmpeg-Builds einschließlich GPL/libx264 vor einer späteren Bündelung beachten; dieses Repository bündelt keine FFmpeg-Binärdatei.
+
+Windows-Nachweis 04.10.2026: FFmpeg 9.0.2 mit libx264/AAC, normaler Hostworker, echte 36-Sekunden-Pexels-MP4 und vollständige lokale Browserwiedergabe geprüft. Weitere Betriebssysteme bleiben Aufgabe 35. [Abnahme Schritt 17](step17-acceptance.md).

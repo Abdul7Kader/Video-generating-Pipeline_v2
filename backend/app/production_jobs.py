@@ -127,6 +127,14 @@ def run_stage(conn, step, context, timeout):
                     raise ValueError('incomplete or inconsistent graphics manifest')
             elif any(a.media_type == 'GRAPHICS_OVERLAY' for a in result.artifacts):
                 raise ValueError('graphics artifacts without timing manifest')
+            if result.encoding is not None:
+                from app.graphics import build_plan
+                plan = build_plan(context)
+                if (step['name'] != 'ENCODING' or result.encoding.duration_frames != plan.duration_frames
+                        or result.encoding.duration_seconds != plan.duration_frames / plan.fps
+                        or keys != ['encoded_master']
+                        or any(a.kind != 'INTERMEDIATE' or a.media_type != 'FINAL_VIDEO' for a in result.artifacts)):
+                    raise ValueError('incomplete or inconsistent encoding manifest')
             return result
         except (ValueError, KeyError, TypeError) as exc:
             raise StageFailure("INVALID_STAGE_RESULT", "Der Produktionsschritt hat ein ungültiges Ergebnis geliefert.") from exc

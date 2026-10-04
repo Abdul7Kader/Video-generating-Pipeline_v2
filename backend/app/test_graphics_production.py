@@ -43,7 +43,7 @@ class GraphicsProductionTest(unittest.TestCase):
             project, run = self.project('Bienen, Blüten & Grüße', mode=mode, payload=payload)
             self.work()
             result = self.output(project, run)
-            self.assertEqual(result['error_code'], 'STAGE_UNAVAILABLE')  # ENCODING is step 17
+            self.assertEqual(result['error_code'], 'STAGE_UNAVAILABLE')  # Isolated graphics suite disables ENCODING.
             self.assertEqual([s['state'] for s in result['steps']], ['COMPLETED']*3 + ['FAILED', 'PENDING'])
             graphics = result['graphics']
             self.assertEqual((graphics['width'], graphics['height'], graphics['fps'], graphics['duration_frames']), (720, 1280, 24, 1008))

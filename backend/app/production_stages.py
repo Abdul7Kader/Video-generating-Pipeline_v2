@@ -1,4 +1,4 @@
-"""Isolated Pexels/Piper/Remotion stages; encoding and storage follow in 17-18."""
+"""Isolated CPU-media stages; final storage and delivery follow in step 18."""
 
 import json
 import os
@@ -148,6 +148,9 @@ def execute_stage(name, context):
     if name == 'GRAPHICS':
         from app.graphics import render_graphics
         return render_graphics(context)
+    if name == 'ENCODING':
+        from app.encoding import encode_video
+        return encode_video(context)
     # No source fallback or simulated media in production.
     labels = {"SCENES": "Szenenbeschaffung", "SPEECH": "Sprachsynthese", "GRAPHICS": "Grafikerstellung",
               "ENCODING": "Video-Encoding", "STORAGE": "Medienablage"}

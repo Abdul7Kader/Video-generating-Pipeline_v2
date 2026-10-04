@@ -12,7 +12,8 @@ type ProductionStep = { id: string; name: string; state: string; attempts: numbe
 type PexelsSource = { scene_position: number; video_id: number; video_page: string; creator: string; creator_page: string; width: number; height: number; duration_seconds: number }
 type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
 type GraphicsManifest = { width: number; height: number; fps: number; duration_frames: number; scenes: { scene_position: number; start_frame: number; caption_frames: number }[] }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null }
+type EncodingManifest = { width: number; height: number; fps: number; duration_seconds: number; video_codec: string; audio_codec: string; size_bytes: number }
+type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -402,6 +403,11 @@ export default function Studio() {
                           <span>Untertitel {scene.scene_position}</span>
                           <strong>{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(scene.start_frame / projectStatus.production_graphics!.fps)}–{new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((scene.start_frame + scene.caption_frames) / projectStatus.production_graphics!.fps)} s</strong>
                         </li>)}</ul>
+                      </section>}
+                      {projectStatus?.production_encoding && <section className="speech-segments encoding-summary" aria-label="Encodiertes Video">
+                        <h3>MP4 zusammengesetzt und geprüft</h3>
+                        <p>{new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(projectStatus.production_encoding.duration_seconds)} s · {projectStatus.production_encoding.width} × {projectStatus.production_encoding.height} · {projectStatus.production_encoding.fps} fps</p>
+                        <p>H.264 · AAC · {new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(projectStatus.production_encoding.size_bytes / 1024 / 1024)} MB</p>
                       </section>}
                       <div className="production-actions">
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}

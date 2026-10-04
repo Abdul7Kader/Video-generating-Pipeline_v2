@@ -9,6 +9,8 @@ real_stage = production_stages.execute_stage
 def graphics_fixture(name, context):
     if name == 'SCENES':
         return fixture_stage(name, context)
+    if name == 'ENCODING':
+        raise production_stages.StageFailure('STAGE_UNAVAILABLE', 'Encoding in isolierter Grafikprüfung deaktiviert.')
     if name == 'GRAPHICS' and context['script']['title'] == 'changed-audio':
         context['previous_results']['SPEECH']['speech'][0]['text'] = 'Unfreigegeben'
     return real_stage(name, context)

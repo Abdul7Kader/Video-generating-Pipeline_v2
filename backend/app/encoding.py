@@ -55,11 +55,16 @@ def ffmpeg_path():
     return executable
 
 
+def runtime_environment():
+    return {k:v for k,v in os.environ.items() if k.upper() in {
+        'PATH', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LD_LIBRARY_PATH'}}
+
+
 def probe_video(path, executable, count=False):
     command = [executable, '-v', 'error', '-protocol_whitelist', 'file,pipe', '-show_streams', '-show_format', '-of', 'json']
     if count:
         command.append('-count_frames')
-    return json.loads(subprocess.check_output(command+[str(path)], stderr=subprocess.DEVNULL, timeout=120))
+    return json.loads(subprocess.check_output(command+[str(path)], env=runtime_environment(), stderr=subprocess.DEVNULL, timeout=120))
 
 
 def prepare_inputs(context, root, executable):
@@ -98,13 +103,11 @@ def prepare_inputs(context, root, executable):
 
 def run_ffmpeg(executable, arguments, folder):
     flags = {'creationflags': subprocess.CREATE_NO_WINDOW} if os.name == 'nt' else {}
-    environment = {k:v for k,v in os.environ.items() if k.upper() in {
-        'PATH', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LD_LIBRARY_PATH'}}
     try:
         with (folder/'ffmpeg.log').open('ab') as log:
             # The isolated production watchdog bounds and kills this entire tree.
             subprocess.run([executable, '-v', 'error', '-nostdin', '-y', '-xerror', *arguments], cwd=folder,
-                           env=environment, stdout=subprocess.DEVNULL, stderr=log, check=True, **flags)
+                           env=runtime_environment(), stdout=subprocess.DEVNULL, stderr=log, check=True, **flags)
     except (OSError, subprocess.SubprocessError) as exc:
         raise StageFailure('ENCODING_FAILED', 'FFmpeg konnte das Video nicht zusammensetzen. Quelldateien und libx264-/AAC-Installation prüfen; keine finale Datei freigegeben.') from exc
 
@@ -130,7 +133,7 @@ def inspect_master(path, frames, probe, encoder, with_audio=True):
                 raise ValueError('incorrect audio profile or timing')
         subprocess.run([encoder, '-v', 'error', '-xerror', '-nostdin', '-protocol_whitelist','file,pipe',
                         '-threads','2','-i',str(path),'-map','0:v:0', *(['-map','0:a:0'] if with_audio else []),'-f','null','-'],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120, check=True)
+                       env=runtime_environment(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120, check=True)
         return {'duration_seconds': frames/24, 'size_bytes': path.stat().st_size}
     except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError, subprocess.SubprocessError) as exc:
         raise StageFailure('ENCODING_OUTPUT_INVALID', 'MP4 ist beschädigt oder entspricht nicht dem Profil 720 × 1280 / 24 fps / H.264 / AAC. Ablage wurde blockiert.') from exc
@@ -153,7 +156,8 @@ def encode_video(context):
         artifact = result.artifacts[0]
         if (artifact.key != 'encoded_master' or artifact.kind != 'INTERMEDIATE' or artifact.media_type != 'FINAL_VIDEO'
                 or artifact.storage_path != target.relative_to(root).as_posix() or checksum(target) != artifact.checksum_sha256
-                or inspect_master(target, plan.duration_frames, probe, encoder)['size_bytes'] != result.encoding.size_bytes):
+                or EncodingManifest(duration_frames=plan.duration_frames,
+                                    **inspect_master(target, plan.duration_frames, probe, encoder)) != result.encoding):
             raise ValueError('changed master')
         return result.model_dump()
     except (OSError, ValueError, KeyError, TypeError, StageFailure):
