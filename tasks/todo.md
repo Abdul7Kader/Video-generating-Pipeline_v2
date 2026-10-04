@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Stand 4. Oktober 2026:** Aufgaben 01–16 und M1 sind abgeschlossen; nächster Schritt ist 17 (FFmpeg-Pipeline). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 4. Oktober 2026:** Aufgaben 01–17 und M1 sind abgeschlossen; nächster Schritt ist 18 (persistenter Medienspeicher/Videoabruf). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -110,9 +110,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Render-Beispiele für kurze/lange Zeilen und deutsche Umlaute visuell prüfen.
 
 ### 17. FFmpeg-Pipeline (M; abhängig von: 14–16)
-- **In Arbeit (04.10.2026):** Eingangsprüfung, CPU-Encoding und Wiederaufnahme aus gespeicherten Zeitdaten. Abschluss erst mit echter Produktion und Sicht-/Hörprüfung; [Stand](../STATE.md).
-- [ ] Clips werden auf Zielprofil normalisiert, zeitlich an Sprechertext angepasst, mit Grafik/Audio zusammengesetzt und encodiert.
-- [ ] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
+- **Abgeschlossen (04.10.2026):** 72 Backendtests ohne Überspringen, zehn Projekttests und Web-Build bestanden. Echte Dienstintegration beider Modi mit kontrollierter Szene sowie normaler Pexels-/Piper-/Remotion-/FFmpeg-Auftrag erzeugen geprüfte MP4s. Vollständige 36-Sekunden-Wiedergabe, Sichtprüfung aller Szenen und Browser-Profilanzeige mit Neuladen/320 Pixeln bestanden. [Prüfbericht](step17-acceptance.md).
+- [x] Clips werden auf Zielprofil normalisiert, zeitlich an Sprechertext angepasst, mit Grafik/Audio zusammengesetzt und encodiert.
+- [x] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
 - **Prüfung:** Ein komplettes LOKAL-Testvideo ansehen und technische Sollwerte maschinell vergleichen.
 
 ### 18. Portabler persistenter Medienspeicher (S; abhängig von: 07, 17)
