@@ -1,16 +1,18 @@
 """CPU-only FFmpeg composition of approved sources, audio and Remotion overlays."""
 
 from fractions import Fraction
+import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import shutil
 import subprocess
+from uuid import UUID
 
 from app.graphics import build_plan, inspect_overlay
-from app.media import checksum, ffprobe_path, media_root
-from app.production_stages import StageFailure, StageResult
+from app.media import checksum, ffprobe_path, media_root, write_json
+from app.production_stages import EncodingManifest, StageArtifact, StageFailure, StageResult
 from app.speech import inspect_audio
 
 
@@ -107,24 +109,27 @@ def run_ffmpeg(executable, arguments, folder):
         raise StageFailure('ENCODING_FAILED', 'FFmpeg konnte das Video nicht zusammensetzen. Quelldateien und libx264-/AAC-Installation prüfen; keine finale Datei freigegeben.') from exc
 
 
-def inspect_master(path, frames, probe, encoder):
+def inspect_master(path, frames, probe, encoder, with_audio=True):
     try:
         data = probe_video(path, probe, count=True)
         videos = [s for s in data['streams'] if s['codec_type'] == 'video']
         audios = [s for s in data['streams'] if s['codec_type'] == 'audio']
-        if len(data['streams']) != 2 or len(videos) != 1 or len(audios) != 1:
+        if len(data['streams']) != (2 if with_audio else 1) or len(videos) != 1 or len(audios) != (1 if with_audio else 0):
             raise ValueError('incorrect stream count')
-        video, audio = videos[0], audios[0]
+        video = videos[0]
         if ('mp4' not in data['format']['format_name'] or video['codec_name'] != 'h264'
                 or (video['width'], video['height'], video['pix_fmt'], video['sample_aspect_ratio']) != (720,1280,'yuv420p','1:1')
                 or Fraction(video['avg_frame_rate']) != 24 or int(video['nb_read_frames']) != frames
                 or abs(float(video['duration'])-frames/24) > 1/24000
-                or audio['codec_name'] != 'aac' or int(audio['sample_rate']) != 48000 or audio['channels'] != 1
-                or abs(float(audio['duration'])-frames/24) > .05
                 or abs(float(data['format']['duration'])-frames/24) > .05):
             raise ValueError('incorrect master profile or timing')
+        if with_audio:
+            audio = audios[0]
+            if (audio['codec_name'] != 'aac' or int(audio['sample_rate']) != 48000 or audio['channels'] != 1
+                    or abs(float(audio['duration'])-frames/24) > .05):
+                raise ValueError('incorrect audio profile or timing')
         subprocess.run([encoder, '-v', 'error', '-xerror', '-nostdin', '-protocol_whitelist','file,pipe',
-                        '-threads','2','-i',str(path),'-map','0:v:0','-map','0:a:0','-f','null','-'],
+                        '-threads','2','-i',str(path),'-map','0:v:0', *(['-map','0:a:0'] if with_audio else []),'-f','null','-'],
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=120, check=True)
         return {'duration_seconds': frames/24, 'size_bytes': path.stat().st_size}
     except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError, subprocess.SubprocessError) as exc:
@@ -132,5 +137,81 @@ def inspect_master(path, frames, probe, encoder):
 
 
 def encode_video(context):
-    prepare_inputs(context, media_root(), ffprobe_path())
-    raise StageFailure('STAGE_UNAVAILABLE', 'Encoding-Renderer wird noch implementiert.')
+    root, probe, encoder = media_root(), ffprobe_path(), ffmpeg_path()
+    plan, artifacts, paths = prepare_inputs(context, root, probe)
+    folder = root/'encoding'/str(UUID(str(context['run_id'])))
+    folder.mkdir(parents=True, exist_ok=True)
+    fingerprint = hashlib.sha256(('ffmpeg-v1-h264-crf20-veryfast-aac128-mono48k\n'+plan.model_dump_json()
+                                 + ''.join(a.model_dump_json() for a in artifacts.values())).encode()).hexdigest()
+    target, manifest = folder/'master.mp4', folder/'manifest.json'
+    try:
+        saved = json.loads(manifest.read_text(encoding='utf-8'))
+        result = StageResult.model_validate(saved['result'])
+        if (saved['fingerprint'] != fingerprint or result.encoding is None or len(result.artifacts) != 1
+                or result.encoding.duration_frames != plan.duration_frames):
+            raise ValueError('changed encoding')
+        artifact = result.artifacts[0]
+        if (artifact.key != 'encoded_master' or artifact.kind != 'INTERMEDIATE' or artifact.media_type != 'FINAL_VIDEO'
+                or artifact.storage_path != target.relative_to(root).as_posix() or checksum(target) != artifact.checksum_sha256
+                or inspect_master(target, plan.duration_frames, probe, encoder)['size_bytes'] != result.encoding.size_bytes):
+            raise ValueError('changed master')
+        return result.model_dump()
+    except (OSError, ValueError, KeyError, TypeError, StageFailure):
+        pass
+    for scene in plan.scenes:
+        clip = folder/f'scene_{scene.scene_position}.mp4'
+        checkpoint = clip.with_suffix('.json')
+        scene_fingerprint = fingerprint+f':{scene.scene_position}'
+        try:
+            saved = json.loads(checkpoint.read_text(encoding='utf-8'))
+            if saved['fingerprint'] != scene_fingerprint or saved['checksum'] != checksum(clip):
+                raise ValueError('changed scene')
+            inspect_master(clip, scene.duration_frames, probe, encoder, with_audio=False)
+            continue
+        except (OSError, ValueError, KeyError, TypeError, StageFailure):
+            pass
+        arguments = ['-protocol_whitelist','file,pipe','-threads','2','-i',str(paths[f'scene_{scene.scene_position}']),
+                     '-loop','1','-framerate','24','-i',str(paths[scene.artifact_key])]
+        filters = (f'[0:v:0]setpts=PTS-STARTPTS,scale=720:1280:force_original_aspect_ratio=increase,'
+                   f'crop=720:1280,setsar=1,fps=24,trim=end_frame={scene.duration_frames},setpts=PTS-STARTPTS[base];'
+                   f"[base][1:v]overlay=0:0:enable='lt(t,{scene.caption_frames}/24)'[caption]")
+        if scene.scene_position == 1:
+            arguments += ['-loop','1','-framerate','24','-i',str(paths[plan.title_artifact_key])]
+            filters += f";[caption][2:v]overlay=0:0:enable='lt(t,{plan.title_frames}/24)'[video]"
+        else:
+            filters += ';[caption]null[video]'
+        part = clip.with_suffix('.part.mp4')
+        try:
+            run_ffmpeg(encoder, arguments+['-filter_complex_threads','1','-filter_complex',filters,'-map','[video]',
+                '-an','-frames:v',str(scene.duration_frames),'-c:v','libx264','-preset','veryfast','-crf','20',
+                '-pix_fmt','yuv420p','-threads','2','-video_track_timescale','24000','-map_metadata','-1',str(part)], folder)
+            inspect_master(part, scene.duration_frames, probe, encoder, with_audio=False)
+            part.replace(clip)
+            write_json(checkpoint, {'fingerprint':scene_fingerprint, 'checksum':checksum(clip)})
+        finally:
+            part.unlink(missing_ok=True)
+    concat = folder/'scenes.ffconcat'
+    concat.write_text('ffconcat version 1.0\n'+''.join(f"file scene_{s.scene_position}.mp4\nduration {s.duration_frames/24:.9f}\n" for s in plan.scenes), encoding='ascii')
+    arguments = ['-protocol_whitelist','file,pipe','-f','concat','-safe','1','-i',str(concat)]
+    audio_filters, labels = [], []
+    for index, scene in enumerate(plan.scenes, 1):
+        arguments += ['-protocol_whitelist','file,pipe','-i',str(paths[f'speech_{scene.scene_position}'])]
+        audio_filters.append(f'[{index}:a:0]aresample=48000,apad=whole_len={scene.duration_frames*2000},'
+                             f'atrim=end_sample={scene.duration_frames*2000},asetpts=PTS-STARTPTS[a{index}]')
+        labels.append(f'[a{index}]')
+    audio_filters.append(''.join(labels)+f'concat=n={len(labels)}:v=0:a=1[audio]')
+    part = target.with_suffix('.part.mp4')
+    try:
+        # One continuous AAC encode avoids per-scene encoder-delay gaps/drift.
+        run_ffmpeg(encoder, arguments+['-filter_complex_threads','1','-filter_complex',';'.join(audio_filters),
+            '-map','0:v:0','-map','[audio]','-c:v','copy','-c:a','aac','-b:a','128k','-ar','48000','-ac','1',
+            '-t',str(plan.duration_frames/24),'-movflags','+faststart','-map_metadata','-1',str(part)], folder)
+        profile = inspect_master(part, plan.duration_frames, probe, encoder)
+        part.replace(target)
+        result = StageResult(artifacts=[StageArtifact(key='encoded_master',kind='INTERMEDIATE',media_type='FINAL_VIDEO',
+            storage_path=target.relative_to(root).as_posix(),checksum_sha256=checksum(target))],
+            encoding=EncodingManifest(duration_frames=plan.duration_frames, **profile)).model_dump()
+        write_json(manifest, {'fingerprint':fingerprint, 'result':result})
+        return result
+    finally:
+        part.unlink(missing_ok=True)

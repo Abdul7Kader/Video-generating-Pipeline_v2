@@ -16,7 +16,7 @@ Stand: **4. Oktober 2026**. Repository: [Abdul7Kader/Video-generating-Pipeline_v
 
 ## Schritt 17 in Arbeit
 
-Fortsetzung am 04.10.2026 auf Betreiberwunsch: FFmpeg-Schnitt/Encoding. Ziel: geprüfte Szenen, Piper-Audio und Remotion-Grafiken zu einer MP4 (720 × 1280, 24 fps, H.264/AAC) zusammensetzen. Geplant sind Eingangsprüfung einschließlich Quellenmodus und Mindestdauer, atomare Render-/Cache-Checkpoints, API-/UI-Profilanzeige, echte Dienstprüfung und Sicht-/Hörprüfung eines LOKAL-Videos. Erster Abschnitt geprüft: vier Tests für freigegebene Zeitdaten, vollständige Artefakte, strikte Quellenmodi, Prüfsummen und defekte/zu kurze Dateien bestehen. Noch kein Render-/Abnahmenachweis für 17; Ablage/Freigabe zum Browserabruf bleibt 18.
+Fortsetzung am 04.10.2026 auf Betreiberwunsch: FFmpeg-Schnitt/Encoding. Ziel: geprüfte Szenen, Piper-Audio und Remotion-Grafiken zu einer MP4 (720 × 1280, 24 fps, H.264/AAC) zusammensetzen. Geplant sind Eingangsprüfung einschließlich Quellenmodus und Mindestdauer, atomare Render-/Cache-Checkpoints, API-/UI-Profilanzeige, echte Dienstprüfung und Sicht-/Hörprüfung eines LOKAL-Videos. Erster Abschnitt geprüft: vier Tests für freigegebene Zeitdaten, vollständige Artefakte, strikte Quellenmodi, Prüfsummen und defekte/zu kurze Dateien bestehen. Fünf Encodingtests bestehen einschließlich echter MP4s für beide Quellenverträge, Pixelprüfung der Overlayzeiten, Audiopausen, Cache und Reparatur beschädigter Ausgaben. Dienstintegration und normaler LOKAL-Auftrag bleiben offen; Ablage/Freigabe zum Browserabruf bleibt 18.
 
 ## Wo die Entwicklung steht
 

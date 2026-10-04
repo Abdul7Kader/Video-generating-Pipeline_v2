@@ -114,12 +114,28 @@ class GraphicsManifest(BaseModel):
     scenes: list[GraphicsScene] = Field(min_length=6, max_length=10)
 
 
+class EncodingManifest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    width: Literal[720] = 720
+    height: Literal[1280] = 1280
+    fps: Literal[24] = 24
+    duration_frames: int = Field(ge=720, le=1440)
+    duration_seconds: float = Field(ge=30, le=60)
+    video_codec: Literal['h264'] = 'h264'
+    audio_codec: Literal['aac'] = 'aac'
+    sample_rate: Literal[48000] = 48000
+    channels: Literal[1] = 1
+    size_bytes: int = Field(gt=0)
+    artifact_key: Literal['encoded_master'] = 'encoded_master'
+
+
 class StageResult(BaseModel):
     model_config = ConfigDict(extra='forbid')
     artifacts: list[StageArtifact] = Field(max_length=100)
     sources: list[PexelsSource] = Field(default_factory=list, max_length=20)
     speech: list[SpeechSegment] = Field(default_factory=list, max_length=20)
     graphics: GraphicsManifest | None = None
+    encoding: EncodingManifest | None = None
 
 
 def execute_stage(name, context):
