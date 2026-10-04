@@ -89,7 +89,8 @@ def synthesize_scenes(context):
     voice = None
     try:
         root = media_root()
-        folder = root / 'speech' / str(UUID(context['run_id']))
+        from app.media import run_folder
+        folder = run_folder(root, context, 'speech')
         folder.mkdir(parents=True, exist_ok=True)
         artifacts, speech = [], []
         for scene in scenes:

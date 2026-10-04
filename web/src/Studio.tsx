@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import ScriptEditor, { type Script } from './ScriptEditor'
 import LoadingBar from './LoadingBar'
 import { request } from './request'
+import StorageSettings from './StorageSettings'
+import VideoPreview from './VideoPreview'
 
 type Mode = 'LOKAL' | 'CLOUD'
 type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
@@ -13,7 +15,7 @@ type PexelsSource = { scene_position: number; video_id: number; video_page: stri
 type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
 type GraphicsManifest = { width: number; height: number; fps: number; duration_frames: number; scenes: { scene_position: number; start_frame: number; caption_frames: number }[] }
 type EncodingManifest = { width: number; height: number; fps: number; duration_seconds: number; video_codec: string; audio_codec: string; size_bytes: number }
-type ProjectStatus = { latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
+type ProjectStatus = { final_artifact_id?: string | null; latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -34,6 +36,7 @@ async function responseError(response: Response) {
 }
 
 export default function Studio() {
+  const [mediaAuthorized, setMediaAuthorized] = useState(false)
   const [health, setHealth] = useState<Health | null>(null)
   const [reachable, setReachable] = useState(true)
   const [idea, setIdea] = useState('')
@@ -339,6 +342,7 @@ export default function Studio() {
           </form>
         </section>
 
+        <StorageSettings onAccess={setMediaAuthorized} />
         {(project || loading || saveError) && (
           <section className="saved-project panel" aria-labelledby="saved-title" aria-busy={loading}>
             <div className="saved-header">
@@ -410,6 +414,7 @@ export default function Studio() {
                         <p>H.264 · AAC · {new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(projectStatus.production_encoding.size_bytes / 1024 / 1024)} MB</p>
                       </section>}
                       <div className="production-actions">
+                        {projectStatus?.final_artifact_id && projectStatus.production_state === 'COMPLETED' && <VideoPreview key={projectStatus.final_artifact_id} artifactId={projectStatus.final_artifact_id} authorized={mediaAuthorized} />}
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
                       </div>
@@ -437,7 +442,7 @@ export default function Studio() {
               <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">06</span><div><h3>Sprache erzeugen</h3><p>Deutsche Sprechertexte werden szenenweise vertont; die gemessenen Dauern bleiben gespeichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">07</span><div><h3>Untertitel rendern</h3><p>Untertitel erhalten sichere Ränder und Zeitdaten passend zu den Sprachsegmenten.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Videoschnitt und abspielbare Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
+              <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Fertige LOKAL-Videos dauerhaft speichern, ansehen und herunterladen.</p></div><span className="step-tag available">Verfügbar</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">
@@ -449,7 +454,7 @@ export default function Studio() {
                 return <li key={key}><span className="service-name"><span className={`service-indicator ${online ? 'online' : ''}`} aria-hidden="true" />{serviceLabels[key]}</span><span className={`service-state ${online ? 'online' : ''}`}>{online ? 'Bereit' : 'Wartet'}</span></li>
               })}
             </ul>
-            <p className="panel-footnote">LOKAL beschafft Pexels-Clips. Die CLOUD-Beschaffung und fertige Videos folgen.</p>
+            <p className="panel-footnote">LOKAL beschafft Pexels-Clips. Die CLOUD-Beschaffung folgt.</p>
           </div>
         </section>
       </main>

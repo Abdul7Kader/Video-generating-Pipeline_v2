@@ -122,3 +122,15 @@ Zwischenclips, Prüfsummencheckpoints, Fehlerlog und `master.mp4` liegen unter `
 Referenzen: [FFmpeg-Filter](https://ffmpeg.org/ffmpeg-filters.html), [MP4/faststart und concat](https://ffmpeg.org/ffmpeg-formats.html), [ffprobe](https://ffmpeg.org/ffprobe.html). Lizenzen des gewählten FFmpeg-Builds einschließlich GPL/libx264 vor einer späteren Bündelung beachten; dieses Repository bündelt keine FFmpeg-Binärdatei.
 
 Windows-Nachweis 04.10.2026: FFmpeg 9.0.2 mit libx264/AAC, normaler Hostworker, echte 36-Sekunden-Pexels-MP4 und vollständige lokale Browserwiedergabe geprüft. Weitere Betriebssysteme bleiben Aufgabe 35. [Abnahme Schritt 17](step17-acceptance.md).
+
+## 10. Speicher und Videozugriff ab Schritt 18
+
+Nach Aktualisierung der API (Migration 0006) den ruhenden nativen Hostworker neu starten. In „Speicher & Videos“ zunächst ein eigenes Passwort mit mindestens zehn Zeichen festlegen; danach Videos und Speichereinstellungen entsperren. Die HttpOnly-Sitzung gilt vier Stunden und übersteht ein Neuladen. Das Passwort gehört weder in den Chat noch in Git. Die erste Einrichtung setzt das Passwort dieser Installation; jede Installation hat ihren eigenen Zugang.
+
+Der vollständige Medienpfad lässt sich in derselben Weboberfläche ändern. Beispiele: `D:\VideoPipeline\Medien`, `/home/benutzer/VideoPipeline/Medien` oder `/Users/benutzer/VideoPipeline/Medien`. Der Ordner gehört dem Worker-Benutzer, muss beschreibbar sein und genügend Platz für die vollständige Kopie bieten. Einen eigenen leeren Ordner wählen, kein ganzes Laufwerk, keinen fremden gefüllten Ordner und keine Verknüpfung. Während einer Produktion ist der Wechsel gesperrt.
+
+„Speicherort übernehmen“ kopiert alle Medien und Manifeste und zeigt den geprüften Anteil als Ladebalken. Erst nach erfolgreicher SHA-256-Prüfung aller Dateien wird die private `worker.json` atomar aktualisiert. Der bisherige Ordner bleibt erhalten; abweichende Zieldateien werden nicht überschrieben. Nach einer Unterbrechung wird der gespeicherte Auftrag automatisch wieder zugestellt, höchstens drei Versuche. Fehlgeschlagene Änderungen lassen den aktuellen Speicher aktiv.
+
+Neue Mediendateien liegen unter `<MEDIA_ROOT>/projects/<project-id>/versions/<version>/runs/<run-id>/<stage>/`. STORAGE schreibt die geprüfte `master.mp4` und `manifest.json` und veröffentlicht das FINAL-Artefakt. Vorhandene ältere relative Pfade bleiben lesbar und werden beim Speicherwechsel unverändert mitkopiert. Modellgewichte liegen weiterhin separat im Modellordner.
+
+Der native Worker liefert angeforderte Medienblöcke über den bestehenden Redis-Dienst an die API. Keine neue öffentliche Host-Schnittstelle und keine wechselnde Laufwerksfreigabe für den Container nötig. Der Hostworker muss auch zum Abspielen laufen. Redis-Zugriff bleibt lokal wie in `compose.host-worker.yaml`; allgemeine Härtung und Backup bleiben 32/35. Der Browser nutzt ausschließlich die Artefakt-ID und eine Sitzung, keine freigegebenen Hostpfade oder URL-Tokens. Vollständige macOS-/Linux-Installation bleibt 35. [Prüfstand 18](step18-acceptance.md).

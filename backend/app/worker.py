@@ -26,7 +26,7 @@ def check_installation() -> None:
             migrated = connection.execute("SELECT to_regclass('script_generation_jobs') IS NOT NULL "
                                           "AND to_regclass('production_steps') IS NOT NULL").fetchone()[0]
             if migrated:
-                migrated = connection.execute('SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = 5)').fetchone()[0]
+                migrated = connection.execute('SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = 6)').fetchone()[0]
     except (psycopg.Error, OSError, ValueError) as exc:
         raise GenerationFailure("DATABASE_UNAVAILABLE", "Die konfigurierte PostgreSQL-Datenbank ist nicht erreichbar.") from exc
     if not migrated:
@@ -48,8 +48,10 @@ class RedisReconnectMixin:
             return
         self.last_production_recovery = now
         from app.production_dispatch import recover_productions
+        from app.storage_jobs import recover_storage_changes
         try:
             recover_productions(self.queues[0])
+            recover_storage_changes(self.queues[0])
         except (psycopg.Error, RedisError, OSError):
             self.log.warning("Produktions-Wiederaufnahme wartet auf Datenbank/Redis.")
 
@@ -86,6 +88,7 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=Path.home() / ".config" / "video-pipeline" / "worker.json",
                         help="Private JSON file with database, queue and optional Pexels/media configuration")
     args = parser.parse_args()
+    os.environ['WORKER_CONFIG_PATH']=str(args.config.resolve())
 
     if args.config.exists():
         try:
@@ -122,7 +125,14 @@ def main() -> None:
     worker.production_recovery_enabled = True
     # RQ heartbeats on every dequeue loop, including an otherwise idle queue.
     worker.worker_ttl = 20
-    worker.work(burst=args.burst)
+    from app.storage_settings import initialize_store
+    from app.media_gateway import MediaGateway
+    initialize_store()
+    gateway=MediaGateway().start()
+    try:
+        worker.work(burst=args.burst)
+    finally:
+        gateway.close()
 
 
 if __name__ == "__main__":

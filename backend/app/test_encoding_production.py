@@ -56,7 +56,7 @@ class EncodingProductionTest(unittest.TestCase):
             self.assertFalse(self.client.get(f"/api/artifacts/{artifact['id']}").json()['content_available'])
             before = path.stat().st_mtime_ns
             with patch.dict(os.environ, {'MEDIA_ROOT':self.files.name}), patch('app.encoding.run_ffmpeg') as render:
-                encode_video(dict(run_id=run,mode=mode,media_type='STOCK_VIDEO' if mode=='LOKAL' else 'AI_GENERATED_VIDEO',
+                encode_video(dict(project_id=project,run_id=run,mode=mode,media_type='STOCK_VIDEO' if mode=='LOKAL' else 'AI_GENERATED_VIDEO',
                                   script=script,scenes=scenes,previous_results=previous))
                 render.assert_not_called()
             self.assertEqual(self.client.post(f'/api/projects/{project}/production-runs/{run}/resume').status_code,200)

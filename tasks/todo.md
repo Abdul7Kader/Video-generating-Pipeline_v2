@@ -2,9 +2,11 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Stand 4. Oktober 2026:** Aufgaben 01–17 und M1 sind abgeschlossen; nächster Schritt ist 18 (persistenter Medienspeicher/Videoabruf). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 4. Oktober 2026:** Aufgaben 01–18 und M1 sind abgeschlossen; nächster Schritt ist 19 (Produktionsstatus und Videoprüfung). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
+
+**18 abgeschlossen.** Speicherpfad in der Weboberfläche editierbar; Kopie vor Aktivierung, geschütztes Playback, Neustart und Prüfsummen nachgewiesen. [Prüfbericht](step18-acceptance.md).
 
 ### 01. V1-Produktparameter fixieren (S; abhängig von: keine)
 - [x] Ziellänge, Szenenzahl, Sprache/Stimme, Format, Kostenlimit, Rollen und Aufbewahrung als konkrete Arbeitswerte in `plan.md` dokumentiert.
@@ -118,9 +120,12 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Ein komplettes LOKAL-Testvideo ansehen und technische Sollwerte maschinell vergleichen.
 
 ### 18. Portabler persistenter Medienspeicher (S; abhängig von: 07, 17)
-- [ ] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher des Installationsrechners. Der Pfad ist konfigurierbar und für Windows, macOS und Linux geeignet.
-- [ ] Browserabruf ist berechtigt und unterstützt Videowiedergabe; Pfadmanipulation wird abgewehrt.
-- **Prüfung:** Lokaler Browser-Zugriffsweg ist eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback auf dem Installationsrechner geprüft. Aufgabe 35 behandelt danach weitere Betriebssysteme, Backup, Härtung und Betriebsübergabe.
+- [x] Masterdatei, Zwischenartefakte und Manifest liegen unter stabilen Projekt-/Versionspfaden auf persistentem Speicher des Installationsrechners. Der Pfad ist konfigurierbar und für Windows, macOS und Linux geeignet.
+- [x] Browserabruf ist berechtigt und unterstützt Videowiedergabe; Pfadmanipulation wird abgewehrt.
+- [x] Speicherpfad direkt in der Weboberfläche ändern, tatsächlichen Kopierfortschritt anzeigen und ursprüngliche Dateien erhalten (Betreiberentscheidung 04.10.2026).
+- **Prüfung bestanden 04.10.2026:** Lokaler Browser-Zugriffsweg ist eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback auf dem Installationsrechner geprüft. Aufgabe 35 behandelt danach weitere Betriebssysteme, Backup, Härtung und Betriebsübergabe.
+
+- **Belege:** [Abnahmebericht](step18-acceptance.md); 83 verschiedene Backendtests in Gesamt- und gezielten Nachläufen, zehn Projekttests, Web-Build, echter normaler FINAL-Auftrag und Chrome-Wiedergabe.
 
 ### 19. Produktionsstatus und Videoprüfung (S; abhängig von: 13, 18)
 - [ ] Mit einer vom Betreiber gewählten Idee Erzählung und Bildpassung prüfen; unbeabsichtigte Clipwiederholungen erkennen und beheben. Automatische Doppelungsprüfung ist bislang nicht implementiert, Suchworttreffer ersetzen keine Bildverständnisprüfung. Die wiederholte Dreierfolge des Techniktests zählt nicht als Nachweis abwechslungsreicher Inhalte.

@@ -21,6 +21,8 @@ def fixture_stage(name, context):
         if scenario == 'ui-resume' and context['attempt'] == 1:
             raise production_stages.StageFailure('TEST_RETRY_REQUIRED', 'Kontrollierte Unterbrechung für die Browser-Wiederaufnahme.')
     relative = f"{context['project_id']}/{context['run_id']}/{name.lower()}.fixture"
+    if name == 'STORAGE':
+        relative = f"projects/{context['project_id']}/versions/{context['script']['version']}/runs/{context['run_id']}/storage/master.mp4"
     root = Path(os.environ['TEST_ARTIFACT_ROOT'])
     target = root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -34,7 +36,13 @@ def fixture_stage(name, context):
                     storage_path=relative, checksum_sha256=hashlib.sha256(content).hexdigest())
     if scenario == 'mixed' and name == 'SCENES':
         artifact['media_type'] = 'AI_GENERATED_VIDEO' if context['mode'] == 'LOKAL' else 'STOCK_VIDEO'
-    return {'artifacts': [artifact]}
+    result = {'artifacts': [artifact]}
+    if name == 'STORAGE':
+        artifact['key'] = 'master_video'
+        result['storage'] = dict(project_id=context['project_id'], run_id=context['run_id'],
+            script_version=context['script']['version'], manifest_path=relative.replace('master.mp4','manifest.json'),
+            manifest_sha256='a'*64)
+    return result
 
 
 def worker_main(queue_name, burst=False, idle_seconds=30):

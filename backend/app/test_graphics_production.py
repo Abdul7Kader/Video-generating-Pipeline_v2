@@ -68,7 +68,7 @@ class GraphicsProductionTest(unittest.TestCase):
                 self.assertFalse(response.json()['content_available'])
             # The filesystem checkpoint must work independently of the DB checkpoint.
             with patch.dict(os.environ, {'MEDIA_ROOT': self.files.name}), patch('app.graphics.subprocess.run', wraps=__import__('subprocess').run) as launch:
-                cached = render_graphics(dict(run_id=run, script=script, scenes=scenes, previous_results=previous))
+                cached = render_graphics(dict(project_id=project,run_id=run, script=script, scenes=scenes, previous_results=previous))
                 self.assertEqual(cached['graphics'], graphics)
                 self.assertFalse(any(str(call.args[0][0]).endswith(('node', 'node.exe')) for call in launch.call_args_list))
             self.assertEqual(self.client.post(f'/api/projects/{project}/production-runs/{run}/resume').status_code, 200)
@@ -93,7 +93,7 @@ class GraphicsProductionTest(unittest.TestCase):
     def test_migration_roundtrip_mode_guards_and_nonlossy_rollback(self):
         migrate('down'); migrate('up')
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4, 5])
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4, 5, 6])
             for mode in ('LOKAL', 'CLOUD'):
                 project, run = self.project(mode=mode)
                 insert = "INSERT INTO artifacts (project_id,production_run_id,kind,media_type,storage_path,checksum_sha256) VALUES (%s,%s,%s,%s,'graphic.png',%s)"
@@ -105,5 +105,5 @@ class GraphicsProductionTest(unittest.TestCase):
         with self.assertRaises(psycopg.Error):
             migrate('down')
         with database() as conn:
-            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 5)
+            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 6)
             self.assertEqual(conn.execute("SELECT count(*) AS n FROM artifacts WHERE media_type = 'GRAPHICS_OVERLAY'").fetchone()['n'], 2)

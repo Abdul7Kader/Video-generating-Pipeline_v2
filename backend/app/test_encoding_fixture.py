@@ -10,6 +10,8 @@ real_stage = production_stages.execute_stage
 
 
 def encoding_fixture(name, context):
+    if name == 'STORAGE':
+        raise production_stages.StageFailure('STAGE_UNAVAILABLE', 'Endablage bleibt in dieser isolierten Encodingprüfung deaktiviert.')
     if name != 'SCENES':
         return real_stage(name, context)
     folder = media_root()/'encoding-test-inputs'

@@ -135,6 +135,16 @@ def run_stage(conn, step, context, timeout):
                         or keys != ['encoded_master']
                         or any(a.kind != 'INTERMEDIATE' or a.media_type != 'FINAL_VIDEO' for a in result.artifacts)):
                     raise ValueError('incomplete or inconsistent encoding manifest')
+            if step['name'] == 'STORAGE':
+                prefix = f"projects/{context['project_id']}/versions/{context['script']['version']}/runs/{context['run_id']}/storage"
+                if (result.storage is None or result.storage.project_id != context['project_id']
+                        or result.storage.run_id != context['run_id'] or result.storage.script_version != context['script']['version']
+                        or result.storage.manifest_path != prefix+'/manifest.json' or keys != ['master_video']
+                        or len(result.artifacts) != 1 or result.artifacts[0].kind != 'FINAL'
+                        or result.artifacts[0].media_type != 'FINAL_VIDEO' or result.artifacts[0].storage_path != prefix+'/master.mp4'):
+                    raise ValueError('incomplete or inconsistent storage manifest')
+            elif result.storage is not None:
+                raise ValueError('storage manifest outside final checkpoint')
             return result
         except (ValueError, KeyError, TypeError) as exc:
             raise StageFailure("INVALID_STAGE_RESULT", "Der Produktionsschritt hat ein ungültiges Ergebnis geliefert.") from exc
@@ -151,6 +161,11 @@ def run_production(run_id: str):
     # Session lock survives transaction commits, but is released on process death.
     with database() as conn:
         conn.autocommit = True
+        from app.storage_settings import storage_lock
+        if not storage_lock(conn, shared=True):
+            return
+        if conn.execute("SELECT EXISTS (SELECT 1 FROM storage_changes WHERE state IN ('QUEUED','RUNNING')) AS pending").fetchone()['pending']:
+            return
         if not try_lock(conn, run_id):
             return
         run = conn.execute("SELECT * FROM production_runs WHERE id = %s", (run_id,)).fetchone()

@@ -144,7 +144,8 @@ def inspect_master(path, frames, probe, encoder, with_audio=True):
 def encode_video(context):
     root, probe, encoder = media_root(), ffprobe_path(), ffmpeg_path()
     plan, artifacts, paths = prepare_inputs(context, root, probe)
-    folder = root/'encoding'/str(UUID(str(context['run_id'])))
+    from app.media import run_folder
+    folder = run_folder(root, context, 'encoding')
     folder.mkdir(parents=True, exist_ok=True)
     fingerprint = hashlib.sha256(('ffmpeg-v2-captions-only-h264-crf20-veryfast-aac128-mono48k\n'+plan.model_dump_json()
                                  + ''.join(a.model_dump_json() for a in artifacts.values())).encode()).hexdigest()

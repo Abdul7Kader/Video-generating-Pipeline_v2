@@ -94,7 +94,8 @@ def render_graphics(context):
     except (OSError, ValueError, StageFailure) as exc:
         raise StageFailure('GRAPHICS_SPEECH_REQUIRED', 'Gespeicherte Sprachdateien fehlen oder sind beschädigt. Grafik wurde blockiert.') from exc
     try:
-        folder = root / 'graphics' / str(UUID(str(context['run_id'])))
+        from app.media import run_folder
+        folder = run_folder(root, context, 'graphics')
         folder.mkdir(parents=True, exist_ok=True)
         templates = ROOT / 'graphics'
         digest = hashlib.sha256()

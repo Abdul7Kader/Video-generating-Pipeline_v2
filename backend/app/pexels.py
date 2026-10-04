@@ -156,7 +156,8 @@ def collect_scenes(context, client=None):
     if context["mode"] != "LOKAL" or context["media_type"] != "STOCK_VIDEO" or any(s["media_type"] != "STOCK_VIDEO" for s in context["scenes"]):
         raise StageFailure("MODE_MISMATCH", "Pexels darf ausschließlich STOCK_VIDEO-Szenen im Modus LOKAL beschaffen.")
     key, executable, root = api_key(), ffprobe_path(), media_root()
-    directory = root / "sources" / str(UUID(context["run_id"]))
+    from app.media import run_folder
+    directory = run_folder(root, context, 'sources')
     directory.mkdir(parents=True, exist_ok=True)
     own_client = client is None
     client = client or httpx.Client(follow_redirects=False, trust_env=False, headers={"User-Agent": "VideoPipeline/0.1"})

@@ -246,8 +246,11 @@ def require_project(conn, project_id: UUID, lock: bool = False):
 
 def require_artifact(conn, artifact_id: UUID):
     row = conn.execute(
-        "SELECT id, project_id, kind, media_type, checksum_sha256, created_at "
-        "FROM artifacts WHERE id = %s", (artifact_id,),
+        "SELECT a.id, a.project_id, a.kind, a.media_type, a.checksum_sha256, a.created_at, "
+        "EXISTS (SELECT 1 FROM production_runs r JOIN production_steps s ON s.production_run_id=r.id "
+        "WHERE r.id=a.production_run_id AND r.state='COMPLETED' AND s.name='STORAGE' AND s.state='COMPLETED' "
+        "AND a.kind='FINAL' AND a.media_type='FINAL_VIDEO') AS content_available "
+        "FROM artifacts a WHERE a.id = %s", (artifact_id,),
     ).fetchone()
     if row is None:
         raise problem(404, "ARTIFACT_NOT_FOUND", "Artifact not found")
@@ -650,14 +653,16 @@ def get_artifact(artifact_id: UUID):
     return artifact
 
 
+@router.head('/artifacts/{artifact_id}/content',include_in_schema=False)
 @router.get(
     "/artifacts/{artifact_id}/content",
     responses={
-        200: {"description": "MP4 file after task 18", "content": {"video/mp4": {}}},
-        501: {"model": ErrorEnvelope, "description": "Media delivery awaits task 18"},
+        200: {"description": "Authenticated MP4", "content": {"video/mp4": {}}},
+        206: {"description": "Single byte range"},
+        401: {"model": ErrorEnvelope, "description": "Operator session required"},
+        416: {"description": "Unsatisfiable range"},
     },
 )
-def get_artifact_content(artifact_id: UUID):
-    with database() as conn:
-        require_artifact(conn, artifact_id)
-    raise problem(501, "MEDIA_NOT_AVAILABLE", "Media delivery is implemented in task 18")
+def get_artifact_content(artifact_id: UUID, request: Request):
+    from app.media_delivery import deliver
+    return deliver(artifact_id,request)

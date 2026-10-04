@@ -90,7 +90,7 @@ class PexelsProductionTest(unittest.TestCase):
         with database() as conn:
             scenes = conn.execute('SELECT s.* FROM scenes s JOIN script_versions v ON v.id = s.script_version_id '
                                   'WHERE v.project_id = %s ORDER BY position', (project['id'],)).fetchall()
-        return project['id'], run, {'mode': mode, 'media_type': project['media_type'], 'run_id': run, 'scenes': scenes}
+        return project['id'], run, {'project_id':project['id'], 'script':{'version':1}, 'mode': mode, 'media_type': project['media_type'], 'run_id': run, 'scenes': scenes}
 
     def work(self):
         ControlledWorker([self.queue], connection=self.redis).work(burst=True, logging_level='WARNING')

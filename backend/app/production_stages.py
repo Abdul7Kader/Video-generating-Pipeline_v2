@@ -1,4 +1,4 @@
-"""Isolated CPU-media stages; final storage and delivery follow in step 18."""
+"""Isolated, validated CPU-media stages through final publication."""
 
 import json
 import os
@@ -136,6 +136,20 @@ class StageResult(BaseModel):
     speech: list[SpeechSegment] = Field(default_factory=list, max_length=20)
     graphics: GraphicsManifest | None = None
     encoding: EncodingManifest | None = None
+    storage: 'StorageManifest | None' = None
+
+
+class StorageManifest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    project_id: str
+    run_id: str
+    script_version: int = Field(ge=1)
+    manifest_path: str
+    manifest_sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
+    artifact_key: Literal['master_video'] = 'master_video'
+
+
+StageResult.model_rebuild()
 
 
 def execute_stage(name, context):
@@ -151,6 +165,9 @@ def execute_stage(name, context):
     if name == 'ENCODING':
         from app.encoding import encode_video
         return encode_video(context)
+    if name == 'STORAGE':
+        from app.storage import store_video
+        return store_video(context)
     # No source fallback or simulated media in production.
     labels = {"SCENES": "Szenenbeschaffung", "SPEECH": "Sprachsynthese", "GRAPHICS": "Grafikerstellung",
               "ENCODING": "Video-Encoding", "STORAGE": "Medienablage"}
@@ -183,6 +200,9 @@ def main():
     try:
         with database() as conn:
             conn.autocommit = True
+            from app.storage_settings import storage_lock
+            if not storage_lock(conn, shared=True):
+                raise StageFailure('STORAGE_BUSY','Der Speicher wird gerade übernommen.',True)
             conn.execute("SELECT pg_advisory_lock(hashtextextended(%s, 13))", (context["step_id"],))
             row = conn.execute("SELECT state, attempts FROM production_steps WHERE id = %s",
                                (context["step_id"],)).fetchone()

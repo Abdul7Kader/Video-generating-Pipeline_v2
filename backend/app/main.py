@@ -14,6 +14,10 @@ app = FastAPI(
     docs_url="/api/docs", openapi_url="/api/openapi.json",
 )
 app.include_router(api_router)
+from app.media_access import router as media_access_router
+from app.storage_api import router as storage_router
+app.include_router(media_access_router)
+app.include_router(storage_router)
 install_error_handlers(app)
 
 

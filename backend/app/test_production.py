@@ -114,7 +114,7 @@ class ProductionIntegrationTest(unittest.TestCase):
             self.work()  # previously queued duplicate
             with database() as conn:
                 self.assertEqual(conn.execute('SELECT count(*) AS n FROM artifacts WHERE production_run_id = %s', (run,)).fetchone()['n'], 5)
-            self.assertEqual(len(list(Path(self.files.name).rglob('*.fixture'))), 5 if mode == 'LOKAL' else 10)
+            self.assertEqual(len(list((p for p in Path(self.files.name).rglob('*') if p.is_file() and (p.suffix == '.fixture' or p.name == 'master.mp4')))), 5 if mode == 'LOKAL' else 10)
 
     def test_retry_keeps_completed_step_and_stops_after_three_attempts(self):
         for scenario in ('transient', 'persistent'):
@@ -147,7 +147,7 @@ class ProductionIntegrationTest(unittest.TestCase):
         self.assertEqual(output['steps'][1]['error_code'], 'STEP_TIMEOUT')
         self.recover_due(run); self.work()
         self.assertEqual(self.output(project, run)['state'], 'COMPLETED')
-        self.assertEqual(len(list(Path(self.files.name).rglob('*.fixture'))), 5)
+        self.assertEqual(len(list((p for p in Path(self.files.name).rglob('*') if p.is_file() and (p.suffix == '.fixture' or p.name == 'master.mp4')))), 5)
 
     def test_outbox_lost_response_resume_and_cancel_are_idempotent(self):
         project, body = self.project(approve=False)
@@ -163,7 +163,7 @@ class ProductionIntegrationTest(unittest.TestCase):
         self.assertEqual(self.client.post(url+'/resume').status_code, 409)
         self.work()
         self.assertEqual(self.output(project, run)['state'], 'FAILED')
-        self.assertEqual(list(Path(self.files.name).rglob('*.fixture')), [])
+        self.assertEqual(list((p for p in Path(self.files.name).rglob('*') if p.is_file() and (p.suffix == '.fixture' or p.name == 'master.mp4'))), [])
         # Explicit resume preserves the run, completed steps and bounded budget.
         project, run = self.project()
         with database() as conn:
@@ -218,7 +218,7 @@ class ProductionIntegrationTest(unittest.TestCase):
             self.assertEqual(final['error_code'], 'CANCELLED')
             self.assertEqual([s['state'] for s in final['steps'][:2]], ['COMPLETED', 'FAILED'])
             self.assertFalse(final['can_resume'])
-            self.assertEqual(len(list(Path(self.files.name).rglob('*.fixture'))), 1)
+            self.assertEqual(len(list((p for p in Path(self.files.name).rglob('*') if p.is_file() and (p.suffix == '.fixture' or p.name == 'master.mp4')))), 1)
         finally:
             if worker.poll() is None:
                 worker.kill(); worker.wait(timeout=10)
@@ -255,7 +255,7 @@ class ProductionIntegrationTest(unittest.TestCase):
                                        (final['steps'][1]['id'],)).fetchall()
                 self.assertEqual([(x['state'], x['error_code']) for x in history], [('FAILED','WORKER_INTERRUPTED'), ('COMPLETED',None)])
                 self.assertEqual(conn.execute('SELECT count(*) AS n FROM artifacts WHERE production_run_id = %s', (run,)).fetchone()['n'], 5)
-            self.assertEqual(len(list(Path(self.files.name).rglob('*.fixture'))), 5)
+            self.assertEqual(len(list((p for p in Path(self.files.name).rglob('*') if p.is_file() and (p.suffix == '.fixture' or p.name == 'master.mp4')))), 5)
             self.assertFalse(list(Path(self.files.name).rglob('*.partial')))
         finally:
             if worker.poll() is None:

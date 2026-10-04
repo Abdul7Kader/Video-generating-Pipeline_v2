@@ -126,3 +126,15 @@ input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;color:#81929
 .speech-segments p { color: #a9b9bd; overflow-wrap: anywhere; }
 .speech-segments ul { list-style: none; padding: 0; margin: 0; }
 .speech-segments li { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid #35434b; }
+.storage-settings { margin: 24px 0; }
+.storage-settings summary { cursor: pointer; padding: 22px; display: flex; justify-content: space-between; font-weight: 700; border-radius: 14px; }
+.storage-settings summary:hover { background: rgba(120, 150, 180, .12); }
+.storage-settings summary:focus-visible { outline: 3px solid #58a8e8; outline-offset: 3px; }
+.storage-body { padding: 0 22px 22px; }
+.storage-body form { display: grid; gap: 14px; }
+.storage-current { overflow-wrap: anywhere; }
+.storage-body input { box-sizing: border-box; width: 100%; padding: 13px; border: 1px solid #61748a; border-radius: 8px; background: #101a25; color: #f3f6fa; font: inherit; }
+.storage-body progress { width: 100%; height: 12px; accent-color: #60bba2; }
+.video-preview { width: 100%; }
+.video-preview video { display: block; width: 100%; max-width: 380px; max-height: 65vh; margin: 16px auto; background: #050b12; border-radius: 12px; }
+.video-download { display: inline-flex; text-decoration: none; margin-top: 12px; }

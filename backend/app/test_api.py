@@ -149,8 +149,8 @@ class ApiContractTest(unittest.TestCase):
         self.assertNotIn("storage_path", metadata.json())
         self.assertFalse(metadata.json()["content_available"])
         content = self.client.get(f"/api/artifacts/{artifact_id}/content")
-        self.assertEqual(content.status_code, 501)
-        self.assertEqual(content.json()["error"]["code"], "MEDIA_NOT_AVAILABLE")
+        self.assertEqual(content.status_code, 401)
+        self.assertEqual(content.json()["error"]["code"], "MEDIA_AUTH_REQUIRED")
         approval_url = f"/api/projects/{project_id}/videos/{artifact_id}/approval"
         wrong = self.client.post(approval_url, json={"checksum_sha256": "b" * 64})
         self.assertEqual(wrong.status_code, 409)
