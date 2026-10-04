@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Fortsetzung ab 1. Oktober 2026:** Aufgaben 01–15 und M1 sind abgeschlossen; nächster Schritt ist 16 (Remotion-Grafikvorlagen). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 4. Oktober 2026:** Aufgaben 01–16 und M1 sind abgeschlossen; nächster Schritt ist 17 (FFmpeg-Pipeline). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -104,10 +104,9 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Testtext anhören und Dauer per ffprobe mit Segmentdaten vergleichen.
 
 ### 16. Remotion-Grafikvorlagen (M; abhängig von: 01, 15)
-- **PAUSIERT auf Betreiberwunsch (01.10.2026):** Entwicklung stoppen. Implementierung als Code-Commit `271c323` auf GitHub gesichert; Fortsetzung und offene Prüfungen im [Wiedereinstieg](../STATE.md#pause-und-genauer-wiedereinstieg). Abschlusskriterien bleiben offen.
-- **Zwischenstand 01.10.2026:** Vier Grafiktests mit tatsächlichem lokalem Rendern, Cache-/Beschädigungsprüfung und deutsche Kurz-/Langtext-Sichtprüfung bestanden. Web-Build und zehn Projekttests erfolgreich. Dienst-/Browserabnahme noch offen wegen Docker-Startfehler; [Prüfstand](step16-acceptance.md).
-- [ ] Titel, satz-/szenengenaue Untertitel und grafische Elemente werden aus gespeicherten Daten gerendert.
-- [ ] Vorlagen funktionieren für gewähltes Format, sichere Ränder und Sonderzeichen.
+- **Abgeschlossen (04.10.2026):** 65 Backendtests ohne Überspringen, zehn Projekttests und Web-Build bestanden. Echte Migration-/RQ-/Piper-/Remotion-Integration beider Modi mit kontrollierten Szenenquellen sowie normaler LOKAL-Auftrag mit sechs echten Pexels-Clips, sechs Sprachsegmenten und sieben Grafiken geprüft. Browser-Neuladen, 320 Pixel, Ladebalken und Sichtprüfung bestanden. [Prüfbericht](step16-acceptance.md).
+- [x] Titel, satz-/szenengenaue Untertitel und grafische Elemente werden aus gespeicherten Daten gerendert.
+- [x] Vorlagen funktionieren für gewähltes Format, sichere Ränder und Sonderzeichen.
 - **Prüfung:** Render-Beispiele für kurze/lange Zeilen und deutsche Umlaute visuell prüfen.
 
 ### 17. FFmpeg-Pipeline (M; abhängig von: 14–16)
