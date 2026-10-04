@@ -3,7 +3,7 @@ import ScriptEditor, { type Script } from './ScriptEditor'
 import LoadingBar from './LoadingBar'
 import { request } from './request'
 import StorageSettings from './StorageSettings'
-import VideoPreview from './VideoPreview'
+import VideoReview from './VideoReview'
 
 type Mode = 'LOKAL' | 'CLOUD'
 type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
@@ -15,7 +15,7 @@ type PexelsSource = { scene_position: number; video_id: number; video_page: stri
 type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
 type GraphicsManifest = { width: number; height: number; fps: number; duration_frames: number; scenes: { scene_position: number; start_frame: number; caption_frames: number }[] }
 type EncodingManifest = { width: number; height: number; fps: number; duration_seconds: number; video_codec: string; audio_codec: string; size_bytes: number }
-type ProjectStatus = { final_artifact_id?: string | null; latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
+type ProjectStatus = { video_approved?: boolean; final_artifact_id?: string | null; latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -102,6 +102,9 @@ export default function Studio() {
       setProject(loadedProject)
       activeProjectId.current = id
       lastProjectId.current = id
+      window.localStorage.setItem(STORAGE_KEY, id)
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('project')) { url.searchParams.delete('project'); window.history.replaceState(null, '', url) }
       setProjectStatus(status)
       setScript(loadedScript)
       if (!status.latest_script_version) {
@@ -119,7 +122,8 @@ export default function Studio() {
   }
 
   useEffect(() => {
-    const id = window.localStorage.getItem(STORAGE_KEY)
+    const linked = new URLSearchParams(window.location.search).get('project')
+    const id = linked && /^[0-9a-f-]{36}$/i.test(linked) ? linked : window.localStorage.getItem(STORAGE_KEY)
     if (id) void loadProject(id)
   }, [])
 
@@ -332,7 +336,7 @@ export default function Studio() {
             </select>
             <div className="mode-detail" aria-live="polite">
               <strong>{mediaType} · {mode === 'LOKAL' ? 'Pexels' : 'Wan'}</strong>
-              <span>{mode === 'LOKAL' ? 'Später ausschließlich Stockvideos von Pexels.' : 'Später ausschließlich Wan-Videos über Modal.'}</span>
+              <span>{mode === 'LOKAL' ? 'Ausschließlich Stockvideos von Pexels.' : 'Wan-Videos über Modal; die CLOUD-Produktion folgt.'}</span>
             </div>
             <button className="primary-button" type="submit" disabled={creatingBlocked} aria-busy={saving}>
               {saving ? 'Projekt wird gespeichert …' : 'Projekt speichern'}<span aria-hidden="true">→</span>
@@ -372,7 +376,7 @@ export default function Studio() {
                 {script && !editing && <div className="script-preview"><p className="script-success" role="status">Skriptversion {script.version} gespeichert. Du kannst das Skript prüfen und bearbeiten.</p><h4 id="script-preview-title" tabIndex={-1}>{script.title}</h4><p>{script.scenes.length} Szenen · {script.target_duration_seconds ?? 'Dauer offen'} Sekunden</p><button className="secondary-button" type="button" onClick={() => setEditing(true)} disabled={approving || loading || saving || Boolean(productionAction)}>Skript bearbeiten</button><ol>{script.scenes.map((scene) => <li key={scene.position}><strong>Szene {scene.position}</strong><p>{scene.narration}</p><small>{scene.visual_description}</small><p className="field-hint">{project.mode === 'LOKAL' ? (scene.pexels_queries ?? (scene.pexels_query ? [scene.pexels_query] : [])).join(' · ') : scene.wan_prompt}</p></li>)}</ol>
                   <div className="approval-area" aria-labelledby="approval-title">
                     <h4 id="approval-title">Skriptfreigabe · Version {script.version}</h4>
-                    <p>Mit der Freigabe bestätigst du genau die angezeigte Version und legst ihren Produktionsauftrag an. Änderungen benötigen eine neue Freigabe. Die Videoerzeugung ist noch in Entwicklung.</p>
+                    <p>Mit der Freigabe startet die Produktion dieser Version. Änderungen benötigen eine neue Freigabe. Das fertige Video prüfst du anschließend vor der zweiten Freigabe.</p>
                     {newerScript && <p className="notice-error" role="alert">Eine neuere Version liegt vor. Bitte lade das Projekt neu.</p>}
                     {!scriptApproved && <button className="primary-button" type="button" onClick={() => void approveScript()} disabled={approving || loading || saving || Boolean(saveError) || newerScript} aria-busy={approving}>{approving ? 'Freigabe wird gespeichert …' : `Skriptversion ${script.version} freigeben`}</button>}
                     {approving && <LoadingBar label="Freigabe und Auftragsübergabe werden bestätigt …" />}
@@ -414,7 +418,13 @@ export default function Studio() {
                         <p>H.264 · AAC · {new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 }).format(projectStatus.production_encoding.size_bytes / 1024 / 1024)} MB</p>
                       </section>}
                       <div className="production-actions">
-                        {projectStatus?.final_artifact_id && projectStatus.production_state === 'COMPLETED' && <VideoPreview key={projectStatus.final_artifact_id} artifactId={projectStatus.final_artifact_id} authorized={mediaAuthorized} />}
+                        {projectStatus?.final_artifact_id && projectStatus.production_state === 'COMPLETED' && <VideoReview key={projectStatus.final_artifact_id} projectId={project.id} artifactId={projectStatus.final_artifact_id}
+                          idea={project.idea} script={script} authorized={mediaAuthorized} approved={Boolean(projectStatus.video_approved)}
+                          busy={loading || saving || approving || newerScript || Boolean(productionAction)}
+                          sceneStarts={projectStatus.production_graphics?.scenes.map(scene => ({ scene_position: scene.scene_position, seconds: scene.start_frame / projectStatus.production_graphics!.fps }))}
+                          duplicateClips={new Set(projectStatus.production_sources?.map(source => source.video_id)).size !== (projectStatus.production_sources?.length ?? 0)}
+                          onApproved={() => setProjectStatus(current => current && activeProjectId.current === project.id && current.final_artifact_id === projectStatus.final_artifact_id ? { ...current, video_approved: true } : current)}
+                          onEdit={() => { setEditing(true); focusScript() }} />}
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
                       </div>
@@ -442,7 +452,7 @@ export default function Studio() {
               <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">06</span><div><h3>Sprache erzeugen</h3><p>Deutsche Sprechertexte werden szenenweise vertont; die gemessenen Dauern bleiben gespeichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">07</span><div><h3>Untertitel rendern</h3><p>Untertitel erhalten sichere Ränder und Zeitdaten passend zu den Sprachsegmenten.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Fertige LOKAL-Videos dauerhaft speichern, ansehen und herunterladen.</p></div><span className="step-tag available">Verfügbar</span></li>
+              <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Eingabe und Ausgabe vergleichen, Szenen prüfen und das fertige Video freigeben.</p></div><span className="step-tag available">Verfügbar</span></li>
             </ol>
           </div>
           <div className="panel systems-panel">

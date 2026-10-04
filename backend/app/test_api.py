@@ -4,6 +4,7 @@ import os
 import copy
 import unittest
 from uuid import uuid4
+from unittest.mock import patch
 
 import psycopg
 from fastapi.testclient import TestClient
@@ -152,12 +153,20 @@ class ApiContractTest(unittest.TestCase):
         self.assertEqual(content.status_code, 401)
         self.assertEqual(content.json()["error"]["code"], "MEDIA_AUTH_REQUIRED")
         approval_url = f"/api/projects/{project_id}/videos/{artifact_id}/approval"
-        wrong = self.client.post(approval_url, json={"checksum_sha256": "b" * 64})
+        body = {'checksum_sha256': 'a'*64, 'reviewed_narration': True, 'reviewed_visuals': True}
+        self.assertEqual(self.client.post(approval_url, json=body).status_code, 401)
+        origin = {'Origin':'http://testserver'}
+        self.assertEqual(self.client.post('/api/media-session',json={'password':'controlled-test-password'},headers=origin).status_code, 200)
+        self.assertEqual(self.client.post(approval_url,json=body,headers={'Origin':'https://other.invalid'}).status_code,403)
+        wrong = self.client.post(approval_url, json={**body, 'checksum_sha256':'b'*64},headers=origin)
         self.assertEqual(wrong.status_code, 409)
         self.assertEqual(wrong.json()["error"]["code"], "ARTIFACT_CONFLICT")
-        approved = self.client.post(approval_url, json={"checksum_sha256": "a" * 64})
+        # Contract fixture has no media host; real file checks are tested in StorageIntegrationTest.
+        with patch('app.api.rpc',side_effect=lambda op,**kwargs: {'checksum':'a'*64,'stream':'controlled'} if op=='open' else {}):
+            approved = self.client.post(approval_url, json=body,headers=origin)
         self.assertEqual(approved.status_code, 201, approved.text)
-        repeated = self.client.post(approval_url, json={"checksum_sha256": "a" * 64})
+        with patch('app.api.rpc',side_effect=lambda op,**kwargs: {'checksum':'a'*64,'stream':'controlled'} if op=='open' else {}):
+            repeated = self.client.post(approval_url, json=body,headers=origin)
         self.assertEqual(repeated.status_code, 200)
         self.assertEqual(repeated.json()["id"], approved.json()["id"])
         status = self.client.get(f"/api/projects/{project_id}/status").json()
@@ -165,6 +174,12 @@ class ApiContractTest(unittest.TestCase):
         with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
             publications = conn.execute("SELECT count(*) FROM platform_publications").fetchone()[0]
         self.assertEqual(publications, 0)
+        self.assertEqual(self.client.post(approval_url,json={**body,'reviewed_visuals':False},headers=origin).status_code,422)
+        newer=self.script_payload('CLOUD',expected_version=1)
+        self.assertEqual(self.client.post(f'/api/projects/{project_id}/scripts',json=newer).status_code,201)
+        stale=self.client.post(approval_url,json=body,headers=origin)
+        self.assertEqual(stale.status_code,409)
+        self.assertEqual(stale.json()['error']['code'],'VIDEO_VERSION_OUTDATED')
 
     def test_complete_edits_preserve_metadata_and_old_versions(self):
         source = self.script_payload()

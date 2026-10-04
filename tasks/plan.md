@@ -51,7 +51,7 @@ Beide Modi verwenden Piper für Sprechertext, FFmpeg/ffprobe für Verarbeitung u
 3. Benutzer bearbeitet Skript und Szenen. Speichern erzeugt eine neue Skriptversion.
 4. Skriptfreigabe fixiert genau diese Version und startet einen Produktionsauftrag. Spätere Textänderungen verlangen eine neue Version und neue Freigabe.
 5. System produziert die Szenen, Sprachdateien, Untertitel, Grafiken und das finale Video. Fortschritt, Fehler und Wiederaufnahme sind sichtbar.
-6. Benutzer prüft das fertige Video sowie Plattformauswahl und Veröffentlichungsdaten. Videofreigabe fixiert genau die geprüfte Videodatei und startet je Plattform einen eigenen Veröffentlichungsauftrag.
+6. Benutzer vergleicht Eingabe, Sprechertext und Bildvorgaben mit dem fertigen Video. Zwei Prüfpunkte und Videofreigabe fixieren genau die aktuelle geprüfte Datei. Plattformwahl, Konten und Veröffentlichungsaufträge folgen erst in 25–31; in 19 wird kein Publikationsauftrag angelegt.
 7. Ergebnis je Plattform anzeigen: in Bearbeitung, veröffentlicht mit Link, oder fehlgeschlagen mit gezielter Wiederholungsmöglichkeit. Kein erneuter Upload eines bereits veröffentlichten Ergebnisses.
 
 ### 2.2 Technischer Aufbau
@@ -236,3 +236,5 @@ Stand der Recherche: 26. September 2026. Vor Implementierung der jeweiligen Inte
 - [TikTok: unterstützte Videoformate und Bildraten](https://developers.tiktok.com/docs/en/content-posting-api-media-transfer-guide)
 - [Modal: A100-80GB-Preisübersicht; vor Kostenfreigabe erneut prüfen](https://modal.com/pricing)
 - [Modal: Budgets und Grenze für Nettokosten](https://modal.com/docs/guide/budgets)
+
+**Schritt 19 abgeschlossen (04.10.2026), Betreiber-Inhaltsabnahme bestätigt:** Eingabe-/Ausgabevergleich mit tatsächlichen Szenenzeitpunkten, zweiter geschützter Freigabe für die exakte aktuelle MP4 und Doppelungssperre für gleiche Pexels-IDs/Dateihashes. Sechs unterschiedliche reale Aufnahmen; ein falscher Suchtreffer bei Tomatenernte wurde durch präzisierte Suche in einer neuen Skriptversion korrigiert und visuell nachgeprüft. Echte Browserproduktion über fünf Stufen bis Freigabe, 36/36 s Wiedergabe, Retry/Neuladen/320 px bestanden. 86 verschiedene Backendtests, zehn Projekttests und Web-Build bestanden. Suchworttreffer sind keine semantische Bildanalyse; Betreiber bestätigt die gezeigte Eingabe/korrigierte Ausgabe: „Ja, das passt auf jeden Fall.“ Nächste Aufgabe 20: Modal-Workflow statisch ohne Inferenz vorbereiten. Kein Publikationsauftrag. [Prüfbericht 19](step19-acceptance.md).

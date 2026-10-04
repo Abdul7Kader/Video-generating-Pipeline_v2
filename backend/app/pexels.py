@@ -111,7 +111,7 @@ def candidates(videos, query, duration):
         except (ValueError, TypeError, KeyError):
             continue
     options.sort(key=lambda item: (-item[0], item[1]))
-    return [(video, file) for _, _, video, file in options[:2]]
+    return [(video, file) for _, _, video, file in options[:10]]
 
 
 def download(client, url, part):
@@ -162,6 +162,8 @@ def collect_scenes(context, client=None):
     own_client = client is None
     client = client or httpx.Client(follow_redirects=False, trust_env=False, headers={"User-Agent": "VideoPipeline/0.1"})
     artifacts, sources = [], []
+    used_videos, used_checksums = set(), set()
+    (directory / 'manifest.json').unlink(missing_ok=True)
     try:
         for scene in context["scenes"]:
             position = scene["position"]
@@ -169,7 +171,7 @@ def collect_scenes(context, client=None):
             queries = scene.get("pexels_queries") or [scene.get("pexels_query")]
             if not isinstance(position, int) or not 1 <= position <= 20 or not duration or not all(isinstance(q, str) and q.strip() for q in queries) or not 1 <= len(queries) <= 4:
                 raise StageFailure("SCENE_SEARCH_REQUIRED", f"Szene {position}: Dauer und Pexels-Suchbegriffe im Skript ergänzen und neu freigeben.")
-            fingerprint = hashlib.sha256(json.dumps({"scene": str(scene["id"]), "duration": duration, "queries": queries}, sort_keys=True).encode()).hexdigest()
+            fingerprint = hashlib.sha256(json.dumps({"selection_policy": 2, "scene": str(scene["id"]), "duration": duration, "queries": queries}, sort_keys=True).encode()).hexdigest()
             clip = directory / f"scene-{position}.mp4"
             checkpoint = directory / f"scene-{position}.json"
             try:
@@ -179,13 +181,18 @@ def collect_scenes(context, client=None):
                 if (saved["fingerprint"] != fingerprint or artifact.storage_path != clip.relative_to(root).as_posix()
                         or artifact.key != f"scene_{position}" or artifact.kind != "SOURCE" or artifact.media_type != "STOCK_VIDEO"
                         or source.artifact_key != artifact.key or source.scene_position != position
-                        or source.scene_duration_seconds != duration or checksum(clip) != artifact.checksum_sha256):
+                        or source.scene_duration_seconds != duration or checksum(clip) != artifact.checksum_sha256
+                        or source.video_id in used_videos or artifact.checksum_sha256 in used_checksums):
                     raise ValueError("checkpoint mismatch")
                 probe(clip, duration, executable)
             except (OSError, ValueError, KeyError, TypeError, StageFailure):
                 selected = None
+                duplicates = False
                 for query in queries:
                     for video, file in candidates(search(client, key, query, root), query, duration):
+                        if video.get('id') in used_videos:
+                            duplicates = True
+                            continue
                         part = clip.with_suffix(".mp4.part")
                         try:
                             download(client, file["link"], part)
@@ -196,6 +203,9 @@ def collect_scenes(context, client=None):
                                                   creator_page=video["user"]["url"], scene_duration_seconds=duration, **media)
                             artifact = StageArtifact(key=source.artifact_key, kind="SOURCE", media_type="STOCK_VIDEO",
                                                      storage_path=clip.relative_to(root).as_posix(), checksum_sha256=checksum(part))
+                            if artifact.checksum_sha256 in used_checksums:
+                                duplicates = True
+                                continue
                             part.replace(clip)
                             write_json(checkpoint, {"fingerprint": fingerprint, "artifact": artifact.model_dump(), "source": source.model_dump()})
                             selected = source
@@ -210,7 +220,11 @@ def collect_scenes(context, client=None):
                     if selected:
                         break
                 if not selected:
+                    if duplicates:
+                        raise StageFailure('PEXELS_DUPLICATE_ONLY', f'Szene {position}: Die passenden Clips wurden bereits verwendet. Andere Suchbegriffe oder Bildbeschreibung speichern und das neue Skript freigeben.')
                     raise StageFailure("PEXELS_NO_MATCH", f"Szene {position}: Kein geeigneter Pexels-Clip gefunden. Suchbegriffe oder Bildbeschreibung im Skript ändern und neu freigeben.")
+            used_videos.add(source.video_id)
+            used_checksums.add(artifact.checksum_sha256)
             artifacts.append(artifact)
             sources.append(source)
         result = StageResult(artifacts=artifacts, sources=sources)

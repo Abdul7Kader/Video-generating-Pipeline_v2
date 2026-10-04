@@ -63,6 +63,42 @@ class StorageIntegrationTest(unittest.TestCase):
         self.client.cookies.set('video_media_session','9999999999.'+'a'*32+'.'+'b'*64,path='/api')
         self.assertFalse(self.client.get('/api/media-session').json()['authorized'])
 
+    def test_video_review_checks_real_file_duplicates_and_exact_approval(self):
+        body=test_production.test_api.ApiContractTest.script_payload()
+        for scene in body['scenes']: scene.update(duration_seconds=5,narration='Eine kurze Gartenpause.')
+        body['narration']=' '.join(s['narration'] for s in body['scenes'])
+        project,run=self.project('Videoprüfung',payload=body)
+        with patch('app.production_jobs.stage_command',return_value=[sys.executable,'-m','app.test_review_fixture']):
+            ControlledWorker([self.queue],connection=self.redis).work(burst=True,logging_level='WARNING')
+        self.assertEqual(self.output(project,run)['state'],'COMPLETED')
+        with database() as conn:
+            final=conn.execute("SELECT * FROM artifacts WHERE production_run_id=%s AND kind='FINAL'",(run,)).fetchone()
+            sources=conn.execute("SELECT * FROM artifacts WHERE production_run_id=%s AND kind='SOURCE' ORDER BY id",(run,)).fetchall()
+            self.assertEqual(conn.execute('SELECT count(*) AS n FROM platform_publications').fetchone()['n'],0)
+        url=f"/api/projects/{project}/videos/{final['id']}/approval"
+        payload=dict(checksum_sha256=final['checksum_sha256'],reviewed_narration=True,reviewed_visuals=True)
+        self.assertEqual(self.client.post(url,json=payload,headers=self.origin).status_code,401)
+        self.login()
+        self.assertEqual(self.client.post(url,json=payload,headers={'Origin':'https://other.invalid'}).status_code,403)
+        self.assertEqual(self.client.post(url,json={**payload,'reviewed_visuals':False},headers=self.origin).status_code,422)
+        self.assertEqual(self.client.post(url,json={**payload,'checksum_sha256':'b'*64},headers=self.origin).status_code,409)
+        with database() as conn: conn.execute('UPDATE artifacts SET checksum_sha256=%s WHERE id=%s',(sources[0]['checksum_sha256'],sources[1]['id']))
+        duplicate=self.client.post(url,json=payload,headers=self.origin)
+        self.assertEqual(duplicate.json()['error']['code'],'VIDEO_DUPLICATE_CLIPS')
+        with database() as conn: conn.execute('UPDATE artifacts SET checksum_sha256=%s WHERE id=%s',(sources[1]['checksum_sha256'],sources[1]['id']))
+        path=media_root()/final['storage_path']; original=path.read_bytes();path.write_bytes(b'corrupt')
+        corrupt=self.client.post(url,json=payload,headers=self.origin)
+        self.assertEqual(corrupt.json()['error']['code'],'MEDIA_CORRUPT')
+        self.assertFalse(self.client.get(f'/api/projects/{project}/status').json()['video_approved'])
+        path.write_bytes(original)
+        first=self.client.post(url,json=payload,headers=self.origin)
+        self.assertEqual(first.status_code,201,first.text)
+        repeated=self.client.post(url,json=payload,headers=self.origin)
+        self.assertEqual(repeated.status_code,200,repeated.text)
+        self.assertEqual(first.json()['id'],repeated.json()['id'])
+        self.assertTrue(self.client.get(f'/api/projects/{project}/status').json()['video_approved'])
+        with database() as conn: self.assertEqual(conn.execute('SELECT count(*) AS n FROM platform_publications').fetchone()['n'],0)
+
     def test_copy_outbox_recovery_checksums_and_conflict_keeps_current_root(self):
         self.login()
         old=media_root(); (old/'projects').mkdir(); (old/'projects'/'fixture.bin').write_bytes(b'media'*100000)

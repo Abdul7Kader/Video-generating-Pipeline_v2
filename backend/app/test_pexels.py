@@ -23,11 +23,11 @@ def context(count=2):
                        for i in range(1, count + 1)]}
 
 
-def video():
-    return {"id": 123, "duration": 8, "url": "https://www.pexels.com/video/bee-on-lavender-123/",
+def video(identity=123):
+    return {"id": identity, "duration": 8, "url": f"https://www.pexels.com/video/bee-on-lavender-{identity}/",
             "user": {"name": "Test Creator", "url": "https://www.pexels.com/@test/"},
-            "video_files": [{"id": 456, "file_type": "video/mp4", "width": 720, "height": 1280,
-                             "link": "https://videos.pexels.com/video-files/123/456.mp4"}]}
+            "video_files": [{"id": identity + 333, "file_type": "video/mp4", "width": 720, "height": 1280,
+                             "link": f"https://videos.pexels.com/video-files/{identity}/{identity + 333}.mp4"}]}
 
 
 @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'), 'FFmpeg and ffprobe required')
@@ -40,6 +40,13 @@ class PexelsTest(unittest.TestCase):
                         'color=c=blue:s=720x1280:r=12:d=8', '-c:v', 'libx264', '-preset', 'ultrafast',
                         '-pix_fmt', 'yuv420p', str(clip)], check=True, timeout=30)
         cls.clip = clip.read_bytes()
+        cls.clips = {123: cls.clip}
+        for identity, color in enumerate(('red','green','yellow','purple','white'), start=124):
+            target = Path(cls.media.name) / f'{identity}.mp4'
+            subprocess.run([shutil.which('ffmpeg'), '-v','error','-f','lavfi','-i',
+                            f'color=c={color}:s=720x1280:r=12:d=8','-c:v','libx264','-preset','ultrafast',
+                            '-pix_fmt','yuv420p',str(target)],check=True,timeout=30)
+            cls.clips[identity] = target.read_bytes()
 
     @classmethod
     def tearDownClass(cls):
@@ -55,7 +62,7 @@ class PexelsTest(unittest.TestCase):
         self.addCleanup(self.env.stop)
         self.requests = []
         self.status = 200
-        self.videos = [video()]
+        self.videos = [video(i) for i in range(123,129)]
         self.downloads = self.clip
         self.client = httpx.Client(transport=httpx.MockTransport(self.http), follow_redirects=False)
         self.addCleanup(self.client.close)
@@ -67,7 +74,7 @@ class PexelsTest(unittest.TestCase):
             return httpx.Response(self.status, json={'videos': self.videos})
         self.assertEqual(request.url.host, 'videos.pexels.com')
         self.assertNotIn('Authorization', request.headers)
-        return httpx.Response(200, content=self.downloads, headers={'Content-Type': 'video/mp4'})
+        return httpx.Response(200, content=self.clips.get(int(request.url.path.split('/')[-2]), self.clip) if self.downloads == self.clip else self.downloads, headers={'Content-Type': 'video/mp4'})
 
     def test_verified_manifest_and_resume_without_network(self):
         body = context()
@@ -86,6 +93,29 @@ class PexelsTest(unittest.TestCase):
         self.assertEqual(json.loads(manifest.read_text()), result)
         self.assertNotIn('controlled-private-key', manifest.read_text())
 
+    def test_duplicate_ids_and_identical_bytes_never_complete(self):
+        for same_bytes in (False, True):
+            with self.subTest(same_bytes=same_bytes):
+                body = context()
+                self.videos = [video(123), video(123 if not same_bytes else 999)]
+                for cache in (self.root / 'pexels-search').glob('*.json'): cache.unlink()
+                with self.assertRaises(StageFailure) as caught: collect_scenes(body, self.client)
+                self.assertEqual(caught.exception.code, 'PEXELS_DUPLICATE_ONLY')
+                self.assertFalse((self.root / 'sources' / body['run_id'] / 'manifest.json').exists())
+                self.assertFalse(list(self.root.rglob('*.part')))
+
+    def test_cached_duplicate_is_replaced_on_resume(self):
+        body = context()
+        original = collect_scenes(body, self.client)
+        directory = self.root / 'sources' / body['run_id']
+        checkpoint = directory / 'scene-2.json'
+        saved = json.loads(checkpoint.read_text())
+        saved['source']['video_id'] = original['sources'][0]['video_id']
+        checkpoint.write_text(json.dumps(saved))
+        result = collect_scenes(body, self.client)
+        self.assertEqual(len({s['video_id'] for s in result['sources']}), 2)
+        self.assertEqual(len({a['checksum_sha256'] for a in result['artifacts']}), 2)
+
     def test_partial_resume_and_corrupt_clip_repair(self):
         body = context()
         body['scenes'][1]['pexels_queries'] = ['train rain', 'tram rain']
@@ -99,7 +129,7 @@ class PexelsTest(unittest.TestCase):
         # A later quota/cache window can bring new matching results.
         for cache in (self.root / 'pexels-search').glob('*.json'):
             cache.unlink()
-        self.videos[0]['url'] = 'https://www.pexels.com/video/train-in-rain-123/'
+        for item in self.videos: item['url'] = f"https://www.pexels.com/video/train-in-rain-{item['id']}/"
         self.requests.clear()
         collect_scenes(body, self.client)
         self.assertEqual(sum(r.url.host == 'videos.pexels.com' for r in self.requests), 1)

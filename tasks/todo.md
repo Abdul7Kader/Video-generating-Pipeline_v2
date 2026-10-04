@@ -128,12 +128,12 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Belege:** [Abnahmebericht](step18-acceptance.md); 83 verschiedene Backendtests in Gesamt- und gezielten Nachläufen, zehn Projekttests, Web-Build, echter normaler FINAL-Auftrag und Chrome-Wiedergabe.
 
 ### 19. Produktionsstatus und Videoprüfung (S; abhängig von: 13, 18)
-- [ ] Mit einer vom Betreiber gewählten Idee Erzählung und Bildpassung prüfen; unbeabsichtigte Clipwiederholungen erkennen und beheben. Automatische Doppelungsprüfung ist bislang nicht implementiert, Suchworttreffer ersetzen keine Bildverständnisprüfung. Die wiederholte Dreierfolge des Techniktests zählt nicht als Nachweis abwechslungsreicher Inhalte.
-- [ ] React zeigt laufende Schritte, Fehler und das fertige Video zur Prüfung an.
-- [ ] Bis zur Videofreigabe wird kein Publikationsjob erzeugt.
-- **Prüfung:** End-to-End-Browserlauf im LOKAL-Modus.
+- [x] Mit einer vom Betreiber gewählten Idee Erzählung und Bildpassung prüfen; unbeabsichtigte Clipwiederholungen erkennen und beheben. Doppelungsprüfung für Pexels-Video-IDs und Datei-SHA-256 ist implementiert; Suchworttreffer ersetzen keine Bildverständnisprüfung. Die Entwicklung hat die neue Folge visuell geprüft; Betreiber bestätigt die korrigierte Folge: „Ja, das passt auf jeden Fall.“ Die wiederholte Dreierfolge des Techniktests zählt nicht als Nachweis abwechslungsreicher Inhalte.
+- [x] React zeigt laufende Schritte, Fehler und das fertige Video zur Prüfung an.
+- [x] Bis zur Videofreigabe wird kein Publikationsjob erzeugt.
+- **Prüfung:** End-to-End-Browserlauf im LOKAL-Modus bestanden: fünf echte Produktionsstufen, vollständige 36-Sekunden-Wiedergabe, Szenensprünge, Freigabe, Retry, Neuladen, 320 px. 86 verschiedene Backendtests, zehn Projekttests und Web-Build bestanden. Doppelungsprüfung implementiert; Suchfehler bei Tomatenernte in neuer Version behoben und visuell nachgeprüft. **Inhaltsabnahme des Betreibers bestätigt. Schritt 19 abgeschlossen.** [Prüfbericht](step19-acceptance.md).
 
-**Checkpoint M2:** [ ] Ein fertiges Video im Modus `LOKAL` mit ausschließlich Pexels-Szenen liegt auf dem Installationsrechner und ist über dessen Weboberfläche abspielbar.
+**Checkpoint M2:** [x] Ein fertiges Video im Modus `LOKAL` mit ausschließlich Pexels-Szenen liegt auf dem Installationsrechner und ist über dessen Weboberfläche abspielbar.
 
 ## M3 – Cloud-Produktionspfad
 

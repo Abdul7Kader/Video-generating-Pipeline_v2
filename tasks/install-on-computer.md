@@ -134,3 +134,9 @@ Der vollständige Medienpfad lässt sich in derselben Weboberfläche ändern. Be
 Neue Mediendateien liegen unter `<MEDIA_ROOT>/projects/<project-id>/versions/<version>/runs/<run-id>/<stage>/`. STORAGE schreibt die geprüfte `master.mp4` und `manifest.json` und veröffentlicht das FINAL-Artefakt. Vorhandene ältere relative Pfade bleiben lesbar und werden beim Speicherwechsel unverändert mitkopiert. Modellgewichte liegen weiterhin separat im Modellordner.
 
 Der native Worker liefert angeforderte Medienblöcke über den bestehenden Redis-Dienst an die API. Keine neue öffentliche Host-Schnittstelle und keine wechselnde Laufwerksfreigabe für den Container nötig. Der Hostworker muss auch zum Abspielen laufen. Redis-Zugriff bleibt lokal wie in `compose.host-worker.yaml`; allgemeine Härtung und Backup bleiben 32/35. Der Browser nutzt ausschließlich die Artefakt-ID und eine Sitzung, keine freigegebenen Hostpfade oder URL-Tokens. Vollständige macOS-/Linux-Installation bleibt 35. [Prüfstand 18](step18-acceptance.md).
+
+## 11. Video vergleichen und freigeben ab Schritt 19
+
+Nach fertiger Produktion zeigt „Video prüfen“ die ursprüngliche Eingabe und den Player. Medienzugang unter „Speicher & Videos“ entsperren. „Sprechertext und Bildvorgaben vergleichen“ öffnen; die Zeitbuttons springen zur tatsächlichen Szene. Stimme, Untertitel, Bilder und Wiederholungen prüfen, beide Prüfpunkte bestätigen und „Video freigeben“ wählen. Die Bestätigung bleibt nach Neuladen gespeichert und gilt nur für diese Datei/versionierte Produktion.
+
+Bei falschen Motiven „Skript für neue Version bearbeiten“ verwenden und die neue Version erneut freigeben. Passende Suchwörter garantieren keine passende Aufnahme. Mehrfach verwendete Pexels-IDs/identische Dateien blockieren neue Freigaben; alte Videos werden dabei nicht geändert. Die Videofreigabe startet in diesem Entwicklungsstand keine Veröffentlichung. [Prüfstand 19](step19-acceptance.md).

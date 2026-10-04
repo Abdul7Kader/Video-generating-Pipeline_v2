@@ -19,6 +19,9 @@ from rq import Queue
 from app.script_contract import validate_script
 from app.production_stages import PexelsSource, SpeechSegment, GraphicsManifest, EncodingManifest
 from app.database import database
+from app.media_access import require_access, same_origin
+from app.media_gateway import rpc
+from app.production_stages import StageFailure
 
 
 Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
@@ -112,6 +115,8 @@ class ScriptApprovalOutput(StrictModel):
 
 class VideoApprovalInput(StrictModel):
     checksum_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reviewed_narration: Literal[True]
+    reviewed_visuals: Literal[True]
 
 
 class VideoApprovalOutput(StrictModel):
@@ -495,9 +500,11 @@ def approve_script(project_id: UUID, version: int, response: Response):
     status_code=201,
     responses={200: {"model": VideoApprovalOutput, "description": "Existing approval"}},
 )
-def approve_video(project_id: UUID, artifact_id: UUID, body: VideoApprovalInput, response: Response):
+def approve_video(project_id: UUID, artifact_id: UUID, body: VideoApprovalInput, response: Response, request: Request):
+    require_access(request)
+    same_origin(request)
     with database() as conn:
-        require_project(conn, project_id)
+        require_project(conn, project_id, lock=True)
         artifact = conn.execute(
             "SELECT id, project_id, kind, checksum_sha256, production_run_id "
             "FROM artifacts WHERE id = %s AND project_id = %s FOR UPDATE",
@@ -508,10 +515,30 @@ def approve_video(project_id: UUID, artifact_id: UUID, body: VideoApprovalInput,
         if artifact["kind"] != "FINAL" or artifact["checksum_sha256"] != body.checksum_sha256:
             raise problem(409, "ARTIFACT_CONFLICT", "Final artifact or checksum does not match")
         run = conn.execute(
-            "SELECT state FROM production_runs WHERE id = %s", (artifact["production_run_id"],),
+            "SELECT state, script_version_id FROM production_runs WHERE id = %s", (artifact["production_run_id"],),
         ).fetchone()
         if run["state"] != "COMPLETED":
             raise problem(409, "STATE_CONFLICT", "Final video is not complete")
+        latest = conn.execute('SELECT id FROM script_versions WHERE project_id=%s ORDER BY version DESC LIMIT 1', (project_id,)).fetchone()
+        if latest['id'] != run['script_version_id']:
+            raise problem(409, 'VIDEO_VERSION_OUTDATED', 'Es gibt ein neueres Skript. Bitte dessen Video prüfen und freigeben.')
+        sources = conn.execute("SELECT checksum_sha256 FROM artifacts WHERE production_run_id=%s AND kind='SOURCE'", (artifact['production_run_id'],)).fetchall()
+        stage = conn.execute("SELECT result FROM production_steps WHERE production_run_id=%s AND name='SCENES'", (artifact['production_run_id'],)).fetchone()
+        ids = [s['video_id'] for s in (stage['result'] or {}).get('sources', [])]
+        hashes = [s['checksum_sha256'] for s in sources]
+        if len(ids) != len(set(ids)) or len(hashes) != len(set(hashes)):
+            raise problem(409, 'VIDEO_DUPLICATE_CLIPS', 'Dieses Video wiederholt Clips. Bildvorgaben bearbeiten und eine neue Version produzieren.')
+        try:
+            opened = rpc('open', artifact_id=str(artifact_id))
+            try:
+                if opened['checksum'] != body.checksum_sha256:
+                    raise problem(409, 'ARTIFACT_CONFLICT', 'Die Videodatei stimmt nicht mit der geprüften Ausgabe überein.')
+            finally:
+                rpc('close', stream=opened['stream'])
+        except StageFailure as exc:
+            raise problem(409 if exc.code == 'MEDIA_CORRUPT' else 503, exc.code, str(exc)) from exc
+        except (RedisError, OSError) as exc:
+            raise problem(503, 'MEDIA_WORKER_UNAVAILABLE', 'Der Medien-Worker ist momentan nicht verfügbar. Bitte erneut versuchen.') from exc
         existing = conn.execute(
             "SELECT id, project_id, artifact_id, checksum_sha256 FROM approvals "
             "WHERE artifact_id = %s AND kind = 'VIDEO'", (artifact_id,),
