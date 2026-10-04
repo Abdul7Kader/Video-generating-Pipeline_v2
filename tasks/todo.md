@@ -110,6 +110,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Render-Beispiele für kurze/lange Zeilen und deutsche Umlaute visuell prüfen.
 
 ### 17. FFmpeg-Pipeline (M; abhängig von: 14–16)
+- **In Arbeit (04.10.2026):** Eingangsprüfung, CPU-Encoding und Wiederaufnahme aus gespeicherten Zeitdaten. Abschluss erst mit echter Produktion und Sicht-/Hörprüfung; [Stand](../STATE.md).
 - [ ] Clips werden auf Zielprofil normalisiert, zeitlich an Sprechertext angepasst, mit Grafik/Audio zusammengesetzt und encodiert.
 - [ ] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
 - **Prüfung:** Ein komplettes LOKAL-Testvideo ansehen und technische Sollwerte maschinell vergleichen.

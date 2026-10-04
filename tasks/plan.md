@@ -2,7 +2,7 @@
 
 Stand: 4. Oktober 2026
 
-**Schritt 16 am 04.10.2026 abgeschlossen:** Migration 0005, echte PostgreSQL-/Redis-/RQ-/Piper-/Remotion-Integration, normaler LOKAL-Auftrag und Browseranzeige abgenommen. 65 Backendtests ohne Überspringen, zehn Projekttests und Web-Build bestanden. Die Pause vom 01.10.2026 ist aufgehoben. Nächster Schritt: **17 – FFmpeg-Pipeline**, noch nicht begonnen. [Prüfbericht](step16-acceptance.md), [aktueller Wiedereinstieg](../STATE.md#pause-und-genauer-wiedereinstieg).
+**Schritt 16 am 04.10.2026 abgeschlossen:** Migration 0005, echte PostgreSQL-/Redis-/RQ-/Piper-/Remotion-Integration, normaler LOKAL-Auftrag und Browseranzeige abgenommen. 65 Backendtests ohne Überspringen, zehn Projekttests und Web-Build bestanden. Die Pause vom 01.10.2026 ist aufgehoben. Aktuell in Arbeit: **17 – FFmpeg-Pipeline**; noch nicht abgenommen. [Prüfbericht](step16-acceptance.md), [aktueller Wiedereinstieg](../STATE.md#pause-und-genauer-wiedereinstieg).
 
 **Git-Sicherung:** Die Implementierung aus Schritt 16 liegt seit 01.10.2026 als `271c323` auf GitHub. Die Abnahme vom 04.10.2026 ergänzt die zuvor offen dokumentierten Dienst-/Browsernachweise; funktionale Codeänderungen waren nicht nötig.
 

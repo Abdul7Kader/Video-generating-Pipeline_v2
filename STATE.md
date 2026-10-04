@@ -14,6 +14,10 @@ Stand: **4. Oktober 2026**. Repository: [Abdul7Kader/Video-generating-Pipeline_v
 
 **Nächste Aufgabe: 17 – FFmpeg-Pipeline.** Sie wurde in diesem Abschluss nicht begonnen. Vor der nächsten Entwicklung Git-Stand und diese Statusdateien lesen, Eingangsartefakte und Grafikmanifest aus Schritt 16 verwenden. Die Drei-Stunden-Frist eines Produktionslaufs niemals verlängern; abgelaufene Aufträge benötigen eine neue Skriptfreigabe. Danach folgt 18 für persistenten Speicher und Browserwiedergabe. Keine neuen Pro-/Modal-/bezahlten API-Aufrufe waren für die Abnahme von 16 nötig.
 
+## Schritt 17 in Arbeit
+
+Fortsetzung am 04.10.2026 auf Betreiberwunsch: FFmpeg-Schnitt/Encoding. Ziel: geprüfte Szenen, Piper-Audio und Remotion-Grafiken zu einer MP4 (720 × 1280, 24 fps, H.264/AAC) zusammensetzen. Geplant sind Eingangsprüfung einschließlich Quellenmodus und Mindestdauer, atomare Render-/Cache-Checkpoints, API-/UI-Profilanzeige, echte Dienstprüfung und Sicht-/Hörprüfung eines LOKAL-Videos. Erster Abschnitt geprüft: drei Tests für freigegebene Zeitdaten, vollständige Artefakte und strikte Quellenmodi bestehen. Noch kein Render-/Abnahmenachweis für 17; Ablage/Freigabe zum Browserabruf bleibt 18.
+
 ## Wo die Entwicklung steht
 
 - **Schritt 16 abgeschlossen (04.10.2026):** Remotion 4.0.532 rendert transparente Titel-/Untertitelgrafiken mit Szenenzähler, geprüftem Timingmanifest und sicheren Rändern. Migration/API/UI, Cache/Wiederaufnahme, Sonderzeichen und kurze/lange Texte geprüft. 65 Backendtests ohne Überspringen, zehn Projekttests, Web-Build, normaler Pexels-/Piper-/Remotion-Auftrag und Browserabnahme bestanden. [Prüfbericht](tasks/step16-acceptance.md). Masterprofil bleibt 720 × 1280 bei 24 fps; Videoschnitt folgt in 17.
