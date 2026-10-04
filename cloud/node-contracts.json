@@ -1,0 +1,251 @@
+{
+  "comfy_commit": "6b747c0428c343e1417219641db93a4fb7cb69ae",
+  "source_sha256": {
+    "nodes.py": "fe624b0c1b6a3cd124a2214e5700b61337589144c2f0668900a04f8ccc031e38",
+    "comfy_extras/nodes_model_advanced.py": "34c5065756d925791c7a238f084eefd5ff912e1e84976a2dbe94432deea8ffcc",
+    "comfy_extras/nodes_hunyuan.py": "dc9ff7a8fe4c63a9a85f25069f331fe38fb81bbcbb8a1678faea91b33cfa25fe",
+    "comfy_extras/nodes_video.py": "5879633287808ba2dac6753bcbc90acf8d73c72e8df1d0a9755a4ab70e712a0d"
+  },
+  "nodes": {
+    "CLIPTextEncode": {
+      "inputs": {
+        "text": {
+          "type": "STRING",
+          "required": true
+        },
+        "clip": {
+          "type": "CLIP",
+          "required": true
+        }
+      },
+      "outputs": [
+        "CONDITIONING"
+      ],
+      "source_module": "nodes.py"
+    },
+    "VAEDecode": {
+      "inputs": {
+        "samples": {
+          "type": "LATENT",
+          "required": true
+        },
+        "vae": {
+          "type": "VAE",
+          "required": true
+        }
+      },
+      "outputs": [
+        "IMAGE"
+      ],
+      "source_module": "nodes.py"
+    },
+    "VAELoader": {
+      "inputs": {
+        "vae_name": {
+          "type": "COMBO",
+          "required": true
+        }
+      },
+      "outputs": [
+        "VAE"
+      ],
+      "source_module": "nodes.py"
+    },
+    "UNETLoader": {
+      "inputs": {
+        "unet_name": {
+          "type": "COMBO",
+          "required": true
+        },
+        "weight_dtype": {
+          "type": "COMBO",
+          "required": true
+        }
+      },
+      "outputs": [
+        "MODEL"
+      ],
+      "source_module": "nodes.py"
+    },
+    "CLIPLoader": {
+      "inputs": {
+        "clip_name": {
+          "type": "COMBO",
+          "required": true
+        },
+        "type": {
+          "type": "COMBO",
+          "required": true
+        },
+        "device": {
+          "type": "COMBO",
+          "required": false
+        }
+      },
+      "outputs": [
+        "CLIP"
+      ],
+      "source_module": "nodes.py"
+    },
+    "KSamplerAdvanced": {
+      "inputs": {
+        "model": {
+          "type": "MODEL",
+          "required": true
+        },
+        "add_noise": {
+          "type": "COMBO",
+          "required": true
+        },
+        "noise_seed": {
+          "type": "INT",
+          "required": true
+        },
+        "steps": {
+          "type": "INT",
+          "required": true
+        },
+        "cfg": {
+          "type": "FLOAT",
+          "required": true
+        },
+        "sampler_name": {
+          "type": "COMBO",
+          "required": true
+        },
+        "scheduler": {
+          "type": "COMBO",
+          "required": true
+        },
+        "positive": {
+          "type": "CONDITIONING",
+          "required": true
+        },
+        "negative": {
+          "type": "CONDITIONING",
+          "required": true
+        },
+        "latent_image": {
+          "type": "LATENT",
+          "required": true
+        },
+        "start_at_step": {
+          "type": "INT",
+          "required": true
+        },
+        "end_at_step": {
+          "type": "INT",
+          "required": true
+        },
+        "return_with_leftover_noise": {
+          "type": "COMBO",
+          "required": true
+        }
+      },
+      "outputs": [
+        "LATENT"
+      ],
+      "source_module": "nodes.py"
+    },
+    "ModelSamplingSD3": {
+      "inputs": {
+        "model": {
+          "type": "MODEL",
+          "required": true
+        },
+        "shift": {
+          "type": "FLOAT",
+          "required": true
+        }
+      },
+      "outputs": [
+        "MODEL"
+      ],
+      "source_module": "comfy_extras/nodes_model_advanced.py"
+    },
+    "EmptyHunyuanLatentVideo": {
+      "inputs": {
+        "width": {
+          "type": "INT",
+          "required": true
+        },
+        "height": {
+          "type": "INT",
+          "required": true
+        },
+        "length": {
+          "type": "INT",
+          "required": true
+        },
+        "batch_size": {
+          "type": "INT",
+          "required": true
+        }
+      },
+      "outputs": [
+        "LATENT"
+      ],
+      "source_module": "comfy_extras/nodes_hunyuan.py"
+    },
+    "SaveVideo": {
+      "inputs": {
+        "video": {
+          "type": "VIDEO",
+          "required": true
+        },
+        "filename_prefix": {
+          "type": "STRING",
+          "required": true
+        },
+        "format": {
+          "type": "COMBO",
+          "required": true
+        },
+        "format.codec": {
+          "type": "COMBO",
+          "required": true
+        },
+        "format.codec.encoding": {
+          "type": "COMBO",
+          "required": true
+        }
+      },
+      "outputs": [
+        "VIDEO"
+      ],
+      "source_module": "comfy_extras/nodes_video.py"
+    },
+    "CreateVideo": {
+      "inputs": {
+        "images": {
+          "type": "IMAGE",
+          "required": true
+        },
+        "fps": {
+          "type": "FLOAT",
+          "required": true
+        },
+        "audio": {
+          "type": "AUDIO",
+          "required": false
+        },
+        "bit_depth": {
+          "type": "COMBO",
+          "required": false
+        },
+        "color_space": {
+          "type": "COMBO",
+          "required": false
+        },
+        "codec": {
+          "type": "COMBO",
+          "required": false
+        }
+      },
+      "outputs": [
+        "VIDEO"
+      ],
+      "source_module": "comfy_extras/nodes_video.py"
+    }
+  }
+}

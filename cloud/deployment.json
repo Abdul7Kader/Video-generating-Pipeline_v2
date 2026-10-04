@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "app_name": "video-pipeline-wan-v1",
+  "function_name": "generate_clip",
+  "gpu": "A100-80GB",
+  "python_version": "3.12",
+  "max_containers": 1,
+  "min_containers": 0,
+  "buffer_containers": 0,
+  "retries": 0,
+  "timeout_seconds": 1800,
+  "scaledown_window_seconds": 2,
+  "cpu": 4,
+  "memory_mib": 65536,
+  "models_volume": "video-pipeline-wan-models-v1",
+  "results_volume": "video-pipeline-wan-results-v1",
+  "models_mount": "/models",
+  "results_mount": "/results",
+  "comfy_listen": "127.0.0.1",
+  "comfy_port": 8188,
+  "live_enabled": false
+}

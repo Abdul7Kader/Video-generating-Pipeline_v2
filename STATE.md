@@ -4,7 +4,13 @@ Stand: **4. Oktober 2026**. Repository: [Abdul7Kader/Video-generating-Pipeline_v
 
 ## Pause und genauer Wiedereinstieg
 
-**Schritt 19 – Produktionsstatus und Videoprüfung am 04.10.2026 abgeschlossen. Nächste Aufgabe: 20 – Modal-Workflow ohne Generierung vorbereiten.** Die Entwicklung ist aktiv; keine Pause.
+**Schritt 20 – Modal-Workflow ohne Generierung vorbereiten am 04.10.2026 statisch abgeschlossen. Nächste Aufgabe: 21 – Cloud-Szenen und Rücktransfer mit Testdaten anbinden.** Die Entwicklung ist aktiv; keine Pause.
+
+**Schritt 20 abgeschlossen:** [Cloud-Bundle](cloud/README.md) mit eigenem 14-Node-API-Graph für Wan 2.2 T2V-A14B, festem ComfyUI-Commit, vier Modellrevisionen/SHA-256, 99 Linux-Paketversionen mit Hashes und offline konstruierbarer Modal-Definition. Explizit `A100-80GB`, ein Container, keine warmen Container/automatischen Retries, 1800 s Funktionslimit, getrennte Modell-/Ergebnis-Volumes. Rohclip 720 × 1280 / 81 Frames / 16 fps; Low-Noise-Ausgang wird decodiert. Keine lokale Wan-Installation und kein neuer Compose-Dienst.
+
+- Sieben Cloud-Fehlerfalltests, fünf gezielte Backendtests, zehn Projekttests und Web-Build bestanden. Gepinntes Modal SDK 1.6.1 konstruiert die Definition ohne Clientinitialisierung. Linux-Wheel-Auflösung und dynamische ComfyUI-Codec-Eingänge statisch geprüft. [Prüfbericht 20](tasks/step20-acceptance.md).
+- **Keine GPU, kein Remote-Image-Build, kein Deployment und kein Gewichtsdownload.** `live_enabled=false`; keine laufende CLOUD-Generierung. Modell-Dateihashes bislang nur aus fixierten offiziellen Metadaten; tatsächliches Volume, Remote-Build, VRAM, Qualität, Laufzeit und Kosten bleiben 24. Die Ausnahme im GPU-Funktionskörper ist keine Kostensperre vor Ressourcenzuteilung. Auftragsgrenzen folgen 22, Kontonachweise vor 24.
+- Ignorierte Belege/Werkzeugumgebung unter `.data/step20-*`; nur Code, Lockdateien und Dokumentation in Git. Weboberfläche unverändert.
 
 - In **„Speicher & Videos“** kann der Betreiber den vollständigen Medienpfad pro Installation eingeben und später ändern. Kopie und SHA-256-Prüfung vor Aktivierung; Fortschrittsbalken, unveränderte Ursprungsdateien, Konflikt-/Pfadschutz und Wiederaufnahme. Private Konfiguration bleibt außerhalb von Git.
 - Native Host-Worker liefern veröffentlichte MP4s über begrenzte Redis-Blöcke an die API. Passwortzugang mit HttpOnly-/SameSite-Sitzung, HTTP-Bereichsabruf, Manifest-/Dateiprüfung; Browser zeigt den Player und MP4-Download. Der Hostworker muss auch für Wiedergabe laufen.
@@ -22,7 +28,7 @@ Stand: **4. Oktober 2026**. Repository: [Abdul7Kader/Video-generating-Pipeline_v
 - **Betreiber-Inhaltsabnahme bestätigt:** „Ja, das passt auf jeden Fall.“ Erzählung/Bildpassung und störungsfreie Folge der korrigierten MP4 damit abgenommen. LOKAL als Pexels-Montage und geplanter CLOUD-Pfad mit selbst erzeugten Wan-Szenen auf Rückfrage erklärt. Die normale Ausgabe ist bewusst noch nicht VIDEO-freigegeben. In der normalen Oberfläche muss der Betreiber seinen eigenen Medienzugang einrichten/entsperren und selbst freigeben.
 - Belege ignoriert unter `.data/step19-tests.log`, `step19-focused.log`, `step19-browser-result.json`, `step19-live-context.json`; Medien/Modelle/private Konfiguration nicht in Git. [Oberfläche](http://127.0.0.1:4177/?project=6defbc8a-23f3-444a-ae90-71fa714d4a49).
 
-**Wiedereinstieg für 20:** Git-/Dienststand und diese Dateien lesen. Versionierten ComfyUI-Wan-Workflow, reproduzierbare Modellgewichte und Modal-Deploy-Konfiguration gemäß todo statisch vorbereiten und prüfen. Keine Inferenz auslösen, keine lokale Wan-Installation. CLOUD-Rücktransfer folgt in 21, Live-Inferenz bleibt ohne nachgewiesene Gratis-Credits und wirksame 0-USD-Nettokostengrenze gesperrt. Weitere Betriebssysteme und vollständiger Betrieb bleiben 35.
+**Wiedereinstieg für 21:** Git-/Dienststand, diese Dateien und das geprüfte Cloud-Bundle lesen. CLOUD-Schnittstelle und Rücktransfer mit kontrollierten Wan-Antworten/Testdateien gemäß todo anbinden: ausschließlich `AI_GENERATED_VIDEO`, Datei-/Manifestprüfung, sicherer Abbruch ohne gültiges Artefakt oder Auftragsdubletten. Mehrclip-Planung für das 81-Frame-Rohprofil berücksichtigen. Keine echte Inferenz, kein kostenpflichtiger Modal-Aufruf und keine lokale Wan-Installation. Grenzen folgen in 22, CLOUD-Browserlauf mit Testdaten in 23. Live-Inferenz bleibt ohne nachgewiesene Gratis-Credits und wirksame 0-USD-Nettokostengrenze gesperrt. Weitere Betriebssysteme und vollständiger Betrieb bleiben 35.
 
 ## Wo die Entwicklung steht
 

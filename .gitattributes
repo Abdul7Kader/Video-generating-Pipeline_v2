@@ -1,0 +1,2 @@
+# Bundle SHA-256 must survive Windows core.autocrlf checkouts.
+cloud/** text eol=lf

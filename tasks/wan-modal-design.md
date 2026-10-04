@@ -2,6 +2,14 @@
 
 Stand: 26. September 2026. **Dokumentenbasierte Prüfung abgeschlossen.** Es wurde weder ein Modal-Job gestartet noch ein Wan-Clip erzeugt. Die folgenden Zahlen sind Planwerte, keine Messung im Projekt. Der erste echte CLOUD-Lauf bleibt Aufgabe 24.
 
+## Umsetzung aus Schritt 20 – 04.10.2026
+
+Die zuvor offenen Workflow-/Versionspunkte sind jetzt **statisch abgeschlossen**: [Cloud-Bundle](../cloud/README.md), [Prüfbericht 20](step20-acceptance.md). ComfyUI v0.38.0 am festen Commit, eigener nativer 14-Node-API-Graph mit High-/Low-Noise-Übergang und abschließendem Low-Noise-Decode. Vier Modellrevisionen, genaue Größen und SHA-256 in `models.lock.json`; Linux-Abhängigkeiten mit festen Versionen/Hashes. Modal SDK 1.6.1, ausdrücklich `A100-80GB`, maximal ein Container, keine warmen Container/automatischen Retries, 1800 s Funktionslimit und getrennte Volumes. Rohprofil 720 × 1280, 81 Frames, 16 fps, H.264/MP4.
+
+Offlineprüfungen, Fehlerfälle und SDK-Konstruktion ohne Clientinitialisierung bestanden. Keine Gewichte heruntergeladen, keine lokale Wan-Installation, kein Remote-Build/Deployment/GPU-Aufruf. Die Gewichte müssen später tatsächlich im Remote-Volume geprüft werden. `live_enabled=false`; eine Ausnahme im GPU-Funktionskörper wäre keine Sperre vor abrechenbarer Ressourcenzuteilung. Auftragsgrenzen folgen 22, nachgewiesene Gratis-Credits/0 USD Nettokosten vor 24. Remote-Start, VRAM, Dauer und Qualität bleiben offen. Die folgenden Kostenangaben sind der historische Entwurf vom 26.09.2026 und müssen vor einem Live-Lauf erneut geprüft werden.
+
+## Historischer Entwurf aus Schritt 05
+
 ## Technischer Befund
 
 | Punkt | Befund und Entwurfsentscheidung |

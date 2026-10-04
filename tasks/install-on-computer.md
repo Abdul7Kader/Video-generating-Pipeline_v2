@@ -140,3 +140,9 @@ Der native Worker liefert angeforderte Medienblöcke über den bestehenden Redis
 Nach fertiger Produktion zeigt „Video prüfen“ die ursprüngliche Eingabe und den Player. Medienzugang unter „Speicher & Videos“ entsperren. „Sprechertext und Bildvorgaben vergleichen“ öffnen; die Zeitbuttons springen zur tatsächlichen Szene. Stimme, Untertitel, Bilder und Wiederholungen prüfen, beide Prüfpunkte bestätigen und „Video freigeben“ wählen. Die Bestätigung bleibt nach Neuladen gespeichert und gilt nur für diese Datei/versionierte Produktion.
 
 Bei falschen Motiven „Skript für neue Version bearbeiten“ verwenden und die neue Version erneut freigeben. Passende Suchwörter garantieren keine passende Aufnahme. Mehrfach verwendete Pexels-IDs/identische Dateien blockieren neue Freigaben; alte Videos werden dabei nicht geändert. Die Videofreigabe startet in diesem Entwicklungsstand keine Veröffentlichung. [Prüfstand 19](step19-acceptance.md).
+
+## 12. CLOUD-Vorbereitung ab Schritt 20
+
+Das [versionierte Cloud-Bundle](../cloud/README.md) lässt sich auf dem Entwicklungs-/Installationsrechner mit `python -m cloud.validate` und `python -m unittest cloud.test_workflow -v` offline prüfen. Dafür sind weder Modal-Anmeldung noch lokale Wan-/ComfyUI-/PyTorch-Installation nötig. Linux-/CUDA-Abhängigkeiten im Verzeichnis `cloud/` beschreiben nur das spätere Remote-Image; sie gehören nicht in die normale Hostworker-Umgebung oder Compose-Installation.
+
+Noch kein Modal-Deployment oder echtes CLOUD-Video verfügbar. Schritt 21 bindet kontrollierte Testdateien an, 22 prüft Auftragsgrenzen und Kosten, 23 den Browserablauf. Erst 24 startet nach nachgewiesenen Gratis-Credits und wirksamen 0 USD Nettokosten einen echten Remote-Build/Modelltransfer/GPU-Test. Diese Vorbereitung benötigt keinen eingeschalteten Ubuntu-Rechner. [Prüfstand 20](step20-acceptance.md).

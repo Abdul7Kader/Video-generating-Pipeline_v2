@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Stand 4. Oktober 2026:** Aufgaben 01–18 und M1 sind abgeschlossen; nächster Schritt ist 19 (Produktionsstatus und Videoprüfung). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 4. Oktober 2026:** Aufgaben 01–20 und M1 sind abgeschlossen; 20 ausschließlich statisch ohne Generierung. Nächster Schritt ist 21 (Cloud-Szenen und Rücktransfer mit Testdaten). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -138,9 +138,10 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ## M3 – Cloud-Produktionspfad
 
 ### 20. Modal-Workflow ohne Generierung vorbereiten (M; abhängig von: 05, 13)
-- [ ] Versionierter ComfyUI-Wan-Workflow mit expliziter `A100-80GB`-GPU und reproduzierbaren Modellgewichten ist vorbereitet.
-- [ ] Keine lokale Wan-Installation ist Teil des Compose-Stacks auf einem Installationsrechner.
+- [x] Versionierter ComfyUI-Wan-Workflow mit expliziter `A100-80GB`-GPU und reproduzierbaren Modellgewichten ist vorbereitet.
+- [x] Keine lokale Wan-Installation ist Teil des Compose-Stacks auf einem Installationsrechner.
 - **Prüfung:** Workflow-Datei, Abhängigkeiten und Deploy-Konfiguration statisch prüfen; keine Inferenz auslösen.
+- **Abgeschlossen 04.10.2026:** 14 native Nodes, feste ComfyUI-/Modellrevisionen und SHA-256, 99 Linux-Paketversionen mit Hashes, getrennte Volumes, explizite GPU und deaktivierter Live-Einstieg. Sieben Cloudtests, fünf gezielte Backendtests, zehn Projekttests, Web-Build und lokale Konstruktion mit Modal SDK 1.6.1 bestanden. Keine GPU, kein Image-Build/Deployment, keine Gewichte heruntergeladen. Remote-Funktion/Qualität/Kosten bleiben 24; Kriterien unverändert. [Prüfbericht](step20-acceptance.md).
 
 ### 21. Cloud-Szenen und Rücktransfer mit Testdaten anbinden (M; abhängig von: 18, 20)
 - [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Installationsrechners.
