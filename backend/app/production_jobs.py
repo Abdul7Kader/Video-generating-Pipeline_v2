@@ -110,6 +110,11 @@ def run_stage(conn, step, context, timeout):
                 if (expected != actual or len(actual) != len(result.sources) or source_keys != set(keys)
                         or len(source_keys) != len(result.sources) or any(a.kind != 'SOURCE' for a in result.artifacts)):
                     raise ValueError('incomplete scene manifest')
+            if result.wan_sources:
+                if step['name'] != 'SCENES' or context['mode'] != 'CLOUD':
+                    raise ValueError('Wan manifest outside CLOUD scenes')
+                from app.wan import validate_scene_manifest
+                validate_scene_manifest(context, result)
             if result.speech:
                 expected = {s['position']: s['narration'].strip() for s in context['scenes']}
                 actual = {s.scene_position: s.text for s in result.speech}
@@ -222,7 +227,7 @@ def run_production(run_id: str):
                                                     'WHERE production_step_id = %s AND artifact_key = %s', (step['id'], artifact.key)).fetchone()
                             if dict(existing) != artifact.model_dump(exclude={'key'}):
                                 raise StageFailure('ARTIFACT_CONFLICT', 'Ein gespeichertes Zwischenergebnis stimmt nicht mit der Wiederaufnahme überein.')
-                    results[step["name"]] = result.model_dump()
+                    results[step["name"]] = result.model_dump(mode='json')
                     conn.execute("UPDATE production_steps SET state = 'COMPLETED', result = %s, updated_at = now() WHERE id = %s",
                                  (Jsonb(results[step["name"]]), step["id"]))
                     conn.execute("UPDATE production_attempts SET state = 'COMPLETED', finished_at = now() "

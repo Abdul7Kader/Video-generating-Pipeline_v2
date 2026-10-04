@@ -10,6 +10,8 @@ Offlineprüfungen, Fehlerfälle und SDK-Konstruktion ohne Clientinitialisierung 
 
 ## Historischer Entwurf aus Schritt 05
 
+**Nachtrag 21 (04.10.2026):** CLOUD-Auftragsvertrag und Rücktransfer mit kontrollierten Antworten/kleinen lokalen MP4s geprüft; stabile Clipkennungen, gespeicherte Intents, Profil-/Hashprüfung und Szenenmanifest. Kein Modal-Aufruf und kein Verbrauch des genannten Guthabens. Echte Remote-Idempotenz, GPU-Qualität und Kosten bleiben unbestätigt; nächste Aufgabe 22. [Prüfbericht 21](step21-acceptance.md).
+
 ## Technischer Befund
 
 | Punkt | Befund und Entwurfsentscheidung |

@@ -2,6 +2,8 @@
 
 Stand: 04.10.2026. Dieses Verzeichnis enthält den versionierten CLOUD-Bauplan, noch keinen aktiven Videogenerator. Der Installationsrechner benötigt dafür weder Wan-Gewichte noch ComfyUI, PyTorch oder eine lokale GPU. Sein bestehender Compose-Stack bleibt unverändert. [Abnahme und offene Live-Nachweise](../tasks/step20-acceptance.md).
 
+**Schritt 21 inzwischen abgeschlossen:** Der Hostadapter in `backend/app/wan.py` plant mehrere Clips, speichert stabile Intents und prüft Antwort-/Dateihashes sowie das tatsächliche MP4-Profil, bevor Szenen im gewählten Medienordner erscheinen. Kurze lokale Testantworten/-dateien und echte PostgreSQL-/Redis-/Prozessprüfungen bestanden; kein Modal-Aufruf. Provider werden nur im Testcode explizit injiziert, normale CLOUD-Produktion bleibt gesperrt. [Transportvertrag](../tasks/cloud-transfer-contract.md), [Prüfbericht 21](../tasks/step21-acceptance.md). Nächster Schritt 22: Grenzen vor teuren Aufrufen; Browserlauf 23, echter Provider nach Kostenprüfung 24.
+
 ## Dateien und feste Versionen
 
 | Datei | Zweck |

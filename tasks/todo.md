@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Stand 4. Oktober 2026:** Aufgaben 01–20 und M1 sind abgeschlossen; 20 ausschließlich statisch ohne Generierung. Nächster Schritt ist 21 (Cloud-Szenen und Rücktransfer mit Testdaten). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 5. Oktober 2026:** Aufgaben 01–21 und M1 sind abgeschlossen; 20 statisch, 21 mit kontrollierten lokalen Testdaten ohne Modal-Aufruf. Nächster Schritt ist 22 (Cloud-Grenzen). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -144,9 +144,10 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Abgeschlossen 04.10.2026:** 14 native Nodes, feste ComfyUI-/Modellrevisionen und SHA-256, 99 Linux-Paketversionen mit Hashes, getrennte Volumes, explizite GPU und deaktivierter Live-Einstieg. Sieben Cloudtests, fünf gezielte Backendtests, zehn Projekttests, Web-Build und lokale Konstruktion mit Modal SDK 1.6.1 bestanden. Keine GPU, kein Image-Build/Deployment, keine Gewichte heruntergeladen. Remote-Funktion/Qualität/Kosten bleiben 24; Kriterien unverändert. [Prüfbericht](step20-acceptance.md).
 
 ### 21. Cloud-Szenen und Rücktransfer mit Testdaten anbinden (M; abhängig von: 18, 20)
-- [ ] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Installationsrechners.
-- [ ] Ein abgebrochener Transfer erzeugt weder gültiges Artefakt noch duplizierten Auftrag.
+- [x] Die CLOUD-Schnittstelle akzeptiert ausschließlich Wan-Ergebnisse; Beispielclips und Metadaten gelangen geprüft in den konfigurierten Medienspeicher des Installationsrechners.
+- [x] Ein abgebrochener Transfer erzeugt weder gültiges Artefakt noch duplizierten Auftrag.
 - **Prüfung:** Erfolgs-, Timeout- und beschädigte-Datei-Proben mit kontrollierten Antworten und Testdateien; Manifest enthält nur `AI_GENERATED_VIDEO`. Keine echte Wan-Generierung.
+- **Abgeschlossen 05.10.2026:** Auftrag-/Herkunftsprüfung, Mehrclip-Planung, atomare Transfers/Checkpoints, vollständige MP4-/SHA-/Frameprüfung und Wan-Metadaten im Produktionsstatus. Fünf neue Wan-Tests, sieben gezielte bestehende Backendtests, sieben Cloudtests, zehn Projekttests und Web-Build bestanden. Zwei echte PostgreSQL-/Redis-/RQ-/Prozessfälle plus vier API-Vertragstests in 14,968 s; Timeout mit null Artefakten und Wiederaufnahme derselben Kennungen. Nur `CONTROLLED_TEST`, normale CLOUD-Generierung gesperrt. Kein Modal-/GPU-/Modelldownload-Aufruf; Kriterien unverändert. [Prüfbericht](step21-acceptance.md).
 
 ### 22. Cloud-Grenzen (S; abhängig von: 21)
 - [ ] Maximale Clipzahl, Laufzeit, Parallelität und Kostenlimit sind konfigurierbar und werden vor teuren Aufträgen geprüft.

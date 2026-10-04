@@ -18,6 +18,7 @@ from rq import Queue
 
 from app.script_contract import validate_script
 from app.production_stages import PexelsSource, SpeechSegment, GraphicsManifest, EncodingManifest
+from app.wan_contract import WanSceneSource
 from app.database import database
 from app.media_access import require_access, same_origin
 from app.media_gateway import rpc
@@ -152,6 +153,7 @@ class ProductionRunOutput(StrictModel):
     available_at: datetime
     steps: list[ProductionStepOutput]
     sources: list[PexelsSource] = Field(default_factory=list)
+    wan_sources: list[WanSceneSource] = Field(default_factory=list)
     speech: list[SpeechSegment] = Field(default_factory=list)
     graphics: GraphicsManifest | None = None
     encoding: EncodingManifest | None = None
@@ -171,6 +173,7 @@ class ProjectStatus(StrictModel):
     production_can_resume: bool = False
     production_cancel_requested: bool = False
     production_sources: list[PexelsSource] = Field(default_factory=list)
+    production_wan_sources: list[WanSceneSource] = Field(default_factory=list)
     production_speech: list[SpeechSegment] = Field(default_factory=list)
     production_graphics: GraphicsManifest | None = None
     production_encoding: EncodingManifest | None = None
@@ -584,6 +587,7 @@ def get_status(project_id: UUID):
         "production_can_resume": production['can_resume'] if production else False,
         "production_cancel_requested": production['cancel_requested'] if production else False,
         "production_sources": production['sources'] if production else [],
+        "production_wan_sources": production['wan_sources'] if production else [],
         "production_speech": production['speech'] if production else [],
         "production_graphics": production['graphics'] if production else None,
         "production_encoding": production['encoding'] if production else None,
@@ -603,6 +607,7 @@ def production_output(conn, project_id, run_id):
     manifest = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
                             "AND name = 'SCENES' AND state = 'COMPLETED'", (run_id,)).fetchone()
     sources = manifest['result'].get('sources', []) if manifest else []
+    wan_sources = manifest['result'].get('wan_sources', []) if manifest else []
     audio = conn.execute("SELECT result FROM production_steps WHERE production_run_id = %s "
                          "AND name = 'SPEECH' AND state = 'COMPLETED'", (run_id,)).fetchone()
     speech = audio['result'].get('speech', []) if audio else []
@@ -618,7 +623,8 @@ def production_output(conn, project_id, run_id):
                   and all(step['state'] == 'COMPLETED' or step['attempts'] < step['max_attempts'] for step in steps))
     return {**{name: run[name] for name in ('id', 'project_id', 'state', 'error_code', 'error_message',
                                            'cancel_requested', 'started_at', 'deadline_at', 'available_at')},
-            'can_resume': can_resume, 'steps': steps, 'sources': sources, 'speech': speech, 'graphics': graphics, 'encoding': encoding}
+            'can_resume': can_resume, 'steps': steps, 'sources': sources, 'wan_sources': wan_sources,
+            'speech': speech, 'graphics': graphics, 'encoding': encoding}
 
 
 @router.get('/projects/{project_id}/production-runs/{run_id}', response_model=ProductionRunOutput)

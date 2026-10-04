@@ -142,3 +142,9 @@ STORAGE bleibt innerhalb der vorhandenen 120-Sekunden-Stufengrenze und unverlän
 ## Videoprüfung ab Schritt 19
 
 Der Status enthält `video_approved` für das FINAL der aktuellen Version. React zeigt Eingabe, Sprechertext/Bildvorgaben und Szenensprünge aus den tatsächlichen Grafik-Startframes. Änderungen speichern eine neue Version mit eigener Produktion/Freigabe. Pexels-Auswahl schließt gleiche Video-IDs und Datei-SHA-256 aus, einschließlich bereits gespeicherter Szenen. Ohne anderen geeigneten Treffer: `PEXELS_DUPLICATE_ONLY` mit Änderungsbedarf; keine fertige Wiederholungsfolge und kein Quellenwechsel. Kein automatisches semantisches Bildverständnis; Inhaltsprüfung erfolgt am Video. [Prüfbericht](step19-acceptance.md).
+
+## Wan-Metadaten ab Schritt 21
+
+`GET /api/projects/{id}/production-runs/{run_id}` ergänzt `wan_sources`, der Projektstatus `production_wan_sources`. Beide sind standardmäßig leer und werden nur aus einem abgeschlossenen SCENES-Checkpoint gelesen. Geordnete Einträge enthalten Szenenposition, Artefaktschlüssel, ausschließlich `AI_GENERATED_VIDEO`, geplante/gemessene Dauer und die geprüften Clipantworten: vollständiger Wan-Auftrag, stabile UUID, Seed/Prompt, Workflow-/ComfyUI-/Modell-Lockbezug, Herkunftskennzeichnung, relativer Ergebnispfad, SHA-256 und Bytes. Keine absoluten Hostpfade, URLs oder Zugangsdaten.
+
+`sources`/`production_sources` bleiben die bestehenden Pexels-Felder; Wan wird additiv ergänzt. Keine Migration erforderlich. Aktuelle Tests verwenden ausdrücklich `execution=CONTROLLED_TEST`, keine reale Wan-Inferenz. Die normale CLOUD-Produktion meldet weiterhin `STAGE_UNAVAILABLE` und benutzt keinen Testprovider. Echte Aktivierung folgt erst nach Grenzen/Kostennachweisen; kompletter CLOUD-Browserlauf mit Testdaten bleibt 23. [Transportvertrag](cloud-transfer-contract.md), [Prüfstand 21](step21-acceptance.md).

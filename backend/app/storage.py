@@ -50,6 +50,8 @@ def store_video(context):
                        inputs=[a.model_dump() for a in inputs], sources=[s.model_dump() for s in previous['SCENES'].sources],
                        speech=[s.model_dump() for s in previous['SPEECH'].speech], graphics=plan.model_dump(),
                        encoding=encoded.encoding.model_dump(), final=final.model_dump())
+        if previous['SCENES'].wan_sources:
+            payload['wan_sources'] = [s.model_dump(mode='json') for s in previous['SCENES'].wan_sources]
         cached = False
         try:
             cached = (json.loads(manifest.read_text(encoding='utf-8')) == payload

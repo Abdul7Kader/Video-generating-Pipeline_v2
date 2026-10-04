@@ -146,3 +146,9 @@ Bei falschen Motiven „Skript für neue Version bearbeiten“ verwenden und die
 Das [versionierte Cloud-Bundle](../cloud/README.md) lässt sich auf dem Entwicklungs-/Installationsrechner mit `python -m cloud.validate` und `python -m unittest cloud.test_workflow -v` offline prüfen. Dafür sind weder Modal-Anmeldung noch lokale Wan-/ComfyUI-/PyTorch-Installation nötig. Linux-/CUDA-Abhängigkeiten im Verzeichnis `cloud/` beschreiben nur das spätere Remote-Image; sie gehören nicht in die normale Hostworker-Umgebung oder Compose-Installation.
 
 Noch kein Modal-Deployment oder echtes CLOUD-Video verfügbar. Schritt 21 bindet kontrollierte Testdateien an, 22 prüft Auftragsgrenzen und Kosten, 23 den Browserablauf. Erst 24 startet nach nachgewiesenen Gratis-Credits und wirksamen 0 USD Nettokosten einen echten Remote-Build/Modelltransfer/GPU-Test. Diese Vorbereitung benötigt keinen eingeschalteten Ubuntu-Rechner. [Prüfstand 20](step20-acceptance.md).
+
+## 13. CLOUD-Testanbindung ab Schritt 21
+
+Wan-Vertrag, Rücktransfer, Dateiprüfung und Mehrclip-Planung sind mit kurzen lokalen Testdateien geprüft. Nach Codeaktualisierung API-Image und den ruhenden Hostworker aktualisieren/neustarten, damit die erweiterten Ergebnis-/Statusmodelle aktiv sind. Kein neues Konto, keine Migration und keine Wan-/CUDA-/Modal-Installation für den normalen Hostworker notwendig. Der Betreiberpfad aus „Speicher & Videos“ gilt auch für diese Szenen.
+
+Die normale CLOUD-Produktion bleibt gesperrt; Testprovider werden nur von Testcode explizit übergeben. Automatisierte Tests dieser Phase verwenden weder Modal noch das genannte 30-USD-Guthaben. Kein `modal run`/`deploy` oder GPU-Auftrag erforderlich. Nächster Entwicklungsschritt 22 prüft konfigurierbare Grenzen; 23 zeigt den gesamten Testdaten-Browserlauf, 24 folgt erst nach wirksamem Kostennachweis. [Prüfstand 21](step21-acceptance.md), [Transportvertrag](cloud-transfer-contract.md).

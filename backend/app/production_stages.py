@@ -11,6 +11,7 @@ import sys
 import threading
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.wan_contract import WanSceneSource
 
 
 STAGES = (("SCENES", 3600), ("SPEECH", 300), ("GRAPHICS", 900),
@@ -133,6 +134,7 @@ class StageResult(BaseModel):
     model_config = ConfigDict(extra='forbid')
     artifacts: list[StageArtifact] = Field(max_length=100)
     sources: list[PexelsSource] = Field(default_factory=list, max_length=20)
+    wan_sources: list[WanSceneSource] = Field(default_factory=list, max_length=20)
     speech: list[SpeechSegment] = Field(default_factory=list, max_length=20)
     graphics: GraphicsManifest | None = None
     encoding: EncodingManifest | None = None
@@ -155,6 +157,9 @@ StageResult.model_rebuild()
 def execute_stage(name, context):
     if name == "SCENES" and context["mode"] == "LOKAL":
         from app.pexels import collect_scenes
+        return collect_scenes(context)
+    if name == 'SCENES' and context['mode'] == 'CLOUD':
+        from app.wan import collect_scenes
         return collect_scenes(context)
     if name == 'SPEECH':
         from app.speech import synthesize_scenes
