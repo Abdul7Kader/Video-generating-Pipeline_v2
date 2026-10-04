@@ -110,7 +110,7 @@ class GraphicsManifest(BaseModel):
     safe_top: Literal[96] = 96
     safe_bottom: Literal[240] = 240
     renderer_version: Literal['4.0.532'] = '4.0.532'
-    template_version: Literal['v1'] = 'v1'
+    template_version: Literal['v1', 'v2'] = 'v2'
     scenes: list[GraphicsScene] = Field(min_length=6, max_length=10)
 
 

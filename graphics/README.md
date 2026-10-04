@@ -1,8 +1,10 @@
 # Remotion-Grafikvorlagen
 
-Lokaler Renderer für Schritt 16: transparente PNG-Ebenen für Titel, Szenenuntertitel und Szenenzähler. React und Remotion **4.0.532**, lokale Noto-Sans-Schriften, Masterprofil **720 × 1280, 24 fps**. Node.js 24 LTS wird auf dem Installationsrechner benötigt.
+Lokaler Renderer für Schritt 16: transparente PNG-Ebenen für Szenenuntertitel und eine interne Titelgrafik. React und Remotion **4.0.532**, lokale Noto-Sans-Schriften, Masterprofil **720 × 1280, 24 fps**. Node.js 24 LTS wird auf dem Installationsrechner benötigt. Nach Produktentscheidung vom 04.10.2026 gibt es keine Szenenzähler oder Szenenfortschrittsstreifen; die Titelgrafik wird nicht ins MP4 eingeblendet.
 
 ## Installation
+
+Vorlagenversion `v2` kennzeichnet Untertitel ohne zusätzliche Beschriftungen. Historische `v1`-Manifeste bleiben lesbar; Encoding darf sie nicht für neue Videos verwenden. Bereits abgeschlossene Versionen werden nicht nachträglich verändert. Für neue Gestaltung eine neue Skriptversion speichern und freigeben.
 
 Im Checkout auf Windows, macOS oder Linux:
 
@@ -19,7 +21,7 @@ Der Hostworker findet `node` im PATH. Alternativ in der privaten `worker.json` `
 
 `app.graphics` prüft Audiohash, tatsächliche WAV-Frames und freigegebenen Szenentext. Es speichert einen Titel und je Szene einen Untertitel als `INTERMEDIATE / GRAPHICS_OVERLAY` sowie ein typisiertes Grafikmanifest. Ablage: `<MEDIA_ROOT>/graphics/<run-id>/`; atomare PNG-/Manifestdateien und Hashprüfungen erlauben Wiederaufnahme. Schriftgröße 22–42 Pixel. Unlesbare oder überlaufende Texte stoppen den Auftrag, ohne Text zu kürzen oder zu ändern.
 
-Sichere Ränder: links 64, rechts 112, oben 96, unten 240 Pixel. Titel und Untertitel bleiben getrennt. Titel am Anfang für höchstens 96 Frames; Untertitel beginnen am Szenenanfang und laufen `ceil(Audiosekunden × 24)` Frames. Jede Szene dauert mindestens ihre geplante Dauer und mindestens die Sprachdauer; Haltezeiten bleiben erhalten. Gesamtdauer weiterhin 30–60 Sekunden. Schritt 17 setzt die Zeitdaten beim Videoschnitt um; Schritt 16 erzeugt keine finale MP4-Datei.
+Sichere Ränder: links 64, rechts 112, oben 96, unten 240 Pixel. Untertitel beginnen am Szenenanfang und laufen `ceil(Audiosekunden × 24)` Frames. Jede Szene dauert mindestens ihre geplante Dauer und mindestens die Sprachdauer; Haltezeiten bleiben erhalten. Gesamtdauer weiterhin 30–60 Sekunden. Die vorhandenen sieben Artefakte und Titelzeitdaten bleiben für die Kompatibilität gespeicherter Checkpoints erhalten; der Titel ist ein internes Zwischenartefakt und wird seit der Benutzerkorrektur nicht mehr vom Encoder überlagert. Schritt 17 setzt die Untertitelzeitdaten beim Videoschnitt um; Schritt 16 erzeugt keine finale MP4-Datei.
 
 ## Lizenz und Kosten
 

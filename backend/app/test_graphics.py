@@ -71,12 +71,16 @@ class GraphicsRenderTest(unittest.TestCase):
             context['run_id'] = str(uuid4())
             for scene in context['scenes']:
                 scene['id'] = str(uuid4())
+                scene['narration'] = 'Über blühende Wiesen fliegen Bienen.'
             context['previous_results']['SPEECH'] = synthesize_scenes(context)
             result = render_graphics(context)
             self.assertEqual(len(result['artifacts']), 7)
             self.assertEqual(result['graphics']['title'], context['script']['title'])
             self.assertEqual([s['caption_frames'] for s in result['graphics']['scenes']], [24]*6)
             files = [self.root/'media'/a['storage_path'] for a in result['artifacts']]
+            # Identical spoken text must render identically at every position:
+            # no scene counter or scene-progress decoration in the final caption.
+            self.assertEqual(len({p.read_bytes() for p in files[1:]}), 1)
             before = {p: p.stat().st_mtime_ns for p in files}
             with patch.dict(os.environ, {'REMOTION_NODE_PATH': str(self.root/'missing-node')}):
                 self.assertEqual(render_graphics(context), result)  # cached files require no Node process

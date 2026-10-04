@@ -112,6 +112,10 @@ Die Videofreigabe erwartet `{"checksum_sha256":"<64 kleine Hex-Zeichen>"}`. Eine
 
 ## Grafikmanifest ab Schritt 16
 
+**Produktentscheidung 04.10.2026:** Der bestehende Titelartefakt-/Zeitvertrag bleibt als interne Grafikmetadaten kompatibel. Er bedeutet keine Einblendung im Endvideo: neue Encodes verwenden ausschließlich die Untertitelgrafiken, ohne Szenenzähler oder Fortschrittsstreifen. Projektname/Titel bleiben im Editor sichtbar. Bereits abgeschlossene Videos und ihre Prüfsummen werden nicht nachträglich verändert; eine neue Gestaltung wird in einer neuen Version geprüft.
+
+`template_version` akzeptiert historische `v1` und neue `v2`, neue Grafiken verwenden `v2`. Ein neuer Encode mit `v1`-Grafiken wird mit `GRAPHICS_STYLE_OUTDATED` blockiert und verlangt eine neue Skriptversion/Freigabe, damit alte Szenenzähler nicht wieder erscheinen. Vorhandene abgeschlossene Checkpoints bleiben lesbar und unverändert.
+
 `GET /api/projects/{id}/production-runs/{run_id}` ergänzt `graphics`, `GET /api/projects/{id}/status` ergänzt `production_graphics`. Beide sind `null`, solange kein abgeschlossener GRAPHICS-Checkpoint vorliegt. Bei Erfolg: Breite 720, Höhe 1280, fps 24, Gesamtdauer in Frames, Titel, Titelartefaktschlüssel/-dauer, sichere Ränder, Renderer-/Vorlagenversion und geordnete Szenen mit Text, Artefaktschlüssel, Startframe, Szenen-/Untertitelframes und gemessener Audiodauer. Positions-/Text-/Zeitdaten müssen zur freigegebenen Version und SPEECH passen; keine Wort-für-Wort-Zusage.
 
 Grafiken erscheinen in Artefaktmetadaten als `INTERMEDIATE / GRAPHICS_OVERLAY`; `content_available` bleibt bis zur Medienauslieferung in 18 false. Kein finaler Videostatus oder Videoartefakt aus dieser Stufe. Sichtbare Fehler: `GRAPHICS_SPEECH_REQUIRED`, `GRAPHICS_TIMELINE_INVALID`, `REMOTION_REQUIRED`, `GRAPHICS_RENDER_FAILED`, `GRAPHICS_OUTPUT_INVALID`, `GRAPHICS_STORAGE_FAILED`; vorhandene Schritt-/Laufzeitgrenzen bleiben unverändert. [Prüfstand](step16-acceptance.md).

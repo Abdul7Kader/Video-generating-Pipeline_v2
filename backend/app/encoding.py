@@ -25,6 +25,8 @@ def encoding_plan(context):
         source = StageResult.model_validate(previous['SCENES'])
         speech = StageResult.model_validate(previous['SPEECH'])
         graphics = StageResult.model_validate(previous['GRAPHICS'])
+        if graphics.graphics and graphics.graphics.template_version != 'v2':
+            raise StageFailure('GRAPHICS_STYLE_OUTDATED', 'Gespeicherte Grafiken verwenden noch die alte Gestaltung mit Szenennummern. Neue Skriptversion speichern und freigeben, um das Video ohne diese Einblendungen zu erzeugen.')
         plan = build_plan(context)
         if graphics.graphics != plan:
             raise ValueError('changed graphics timeline')
@@ -144,7 +146,7 @@ def encode_video(context):
     plan, artifacts, paths = prepare_inputs(context, root, probe)
     folder = root/'encoding'/str(UUID(str(context['run_id'])))
     folder.mkdir(parents=True, exist_ok=True)
-    fingerprint = hashlib.sha256(('ffmpeg-v1-h264-crf20-veryfast-aac128-mono48k\n'+plan.model_dump_json()
+    fingerprint = hashlib.sha256(('ffmpeg-v2-captions-only-h264-crf20-veryfast-aac128-mono48k\n'+plan.model_dump_json()
                                  + ''.join(a.model_dump_json() for a in artifacts.values())).encode()).hexdigest()
     target, manifest = folder/'master.mp4', folder/'manifest.json'
     try:
@@ -178,12 +180,9 @@ def encode_video(context):
                      '-loop','1','-framerate','24','-i',str(paths[scene.artifact_key])]
         filters = (f'[0:v:0]setpts=PTS-STARTPTS,scale=720:1280:force_original_aspect_ratio=increase,'
                    f'crop=720:1280,setsar=1,fps=24,trim=end_frame={scene.duration_frames},setpts=PTS-STARTPTS[base];'
-                   f"[base][1:v]overlay=0:0:enable='lt(t,{scene.caption_frames}/24)'[caption]")
-        if scene.scene_position == 1:
-            arguments += ['-loop','1','-framerate','24','-i',str(paths[plan.title_artifact_key])]
-            filters += f";[caption][2:v]overlay=0:0:enable='lt(t,{plan.title_frames}/24)'[video]"
-        else:
-            filters += ';[caption]null[video]'
+                   f"[base][1:v]overlay=0:0:enable='lt(t,{scene.caption_frames}/24)'[video]")
+        # The project title stays in saved metadata/intermediate graphics for
+        # compatibility. The final video contains only the approved captions.
         part = clip.with_suffix('.part.mp4')
         try:
             run_ffmpeg(encoder, arguments+['-filter_complex_threads','1','-filter_complex',filters,'-map','[video]',

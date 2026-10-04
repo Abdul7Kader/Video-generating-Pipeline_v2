@@ -110,6 +110,8 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Render-Beispiele für kurze/lange Zeilen und deutsche Umlaute visuell prüfen.
 
 ### 17. FFmpeg-Pipeline (M; abhängig von: 14–16)
+- **Nachprüfung der Benutzerkorrektur:** 73 Backendtests, zehn Projekttests und Web-Build bestanden; normaler neuer Versionslauf mit Grafikvorlage `v2`, 20 geprüften Artefakten und 36-Sekunden-MP4. Pixel-/PNG-Prüfungen belegen fehlende Titel-/Zählereinblendung; alte Vorlagen sind bei neuen Encodes gesperrt. Projektidee und tatsächlicher Schnitt-Eingabetext im [Prüfbericht](step17-acceptance.md#nachprüfung-nach-benutzerkorrektur--04102026).
+- **Benutzerkorrektur 04.10.2026:** Betreiber bestätigt echte Aufnahmen, Sichtbarkeit und Verständlichkeit. Neue Endvideos müssen ohne Themenkasten, Szenenzähler und Szenenfortschrittsstreifen erzeugt werden. Die bisherige Dreierfolge ist ausdrücklich ein technisches Testskript, keine Inhaltsvorgabe; Nachprüfung im [Prüfbericht](step17-acceptance.md).
 - **Abgeschlossen (04.10.2026):** 72 Backendtests ohne Überspringen, zehn Projekttests und Web-Build bestanden. Echte Dienstintegration beider Modi mit kontrollierter Szene sowie normaler Pexels-/Piper-/Remotion-/FFmpeg-Auftrag erzeugen geprüfte MP4s. Vollständige 36-Sekunden-Wiedergabe, Sichtprüfung aller Szenen und Browser-Profilanzeige mit Neuladen/320 Pixeln bestanden. [Prüfbericht](step17-acceptance.md).
 - [x] Clips werden auf Zielprofil normalisiert, zeitlich an Sprechertext angepasst, mit Grafik/Audio zusammengesetzt und encodiert.
 - [x] ffprobe validiert jeden Eingang und die finale MP4; defekte oder zu kurze Quellen stoppen den Schritt.
@@ -121,6 +123,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Lokaler Browser-Zugriffsweg ist eingerichtet; Containerneustart, Dateiprüfsumme und Browser-Playback auf dem Installationsrechner geprüft. Aufgabe 35 behandelt danach weitere Betriebssysteme, Backup, Härtung und Betriebsübergabe.
 
 ### 19. Produktionsstatus und Videoprüfung (S; abhängig von: 13, 18)
+- [ ] Mit einer vom Betreiber gewählten Idee Erzählung und Bildpassung prüfen; unbeabsichtigte Clipwiederholungen erkennen und beheben. Automatische Doppelungsprüfung ist bislang nicht implementiert, Suchworttreffer ersetzen keine Bildverständnisprüfung. Die wiederholte Dreierfolge des Techniktests zählt nicht als Nachweis abwechslungsreicher Inhalte.
 - [ ] React zeigt laufende Schritte, Fehler und das fertige Video zur Prüfung an.
 - [ ] Bis zur Videofreigabe wird kein Publikationsjob erzeugt.
 - **Prüfung:** End-to-End-Browserlauf im LOKAL-Modus.

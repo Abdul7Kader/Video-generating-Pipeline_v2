@@ -1,7 +1,4 @@
 .overlay-panel { position: absolute; left: 64px; right: 112px; padding: 24px; color: #f9fbf7; background: rgba(12, 24, 32, .94); border-radius: 16px; border: 2px solid rgba(181, 232, 214, .42); box-sizing: border-box; }
 .overlay-panel.title { top: 96px; }
 .overlay-panel.caption { bottom: 240px; }
-.overlay-label { color: #b5e8d6; font-size: 16px; font-weight: 700; line-height: 22px; letter-spacing: 2px; margin-bottom: 14px; }
 .overlay-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.32; font-weight: 700; }
-.overlay-track { height: 4px; margin-top: 18px; background: rgba(181, 232, 214, .14); border-radius: 4px; overflow: hidden; }
-.overlay-track > div { height: 100%; background: #b5e8d6; }

@@ -4,7 +4,7 @@ import '@fontsource/noto-sans/latin-400.css';
 import '@fontsource/noto-sans/latin-700.css';
 import './overlay.css';
 
-function Overlay({kind, text, position = 1, total = 6}) {
+function Overlay({kind, text}) {
   const panel = useRef(null);
   const content = useRef(null);
   const [handle] = useState(() => delayRender('Lokale Schrift und sichere Textgrenzen'));
@@ -35,9 +35,7 @@ function Overlay({kind, text, position = 1, total = 6}) {
   }, [handle, kind, text]);
   return <AbsoluteFill style={{backgroundColor: 'transparent', fontFamily: 'Noto Sans'}}>
     <div ref={panel} className={`overlay-panel ${kind}`}>
-      <div className="overlay-label">{kind === 'title' ? 'THEMA' : `${String(position).padStart(2, '0')} / ${String(total).padStart(2, '0')}`}</div>
       <div ref={content} className="overlay-text">{text}</div>
-      <div className="overlay-track"><div style={{width: kind === 'title' ? '100%' : `${100 * position / total}%`}} /></div>
     </div>
   </AbsoluteFill>;
 }

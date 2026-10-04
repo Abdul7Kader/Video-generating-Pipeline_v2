@@ -396,8 +396,8 @@ export default function Studio() {
                         </li>)}</ul>
                       </section>}
                       {projectStatus?.production_graphics && <section className="speech-segments graphics-summary" aria-label="Gerenderte Grafiken">
-                        <h3>Titel und Untertitel gerendert</h3>
-                        <p>1 Titel · {projectStatus.production_graphics.scenes.length} Untertitel · {projectStatus.production_graphics.width} × {projectStatus.production_graphics.height} · {projectStatus.production_graphics.fps} fps</p>
+                        <h3>Untertitel gerendert</h3>
+                        <p>{projectStatus.production_graphics.scenes.length} Untertitel · {projectStatus.production_graphics.width} × {projectStatus.production_graphics.height} · {projectStatus.production_graphics.fps} fps</p>
                         <p>{new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(projectStatus.production_graphics.duration_frames / projectStatus.production_graphics.fps)} s geplante Videolänge</p>
                         <ul>{projectStatus.production_graphics.scenes.map(scene => <li key={scene.scene_position}>
                           <span>Untertitel {scene.scene_position}</span>
@@ -436,7 +436,7 @@ export default function Studio() {
               <li><span className="step-number">04</span><div><h3>Skript freigeben</h3><p>Die geprüfte Version bestätigen und ihren Produktionsauftrag speichern.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">05</span><div><h3>Pexels-Clips beschaffen</h3><p>Freigegebene LOKAL-Szenen erhalten geprüfte Clips mit verlinkten Quellen.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">06</span><div><h3>Sprache erzeugen</h3><p>Deutsche Sprechertexte werden szenenweise vertont; die gemessenen Dauern bleiben gespeichert.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
-              <li><span className="step-number">07</span><div><h3>Titel und Untertitel rendern</h3><p>Grafiken erhalten sichere Ränder und Zeitdaten passend zu den Sprachsegmenten.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
+              <li><span className="step-number">07</span><div><h3>Untertitel rendern</h3><p>Untertitel erhalten sichere Ränder und Zeitdaten passend zu den Sprachsegmenten.</p></div><span className="step-tag available"><span aria-hidden="true">✓ </span>Verfügbar</span></li>
               <li><span className="step-number">08</span><div><h3>Video ansehen</h3><p>Videoschnitt und abspielbare Vorschau folgen.</p></div><span className="step-tag">Folgt</span></li>
             </ol>
           </div>

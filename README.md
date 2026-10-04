@@ -2,7 +2,7 @@
 
 Stand: Schritte **01–17** und Meilenstein M1 abgeschlossen. Nach Skriptbearbeitung/Freigabe beschafft LOKAL Pexels-Clips, Piper erzeugt deutsche Sprache und Remotion Titel/Untertitel. FFmpeg setzt daraus jetzt eine echte MP4 zusammen: 720 × 1280, 24 fps, H.264/AAC. 72 Backendtests ohne Überspringen, zehn Projekttests, Web-Build und echte Produktions-/Browserprüfung bestanden. Nächster Schritt: **18 – Endablage und berechtigter Videoabruf**.
 
-**Schritt 17 abgeschlossen (04.10.2026):** Erstes echtes LOKAL-Video: sechs Szenen, 36 Sekunden, Titel, Untertitel und Sprecherstimme. Vollständige Wiedergabe und Sollprofil geprüft. Die Oberfläche zeigt Dauer, Format, Codecs und Dateigröße. MP4 liegt zunächst als Zwischenartefakt unter `<MEDIA_ROOT>/encoding/<run-id>/master.mp4`; STORAGE/FINAL-Ablage und reguläres Playback in der App fehlen noch. [Prüfbericht](tasks/step17-acceptance.md), [FFmpeg einrichten](tasks/install-on-computer.md#9-ffmpeg-schnitt-und-encoding-ab-schritt-17).
+**Schritt 17 abgeschlossen (04.10.2026):** Erstes echtes LOKAL-Video: sechs Szenen, 36 Sekunden, Untertitel und Sprecherstimme. Neue Videos enthalten nach Benutzerkorrektur keinen Themenkasten oder Szenenzähler. Vollständige Wiedergabe und Sollprofil geprüft. Die Oberfläche zeigt Dauer, Format, Codecs und Dateigröße. MP4 liegt zunächst als Zwischenartefakt unter `<MEDIA_ROOT>/encoding/<run-id>/master.mp4`; STORAGE/FINAL-Ablage und reguläres Playback in der App fehlen noch. [Prüfbericht](tasks/step17-acceptance.md), [FFmpeg einrichten](tasks/install-on-computer.md#9-ffmpeg-schnitt-und-encoding-ab-schritt-17).
 
 **Schritt 16 abgeschlossen (04.10.2026):** Echte Dienstprüfung und normaler LOKAL-Auftrag speichern sechs Stockclips, sechs Sprachdateien und sieben Grafiken. Die Oberfläche zeigt Grafikprofil und Untertitelzeiten auch nach Neuladen und bei 320 Pixeln. Encoding ist in Schritt 17 ergänzt; der Auftrag stoppt bis Schritt 18 bei STORAGE. [Prüfbericht](tasks/step16-acceptance.md), [Remotion installieren](graphics/README.md).
 
@@ -17,6 +17,15 @@ Der Prototyp unter [`tasks/`](tasks/) enthält den [Umsetzungsplan](tasks/plan.m
 Der [API-Vertrag](tasks/api-contract.md) beschreibt die Endpunkte und Beispielpayloads. Die OpenAPI-Dokumentation liegt bei gestartetem Compose-Stack unter `/api/docs`. Bei Skriptfreigabe speichert die API einen `QUEUED`-Produktionslauf und übergibt ihn an RQ; der Status zeigt Freigabe, Schritte, Versuche und sichere Fehlerursache. Wiederzustellung nach Broker-/Worker-Ausfall erfolgt automatisch; bewusste Wiederaufnahme und Abbruch sind im Browser möglich. Dateiabruf und Publikationsaufträge folgen später.
 
 Die Oberfläche zeigt Wartezeiten durch Ladebalken und unterscheidet Aktionen, deaktivierte Buttons und Statusanzeigen durch ihre Gestaltung. Der Editor bietet eine mitlaufende Speicherleiste, Tastaturfokus und Schutz ungespeicherter Änderungen beim Neuladen. Langsame oder fehlgeschlagene Anfragen bleiben erneut ladbar. [UI-Prüfbericht](tasks/ui-interaction-acceptance.md).
+
+## Nutzung aus Sicht des Betreibers
+
+1. **Du bestimmst das Thema:** Gib deine Videoidee und gewünschte Aussage ein. Die Beispielthemen sind Testdaten, keine Vorgabe und keine aus deinem Verhalten abgeleitete Vorliebe.
+2. **Du prüfst den Vorschlag:** Die App schlägt Sprechertext und eine Bildfolge vor. Ändere Texte und Bildbeschreibungen vor der Freigabe. Der Projektname dient zur Verwaltung und wird nicht oben ins Video geschrieben.
+3. **Du gibst die Produktion frei:** Im Modus LOKAL sucht die App echte Stockaufnahmen passend zu den Szenen, erzeugt die Stimme und zeigt denselben Sprechertext als Untertitel. Szenennummern werden nicht automatisch eingeblendet oder in Texte eingefügt; im freigegebenen Text enthaltene Wörter werden jedoch unverändert gesprochen.
+4. **Du beurteilst das Ergebnis:** Verständlichkeit, Bildauswahl und Inhalt sind getrennte Prüfungen. Die normale Videovorschau in der App folgt in Schritt 18/19; bislang gibt es dafür eine temporäre Entwicklungsvorschau.
+
+Das erste Video aus Schritt 17 ist ausdrücklich eine **Funktionsprobe** mit einem gespeicherten, manuell präzisierten Testskript. Drei Motive kommen je zweimal vor. Das beweist die Verarbeitung echter Aufnahmen, Stimme und Untertitel, aber keine abwechslungsreiche Erzählung oder perfekte Bildauswahl. Die Stocksuche prüft Suchtreffer und Dateieigenschaften, versteht den Bildinhalt jedoch nicht automatisch; eine automatische Prüfung gegen doppelte Clips ist noch offen. Diese Grenzen sind kein gewünschtes Endverhalten. Nach Benutzerentscheidung vom 04.10.2026 enthalten neue Videos keinen Themenkasten, Szenenzähler oder Szenenfortschrittsstreifen. [Aktueller Prüfbericht](tasks/step17-acceptance.md).
 
 ## Webanwendung lokal starten
 

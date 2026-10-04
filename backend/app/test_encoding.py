@@ -38,6 +38,13 @@ def encoding_context(mode='LOKAL'):
 
 
 class EncodingPlanTest(unittest.TestCase):
+    def test_legacy_graphics_cannot_reintroduce_scene_counters_on_resume(self):
+        context = encoding_context()
+        context['previous_results']['GRAPHICS']['graphics']['template_version'] = 'v1'
+        with self.assertRaises(StageFailure) as caught:
+            encoding_plan(context)
+        self.assertEqual(caught.exception.code, 'GRAPHICS_STYLE_OUTDATED')
+
     def test_both_modes_preserve_graphics_and_speech_timeline(self):
         for mode in ('LOKAL', 'CLOUD'):
             context = encoding_context(mode)
@@ -160,8 +167,9 @@ class EncodingRenderTest(unittest.TestCase):
             self.assertEqual(result['encoding']['duration_frames'], 720)
             inspect_master(target, 720, shutil.which('ffprobe'), shutil.which('ffmpeg'))
             if mode == 'LOKAL':
-                # Pixel probes verify captions end with speech, title ends at frame 96.
-                for time, y, wanted in [('0.5',500,'red'), ('1.5',500,'blue'), ('0.5',120,'green'), ('4.5',120,'blue')]:
+                # Captions end with speech; the stored project-title graphic
+                # must never cover the source, including at the beginning.
+                for time, y, wanted in [('0.5',500,'red'), ('1.5',500,'blue'), ('0.5',120,'blue'), ('4.5',120,'blue')]:
                     pixel = subprocess.check_output([shutil.which('ffmpeg'), '-v','error','-ss',time,'-i',str(target),
                         '-vf',f'crop=2:2:100:{y},format=rgb24','-frames:v','1','-f','rawvideo','-'])[:3]
                     self.assertGreater(pixel[{'red':0,'green':1,'blue':2}[wanted]], 180)
