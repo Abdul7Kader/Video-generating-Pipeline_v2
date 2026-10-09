@@ -9,6 +9,7 @@ class PublicationFunctionsTest(unittest.TestCase):
         yt=profile('youtube',metadata,'Pexels: Author https://www.pexels.com/video/1/','CLOUD')
         self.assertTrue(yt['status']['containsSyntheticMedia'])
         self.assertIn('Pexels:',yt['snippet']['description'])
+        self.assertEqual(yt['snippet']['categoryId'],'22')
         self.assertTrue(profile('tiktok',metadata,'','CLOUD')['post_info']['is_aigc'])
         self.assertFalse(profile('youtube',metadata,'','LOKAL')['status']['containsSyntheticMedia'])
 

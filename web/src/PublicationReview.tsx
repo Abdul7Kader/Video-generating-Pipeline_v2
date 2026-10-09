@@ -8,7 +8,9 @@ type Metadata = { title: string; description: string; made_for_kids: boolean; sy
   tiktok_music_confirmed: boolean; tiktok_brand_policy_confirmed: boolean; targets: Record<string, { visibility: string }> }
 type Data = { revision: number; checksum_sha256: string; metadata: Metadata; release_id: string | null;
   provenance: { mode: string; credits: string; controlled_test: boolean }; platforms: { provider: string; label: string; ready: boolean; problems: string[]; account_title: string | null }[];
-  jobs: { id: string; platform: string; state: string }[] }
+  upload_available: boolean;
+  jobs: { id: string; platform: string; state: string; phase: string | null; confirmed_bytes: number | null;
+    size_bytes: number | null; actual_visibility: string | null; external_id: string | null; error_message: string | null }[] }
 const visibilityLabels: Record<string, string> = { private: 'Privat', unlisted: 'Nicht gelistet', public: 'Öffentlich',
   SELF_ONLY: 'Nur ich', MUTUAL_FOLLOW_FRIENDS: 'Gegenseitige Freunde', FOLLOWER_OF_CREATOR: 'Follower', PUBLIC_TO_EVERYONE: 'Alle' }
 
@@ -72,7 +74,12 @@ export default function PublicationReview({ projectId, artifactId, authorized, v
           body: JSON.stringify({ expected_revision: data.revision, checksum_sha256: data.checksum_sha256,
             reviewed_metadata: true, reviewed_sources: true, consent_to_publish: true }) })
         const body = await json(path)
-        if (mounted.current) { apply(body); setMessage('Freigabe gespeichert. Die Plattformaufträge warten auf die Upload-Anbindung.') }
+        if (mounted.current) { apply(body); setMessage('Freigabe gespeichert. Berechtigte YouTube-Aufträge können separat gestartet werden.') }
+      } else if (operation.startsWith('youtube:') && data && !dirty) {
+        const jobId = operation.slice(8)
+        await json(`${path}/jobs/${encodeURIComponent(jobId)}/youtube`, { method: 'POST' })
+        const body = await json(path)
+        if (mounted.current) { apply(body); setMessage('YouTube-Auftrag an den Worker übergeben. Der gespeicherte Stand kann neu geladen werden.') }
       } else if (operation === 'reload') {
         const body = await json(path)
         if (mounted.current) { apply(body); setChoices({}); setAccountNames({}); setInteractions({}) }
@@ -87,7 +94,7 @@ export default function PublicationReview({ projectId, artifactId, authorized, v
   return <details className="panel publication-review">
     <summary>Veröffentlichung vorbereiten</summary>
     <div className="storage-body">
-      <p>Prüfe Zielkonten, Sichtbarkeit und Angaben für dieses Video. Die Upload-Anbindungen folgen; hier wird noch nichts hochgeladen.</p>
+      <p>Prüfe Zielkonten, Sichtbarkeit und Angaben für dieses Video. Nach der Freigabe kann ein freigeschalteter YouTube-Upload separat gestartet werden.</p>
       {!authorized && <p>Bitte zuerst unter „Speicher &amp; Videos“ anmelden.</p>}
       {busy && <LoadingBar label={busy} />}
       {error && <p className="field-error" role="alert">{error}</p>}
@@ -100,6 +107,7 @@ export default function PublicationReview({ projectId, artifactId, authorized, v
           <label>Titel<input value={metadata.title} maxLength={100} onChange={e => edit({ title: e.target.value })} /></label>
           <label>Beschreibung<textarea value={metadata.description} maxLength={2000} rows={4} onChange={e => edit({ description: e.target.value })} /></label>
           <label><input type="checkbox" checked={metadata.made_for_kids} onChange={e => edit({ made_for_kids: e.target.checked })} />Für Kinder erstellt (YouTube)</label>
+          {metadata.targets.youtube && <p>YouTube-Kategorie: Menschen &amp; Blogs.</p>}
           <label><input type="checkbox" checked={metadata.synthetic_media || data.provenance.mode === 'CLOUD'} disabled={data.provenance.mode === 'CLOUD'} onChange={e => edit({ synthetic_media: e.target.checked })} />KI-generierte oder wesentlich veränderte Inhalte kennzeichnen</label>
           <label><input type="checkbox" checked={metadata.paid_partnership} onChange={e => edit({ paid_partnership: e.target.checked })} />Bezahlte Partnerschaft für eine fremde Marke</label>
           <label><input type="checkbox" checked={metadata.own_brand} onChange={e => edit({ own_brand: e.target.checked })} />Werbung für die eigene Marke</label>
@@ -134,7 +142,19 @@ export default function PublicationReview({ projectId, artifactId, authorized, v
         </fieldset>
         <button type="button" className="primary-button" disabled={Boolean(busy) || dirty || !videoApproved || !ready || !eligible || !checks.every(Boolean) || Boolean(data.release_id)} onClick={() => void action('approve')}>Veröffentlichungsfreigabe speichern</button>
         {data.release_id && !dirty && <p role="status">Freigabe für Version {data.revision} gespeichert.</p>}
-        {data.jobs.length > 0 && <ul>{data.jobs.map(job => <li key={job.id}>{job.platform}: {job.state === 'QUEUED' ? 'Vorbereitet · Upload-Anbindung ausstehend' : job.state}</li>)}</ul>}
+        {data.jobs.length > 0 && <ul>{data.jobs.map(job => <li key={job.id}>
+          {job.platform}: {job.state === 'QUEUED' ? 'Vorbereitet' : job.state === 'PUBLISHED' ? `Verarbeitet · ${visibilityLabels[job.actual_visibility ?? ''] ?? 'Sichtbarkeit prüfen'}`
+            : job.state === 'FAILED' ? 'Prüfung erforderlich' : job.phase === 'PROCESSING' ? 'YouTube verarbeitet das Video' : 'Upload läuft'}
+          {job.state === 'UPLOADING' && job.phase !== 'PROCESSING' && Boolean(job.size_bytes) && <p>{job.confirmed_bytes ?? 0} von {job.size_bytes} Bytes bestätigt</p>}
+          {job.error_message && <p role="status">{job.error_message}</p>}
+          {job.actual_visibility && job.state !== 'PUBLISHED' && <p>Bei YouTube bestätigte Sichtbarkeit: {visibilityLabels[job.actual_visibility]}</p>}
+          {job.external_id && <p><a href={`https://www.youtube.com/watch?v=${encodeURIComponent(job.external_id)}`} target="_blank" rel="noreferrer">Video bei YouTube ansehen</a></p>}
+          {job.platform === 'YOUTUBE' && (job.state === 'QUEUED' || job.state === 'FAILED') && job.phase !== 'UNKNOWN' && job.phase !== 'INITIATING' && <button type="button" className="secondary-button"
+            disabled={Boolean(busy) || dirty || !data.release_id || !data.upload_available} onClick={() => void action(`youtube:${job.id}`)}>
+            {job.state === 'QUEUED' ? 'YouTube-Upload starten' : 'Bestehenden YouTube-Auftrag erneut prüfen'}</button>}
+          {job.platform === 'YOUTUBE' && !data.upload_available && <p>YouTube-Upload ist gesperrt. Private Aktivierung und aktuelle Konto-/Videonachweise fehlen.</p>}
+          {job.platform !== 'YOUTUBE' && job.state === 'QUEUED' && <p>Upload-Anbindung ausstehend.</p>}
+        </li>)}</ul>}
       </>}
     </div>
   </details>

@@ -1,4 +1,4 @@
-"""Save and approve exact publication metadata. No uploader/remote posts."""
+"""Save and approve exact publication metadata; explicitly start guarded uploads."""
 from datetime import datetime,timezone
 from uuid import UUID
 from fastapi import APIRouter,Request,Response
@@ -78,6 +78,11 @@ def readiness(conn):
 
 def bindings_match(conn,release):
     for provider,target in release['snapshot']['targets'].items():
+        try:
+            source=release['snapshot']['provenance']
+            expected=profile(provider,Metadata.model_validate(release['snapshot']['metadata']),source['credits'],source['mode'])
+            if expected!=target['profile']: return False
+        except (ValueError,KeyError,TypeError): return False
         row=conn.execute('SELECT * FROM social_connections WHERE provider=%s',(provider,)).fetchone()
         if not row or row['state']!='CONNECTED' or any(str(row[key])!=str(target[key]) for key in ('account_id','config_fingerprint')) or str(row['id'])!=target['connection_id']:
             return False
@@ -86,7 +91,8 @@ def bindings_match(conn,release):
 
 def state(conn,row):
     draft=conn.execute('SELECT * FROM publication_drafts WHERE artifact_id=%s',(row['id'],)).fetchone()
-    jobs=conn.execute('SELECT id,platform,state,release_id FROM platform_publications WHERE artifact_id=%s ORDER BY platform',(row['id'],)).fetchall()
+    jobs=conn.execute('SELECT p.id,p.platform,p.state,p.release_id,p.external_id,p.error_message,u.phase,u.confirmed_bytes,u.size_bytes,u.actual_visibility,u.error_code,u.available_at '
+        'FROM platform_publications p LEFT JOIN youtube_uploads u ON u.publication_id=p.id WHERE p.artifact_id=%s ORDER BY p.platform',(row['id'],)).fetchall()
     source=provenance(conn,row)
     metadata=Metadata.model_validate(draft['metadata']).model_dump(mode='json') if draft else Metadata(title=row['title'],made_for_kids=False,synthetic_media=row['mode']=='CLOUD').model_dump(mode='json')
     release=conn.execute('SELECT * FROM publication_releases WHERE artifact_id=%s ORDER BY revision DESC LIMIT 1',(row['id'],)).fetchone()
@@ -95,7 +101,14 @@ def state(conn,row):
     valid=valid and bindings_match(conn,release) and all(p['ready'] for p in platforms if p['provider'] in metadata['targets'])
     return dict(checksum_sha256=row['checksum_sha256'],revision=draft['revision'] if draft else 0,metadata=metadata,
         provenance=source,platforms=platforms,release_id=release['id'] if valid else None,jobs=jobs,
-        upload_available=False)
+        upload_available=youtube_available())
+
+
+def youtube_available():
+    try:
+        config=load_config()
+        return bool(config and not blockers('youtube',config) and config.providers['youtube'].upload_enabled)
+    except SocialError: return False
 
 
 @router.get('')
@@ -201,5 +214,36 @@ def approve_publication(project_id:UUID,artifact_id:UUID,body:ReleaseInput,reque
                 for provider,target in targets.items():
                     conn.execute('INSERT INTO platform_publications(project_id,artifact_id,video_approval_id,platform,release_id,snapshot) VALUES (%s,%s,%s,%s,%s,%s)',
                         (project_id,artifact_id,approval['id'],provider.upper(),release['id'],Jsonb(target)))
-            return dict(release_id=release['id'],revision=release['revision'],jobs=state(conn,row)['jobs'],upload_available=False)
+            return dict(release_id=release['id'],revision=release['revision'],jobs=state(conn,row)['jobs'],upload_available=youtube_available())
     except SocialError as exc: raise denied(409,exc.code,exc.message) from exc
+
+
+@router.post('/jobs/{publication_id}/youtube',status_code=202)
+def start_youtube(project_id:UUID,artifact_id:UUID,publication_id:UUID,request:Request):
+    require_access(request);same_origin(request)
+    from app import youtube_jobs as jobs
+    from app.youtube_upload import UploadError
+    try:
+        with database() as conn:
+            if not jobs.try_lock(conn,publication_id): raise denied(409,'YOUTUBE_BUSY','Der YouTube-Auftrag läuft bereits.')
+            job,row,_,_=jobs.validate(conn,publication_id,project_id,artifact_id)
+            config,_=configuration('youtube');require_origin(request,config)
+            upload=conn.execute('SELECT * FROM youtube_uploads WHERE publication_id=%s',(publication_id,)).fetchone()
+            if upload and upload['phase'] in ('UNKNOWN','INITIATING'):
+                raise denied(409,'YOUTUBE_RESULT_UNKNOWN','Upload-Start nicht eindeutig bestätigt. Ergebnis zuerst im Zielkonto klären.')
+            if job['state']=='PUBLISHED': return {'state':'PUBLISHED'}
+            opened=jobs.verified_open(row)
+            try:
+                if upload and opened['size']!=upload['size_bytes']: raise denied(409,'ARTIFACT_CONFLICT','Die Dateigröße hat sich geändert.')
+                if not upload:
+                    conn.execute('INSERT INTO youtube_uploads(publication_id,size_bytes) VALUES (%s,%s)',(publication_id,opened['size']))
+                elif job['state']=='FAILED':
+                    # Manual retry preserves session/external ID and backoff.
+                    conn.execute('UPDATE youtube_uploads SET retries=0,poll_count=0,error_code=NULL WHERE publication_id=%s',(publication_id,))
+                conn.execute("UPDATE platform_publications SET state='UPLOADING',error_message=NULL,updated_at=now() WHERE id=%s",(publication_id,))
+            finally: rpc('close',stream=opened['stream'])
+        try: jobs.enqueue_pending();queued=True
+        except (RedisError,OSError): queued=False
+        return {'state':'UPLOADING','worker_queued':queued}
+    except (SocialError,StageFailure,UploadError) as exc:
+        raise denied(409,exc.code,exc.message if isinstance(exc,SocialError) else str(exc)) from exc

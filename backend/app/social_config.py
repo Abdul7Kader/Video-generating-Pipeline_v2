@@ -26,6 +26,7 @@ class ProviderConfig(BaseModel):
     review_status: Literal['UNVERIFIED','TEST_ONLY','APPROVED'] = 'UNVERIFIED'
     public_upload_approved: bool = Field(default=False, strict=True)
     public_creator_app_confirmed: bool = Field(default=False, strict=True)
+    upload_enabled: bool = Field(default=False, strict=True)
     account_reference: str = Field(default='', max_length=300)
 
 

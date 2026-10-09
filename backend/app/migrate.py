@@ -19,17 +19,17 @@ def migrate(direction: str = "up") -> None:
         exists = conn.execute("SELECT to_regclass('schema_migrations')").fetchone()[0]
         versions = ({row[0] for row in conn.execute("SELECT version FROM schema_migrations")}
                     if exists else set())
-        if versions not in (set(), {1}, {1, 2}, {1, 2, 3}, {1, 2, 3, 4}, {1, 2, 3, 4, 5}, {1, 2, 3, 4, 5, 6}, {1, 2, 3, 4, 5, 6, 7}, {1, 2, 3, 4, 5, 6, 7, 8}):
+        if versions not in tuple(set(range(1, n+1)) for n in range(10)):
             raise RuntimeError(f"unexpected migration versions: {versions}")
         if direction == "up":
             for version, filename in ((1, "0001_initial.sql"), (2, "0002_script_generation.sql"),
                                       (3, "0003_production_steps.sql"), (4, "0004_speech_audio.sql"),
                                       (5, "0005_graphics_overlays.sql"), (6, "0006_media_storage.sql"),
-                                      (7, "0007_social_connections.sql"), (8, "0008_publication_release.sql")):
+                                      (7, "0007_social_connections.sql"), (8, "0008_publication_release.sql"), (9, "0009_youtube_upload.sql")):
                 if version not in versions:
                     conn.execute((MIGRATIONS / filename).read_text(encoding="utf-8"))
         else:
-            for version, filename in ((8, "0008_publication_release.down.sql"), (7, "0007_social_connections.down.sql"), (6, "0006_media_storage.down.sql"), (5, "0005_graphics_overlays.down.sql"), (4, "0004_speech_audio.down.sql"), (3, "0003_production_steps.down.sql"),
+            for version, filename in ((9, "0009_youtube_upload.down.sql"), (8, "0008_publication_release.down.sql"), (7, "0007_social_connections.down.sql"), (6, "0006_media_storage.down.sql"), (5, "0005_graphics_overlays.down.sql"), (4, "0004_speech_audio.down.sql"), (3, "0003_production_steps.down.sql"),
                                       (2, "0002_script_generation.down.sql"),
                                       (1, "0001_initial.down.sql")):
                 if version in versions:

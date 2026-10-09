@@ -191,6 +191,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Browser-Doppelklick, nachträgliche Datei-/Metadatenänderung und fehlende Verbindung testen.
 
 ### 27. YouTube-Adapter (S; abhängig von: 26)
+- **Teilstand 09.10.2026, „mach die 1“:** resumable Adapter, verschlüsselte Sitzung/Bytecheckpoints, expliziter Start, RQ-Outbox/Wiederaufnahme und sichere Sichtbarkeits-/Statusanzeige implementiert/funktional geprüft. **73 gezielte Backendfälle einschließlich 52 echter Dienstintegrationen**, zehn Projekttests und Web-Build bestanden; externe Antworten synthetisch. Echte Upload-/Konten-/Reviewnachweise, Betreiberabnahme und Voraussetzungen 24–26 offen. Aktuelle offizielle Referenz widerspricht der bisherigen allgemeinen Privatbeschränkung; private Produktschranke bleibt erhalten. Keine Abnahmekriterien geändert. [Prüfbericht 27](step27-acceptance.md).
 - [ ] Video wird per `videos.insert` mit autorisiertem Kanal und Metadaten hochgeladen; externe ID/Status gespeichert.
 - [ ] Private Beschränkung ungeprüfter Projekte wird als solche angezeigt.
 - [ ] Erforderlichen Audit für öffentliche Uploads beantragen und bis zur Freigabe verfolgen, falls das Projekt ungeprüft ist.

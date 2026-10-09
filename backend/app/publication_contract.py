@@ -77,7 +77,7 @@ def profile(provider,metadata,credits,mode):
     if provider=='youtube':
         if visibility not in ('private','unlisted','public') or len(description.encode('utf-8'))>5000:
             raise ValueError('YouTube visibility or description invalid')
-        return dict(snippet=dict(title=metadata.title,description=description),
+        return dict(snippet=dict(title=metadata.title,description=description,categoryId='22'),
             status=dict(privacyStatus=visibility,containsSyntheticMedia=synthetic,selfDeclaredMadeForKids=metadata.made_for_kids),
             paidProductPlacementDetails=dict(hasPaidProductPlacement=metadata.paid_partnership))
     if provider=='tiktok':

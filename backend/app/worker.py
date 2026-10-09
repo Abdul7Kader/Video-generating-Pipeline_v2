@@ -49,9 +49,11 @@ class RedisReconnectMixin:
         self.last_production_recovery = now
         from app.production_dispatch import recover_productions
         from app.storage_jobs import recover_storage_changes
+        from app.youtube_jobs import recover_uploads
         try:
             recover_productions(self.queues[0])
             recover_storage_changes(self.queues[0])
+            recover_uploads(self.queues[0])
         except (psycopg.Error, RedisError, OSError):
             self.log.warning("Produktions-Wiederaufnahme wartet auf Datenbank/Redis.")
 
@@ -99,7 +101,7 @@ def main() -> None:
                 if not isinstance(settings.get(name), str) or not settings[name]:
                     raise ValueError(f"{name} is missing")
                 os.environ[name] = settings[name]
-            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "FFMPEG_PATH", "PIPER_MODEL_PATH", "REMOTION_NODE_PATH", "REMOTION_BROWSER_EXECUTABLE"):
+            for name in ("PEXELS_API_KEY", "MEDIA_ROOT", "FFPROBE_PATH", "FFMPEG_PATH", "PIPER_MODEL_PATH", "REMOTION_NODE_PATH", "REMOTION_BROWSER_EXECUTABLE", "SOCIAL_CONFIG_PATH", "SOCIAL_TOKEN_KEY_PATH"):
                 if name in settings:
                     if not isinstance(settings[name], str) or not settings[name]:
                         raise ValueError(f"{name} must be a nonempty string")
