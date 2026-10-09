@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import tempfile
 from uuid import UUID, uuid4
 from app.media import checksum, media_root, write_json
 from app.production_stages import StageFailure
@@ -24,20 +25,22 @@ def config_path():
 
 def private_write(path, value):
     path.parent.mkdir(parents=True,exist_ok=True)
-    part = path.with_suffix('.json.part')
+    descriptor, name = tempfile.mkstemp(prefix=path.name+'.',suffix='.part',dir=path.parent)
+    part = Path(name)
     try:
-        with part.open('w',encoding='utf-8') as output:
+        with os.fdopen(descriptor,'w',encoding='utf-8') as output:
+            # Restrict the exclusively created empty file before writing secrets.
+            if os.name == 'nt':
+                flags={'creationflags':subprocess.CREATE_NO_WINDOW}
+                identity=subprocess.check_output(['whoami','/user','/fo','csv','/nh'],text=True,**flags)
+                sid=next(csv.reader([identity.strip()]))[1]
+                if not re.fullmatch(r'S-1-[0-9-]+',sid): raise ValueError('invalid identity')
+                subprocess.run(['icacls',str(part),'/inheritance:r','/grant:r',f'*{sid}:(F)','*S-1-5-18:(F)'],
+                               stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True,**flags)
+            else:
+                part.chmod(0o600)
             json.dump(value,output,ensure_ascii=False,indent=2)
             output.flush(); os.fsync(output.fileno())
-        if os.name == 'nt':
-            flags={'creationflags':subprocess.CREATE_NO_WINDOW}
-            identity=subprocess.check_output(['whoami','/user','/fo','csv','/nh'],text=True,**flags)
-            sid=next(csv.reader([identity.strip()]))[1]
-            if not re.fullmatch(r'S-1-[0-9-]+',sid): raise ValueError('invalid identity')
-            subprocess.run(['icacls',str(part),'/inheritance:r','/grant:r',f'*{sid}:(F)','*S-1-5-18:(F)'],
-                           stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True,**flags)
-        else:
-            part.chmod(0o600)
         part.replace(path)
     finally:
         part.unlink(missing_ok=True)

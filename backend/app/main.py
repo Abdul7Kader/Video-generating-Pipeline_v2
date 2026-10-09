@@ -18,7 +18,18 @@ from app.media_access import router as media_access_router
 from app.storage_api import router as storage_router
 app.include_router(media_access_router)
 app.include_router(storage_router)
+from app.social_api import router as social_router
+app.include_router(social_router)
 install_error_handlers(app)
+
+
+@app.middleware('http')
+async def private_connection_responses(request,call_next):
+    response=await call_next(request)
+    if request.url.path.startswith('/api/connections'):
+        response.headers['Cache-Control']='no-store'
+        response.headers['Referrer-Policy']='no-referrer'
+    return response
 
 
 @app.get("/api/health/live")

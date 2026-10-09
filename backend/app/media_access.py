@@ -8,11 +8,15 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 from redis import Redis
 from redis.exceptions import RedisError
+from argon2 import PasswordHasher
+from argon2.exceptions import VerificationError, InvalidHashError
+from argon2.low_level import Type
 from app.database import database
 
 router = APIRouter(prefix='/api')
 COOKIE = 'video_media_session'
 SESSION_SECONDS = 14400
+PASSWORDS = PasswordHasher(type=Type.ID,time_cost=3,memory_cost=65536,parallelism=4,salt_len=16,hash_len=32)
 
 
 def denied(status, code, message):
@@ -29,9 +33,26 @@ def settings():
         return conn.execute('SELECT * FROM media_access WHERE singleton=true').fetchone()
 
 
-def password_hash(password, salt):
+def legacy_password_hash(password, salt):
     return hashlib.scrypt(password.encode('utf-8'), salt=bytes.fromhex(salt), n=16384, r=8, p=1,
                           dklen=32, maxmem=64*1024*1024).hex()
+
+
+def password_hash(password):
+    return PASSWORDS.hash(password)
+
+
+def verify_password(password, row):
+    """Legacy verification exists only to upgrade after a successful login."""
+    try:
+        encoded=row['password_hash']
+        if encoded.startswith('$argon2id$'):
+            PASSWORDS.verify(encoded,password)
+            return True, PASSWORDS.check_needs_rehash(encoded)
+        valid=hmac.compare_digest(legacy_password_hash(password,row['password_salt']),encoded)
+        return valid,valid
+    except (VerificationError,InvalidHashError,ValueError,TypeError,KeyError):
+        return False,False
 
 
 def authorized(request, row=None):
@@ -77,13 +98,21 @@ def login(body: Login, request: Request, response: Response):
         raise denied(503,'MEDIA_ACCESS_UNAVAILABLE','Der Videozugriff ist derzeit nicht erreichbar.') from exc
     row = settings()
     if row is None:
-        salt = secrets.token_hex(16)
         with database() as conn:
             conn.execute('INSERT INTO media_access (password_salt,password_hash,session_secret) VALUES (%s,%s,%s) '
-                         'ON CONFLICT DO NOTHING', (salt,password_hash(body.password,salt),secrets.token_hex(32)))
+                         'ON CONFLICT DO NOTHING', ('',password_hash(body.password),secrets.token_hex(32)))
         row = settings()
-    if not hmac.compare_digest(password_hash(body.password,row['password_salt']),row['password_hash']):
+    valid,renew=verify_password(body.password,row)
+    if not valid:
         raise denied(401,'MEDIA_PASSWORD_INVALID','Das Passwort ist nicht richtig.')
+    if renew:
+        with database() as conn:
+            conn.execute("UPDATE media_access SET password_hash=%s,password_salt='' WHERE singleton=true AND password_hash=%s",
+                         (password_hash(body.password),row['password_hash']))
+    if old_session := request.cookies.get(COOKIE):
+        with database() as conn:
+            conn.execute('DELETE FROM social_oauth_attempts WHERE session_hash=%s',
+                         (hashlib.sha256(old_session.encode('utf-8')).hexdigest(),))
     connection.delete(key)
     expiry, nonce = str(int(time.time())+SESSION_SECONDS), secrets.token_hex(16)
     signature = hmac.new(bytes.fromhex(row['session_secret']),f'{expiry}.{nonce}'.encode(),hashlib.sha256).hexdigest()
@@ -96,5 +125,10 @@ def login(body: Login, request: Request, response: Response):
 @router.delete('/media-session')
 def logout(request: Request, response: Response):
     same_origin(request)
+    # Cancel pending connection grants when this operator session ends.
+    if session := request.cookies.get(COOKIE):
+        with database() as conn:
+            conn.execute('DELETE FROM social_oauth_attempts WHERE session_hash=%s',
+                         (hashlib.sha256(session.encode('utf-8')).hexdigest(),))
     response.delete_cookie(COOKIE,path='/api',httponly=True,samesite='strict')
     return {'authorized':False}

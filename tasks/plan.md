@@ -2,6 +2,8 @@
 
 Stand: 9. Oktober 2026
 
+**Schritt 25 technisch begonnen (09.10.2026), durch „mach 4“ ausdrücklich beauftragt:** YouTube-/TikTok-Desktop-OAuth, lokale Zielkonto-/Rechteanzeige, AES-GCM-Tokens, PKCE/Einmalzustimmung, Erneuerung/Widerruf und geschützte private Einrichtung. Migration 7 und Argon2id-Upgrade beim erfolgreichen Betreiberlogin. 37 verschiedene gezielte Backendfälle und zehn Projekttests bestanden; Web-Build, Nginx-Konfiguration und gezielte Paket-Sicherheitsupdates geprüft. Meta-Verbindungen, echte Konten/Kosten/Rechte/Reviews sowie Betreiberbedienung offen. Unabhängige Codearbeit vorgezogen; echte Aktivierung bleibt bis zur Videoabnahme aus 24 gesperrt. Kein Uploadauftrag oder Start von 26. [Prüfbericht 25 und Einrichtung](step25-acceptance.md).
+
 **Schritt 24 begonnen, nicht abgeschlossen (09.10.2026):** durch Betreiber „jetzt mach 3“ beauftragt. Offline-Kostenplanung und Modal-Ressourcengrenzen ergänzt; 27 Funktionen/Verträge, zehn Projekttests und Web-Build bestanden. Aktuelle Kontonachweise/0-USD-Nettospend-Limit fehlen, keine Modal-Anbindung im aktuellen SDK-Benutzerkontext gefunden. Zwölf Clips im bestehenden Remote-Zeitrahmen ergeben 22,73 USD Compute-Planwert vor Zusatzkosten; Vollvideo überschreitet damit das bestehende 10-USD-Bruttobudget. Nach Kontobeleg erst begrenzter Einzelclip-Messlauf und wirksame Remote-/Gesamtgrenzen, danach Beispiel B und Betreiberabnahme. Remote-Adapter/Reservierung/Abbruch, tatsächliches Video und M3 bleiben offen. Kein Modal-/GPU-Aufruf; Details und exakte lokale Übergabe in [Prüfbericht 24](step24-acceptance.md).
 
 **Schritt 23 funktional nachgewiesen (09.10.2026):** API-Skriptfreigabe → PostgreSQL/Redis/RQ → kontrollierte Wan-Szenen → echte lokale Piper-/Remotion-/FFmpeg-/Endablage → geschützter MP4-/HEAD-/Bytebereichsabruf. 36 s, sechs Szenen, zwölf Testclipaufträge, alle fünf Stufen abgeschlossen, keine Produktions-/Artefaktdubletten. 30 Funktionen/Verträge und acht verschiedene echte Integrationsfälle erfolgreich, Web-Build bestanden. Damit auch fehlender Dienstnachweis aus 22 erbracht. Gemischte Artefakte/Herkunft vor Encoding gesperrt; UI kennzeichnet kontrollierte Testclips. Betreiber-Bedienungsabnahme offen; kein Browserlauf durch Codex auf ausdrückliche Nutzervorgabe. Kein Modal-Aufruf, normale CLOUD-Produktion gesperrt. [Prüfbericht 23](step23-acceptance.md).
@@ -180,7 +182,7 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 
 ### M4 – Veröffentlichung nach Videoabnahme
 
-25. [ ] Plattformverbindungen, OAuth, Tokenpflege und Zielkonten umsetzen.
+25. [ ] Plattformverbindungen, OAuth, Tokenpflege und Zielkonten umsetzen. YouTube/TikTok implementiert/funktional geprüft; Meta, echte Kontonachweise und Betreiberabnahme offen ([Teilstand](step25-acceptance.md)).
 26. [ ] Veröffentlichungsdaten, Plattformprofile und Video-Freigabe umsetzen.
 27. [ ] YouTube-Uploadadapter implementieren.
 28. [ ] TikTok-Direct-Post-Adapter implementieren.

@@ -3,6 +3,7 @@ import ScriptEditor, { type Script } from './ScriptEditor'
 import LoadingBar from './LoadingBar'
 import { request } from './request'
 import StorageSettings from './StorageSettings'
+import PlatformConnections from './PlatformConnections'
 import VideoReview from './VideoReview'
 
 type Mode = 'LOKAL' | 'CLOUD'
@@ -348,6 +349,7 @@ export default function Studio() {
         </section>
 
         <StorageSettings onAccess={setMediaAuthorized} />
+        <PlatformConnections authorized={mediaAuthorized} onAccessLost={() => setMediaAuthorized(false)} />
         {(project || loading || saveError) && (
           <section className="saved-project panel" aria-labelledby="saved-title" aria-busy={loading}>
             <div className="saved-header">

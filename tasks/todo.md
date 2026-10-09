@@ -177,6 +177,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ## M4 – Veröffentlichung nach Videoabnahme
 
 ### 25. Plattformverbindungen (M; abhängig von: 24, 07–08)
+- **Teilstand 09.10.2026, ausdrücklich durch „mach 4“ beauftragt:** unabhängiger YouTube-/TikTok-OAuth-Code und lokale Plattformoberfläche implementiert/funktional geprüft. AES-GCM-Persistenz, PKCE/Einmalzustimmung, Tokenrotation, Widerruf und Fehlerbereinigung, Migration 7 sowie Argon2id-Login. 37 verschiedene gezielte Backendfälle, zehn Projekttests, Web-Build und Nginx-Syntaxprüfung bestanden; keine Browserabnahme durch Codex. Meta-Adapter, reale Konto-/Kosten-/Reviewnachweise und echter Verbindungstest offen. Fehlende Videoabnahme aus 24 bleibt Aktivierungsschranke; X gesperrt. Abnahmekriterien unverändert, Gesamtaufgabe nicht abgeschlossen. [Prüfbericht/Einrichtung/Übergabe](step25-acceptance.md).
 - [ ] OAuth-/Tokenfluss, sichere Speicherung, Erneuerung und Widerruf für berechtigte Zielkonten implementiert.
 - [ ] Fehlende Rechte oder Kontotypen erscheinen vor der Videofreigabe als konkrete Hinweise.
 - [ ] Vor echter Verbindung sind API-Kosten, vorhandene Konten, Rechte, Billing/Credits und Reviewstatus je Zielplattform anhand des Kontos geprüft. Kostenpflichtige Plattformen bleiben ohne neue Entscheidung deaktiviert.

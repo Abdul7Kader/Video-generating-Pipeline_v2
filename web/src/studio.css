@@ -156,3 +156,9 @@ input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;color:#81929
 .review-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .review-approved { padding: 16px; background: #263f25; border: 1px solid #bddf87; border-radius: 12px; }
 @media (max-width: 480px) { .review-actions button { width: 100%; } }
+.connection-list { list-style: none; padding: 0; margin: 20px 0; }
+.connection-list > li { padding: 20px 0; border-top: 1px solid #465a4a; overflow-wrap: anywhere; }
+.connection-list h3 { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
+.connection-list small { font-size: .8rem; font-weight: 400; color: #b6c5be; }
+.connection-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+@media (max-width: 480px) { .connection-actions button { width: 100%; } }

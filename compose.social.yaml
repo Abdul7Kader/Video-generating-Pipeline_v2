@@ -1,0 +1,14 @@
+# Optional, private local OAuth configuration; no credentials in this file.
+services:
+  api:
+    environment:
+      SOCIAL_CONFIG_PATH: /run/secrets/social_config
+      SOCIAL_TOKEN_KEY_PATH: /run/secrets/social_token_key
+    secrets:
+      - social_config
+      - social_token_key
+secrets:
+  social_config:
+    file: ${SOCIAL_CONFIG_FILE:?Set the private OAuth configuration file path}
+  social_token_key:
+    file: ${SOCIAL_TOKEN_KEY_FILE:?Set the separate private token key file path}
