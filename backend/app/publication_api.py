@@ -58,6 +58,8 @@ def readiness(conn):
     result=[];now=datetime.now(timezone.utc)
     for provider,label in PLATFORMS.items():
         problems=blockers(provider,config)
+        if provider in ('facebook','instagram'):
+            problems.append('Veröffentlichungsadapter noch offen; die Kontoverbindung startet keinen Upload.')
         if provider=='tiktok' and (not config or not config.providers.get(provider) or not config.providers[provider].public_creator_app_confirmed):
             problems.append('TikTok Direct Post erlaubt keine reine Eigen-/Teamkonto-Utility. Zulässigen Nutzungskreis der Entwickler-App zuerst nachweisen.')
         row=conn.execute('SELECT * FROM social_connections WHERE provider=%s',(provider,)).fetchone()
@@ -144,6 +146,8 @@ def save_draft(project_id:UUID,artifact_id:UUID,body:DraftInput,request:Request)
 
 
 def eligible(conn,provider,request):
+    if provider not in ('youtube','tiktok'):
+        raise denied(409,'PUBLICATION_ADAPTER_UNAVAILABLE','Der Veröffentlichungsadapter für diese Plattform ist noch offen.')
     config,key=configuration(provider);require_origin(request,config);lock(conn,provider)
     if provider=='tiktok' and not config.providers[provider].public_creator_app_confirmed:
         raise denied(409,'PUBLICATION_TIKTOK_USE_BLOCKED','TikTok Direct Post erlaubt keine reine Eigen-/Teamkonto-Utility. Zulässigen Nutzungskreis der App zuerst prüfen.')

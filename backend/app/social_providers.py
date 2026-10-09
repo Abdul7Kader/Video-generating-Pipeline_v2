@@ -8,7 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.social_config import SocialError
 
 SCOPES={'youtube':['https://www.googleapis.com/auth/youtube.readonly','https://www.googleapis.com/auth/youtube.upload'],
-        'tiktok':['user.info.basic','video.publish']}
+        'tiktok':['user.info.basic','video.publish'],
+        'facebook':['pages_show_list','pages_read_engagement','pages_manage_posts'],
+        'instagram':['pages_show_list','pages_read_engagement','instagram_basic','instagram_content_publish']}
 AUTH={'youtube':'https://accounts.google.com/o/oauth2/v2/auth','tiktok':'https://www.tiktok.com/v2/auth/authorize/'}
 TOKEN={'youtube':'https://oauth2.googleapis.com/token','tiktok':'https://open.tiktokapis.com/v2/oauth/token/'}
 REVOKE={'youtube':'https://oauth2.googleapis.com/revoke','tiktok':'https://open.tiktokapis.com/v2/oauth/revoke/'}
@@ -45,12 +47,19 @@ class Tokens(BaseModel):
     scope: str=Field(default='',max_length=4096)
     token_type: str='Bearer'
     open_id: str | None=Field(default=None,min_length=1,max_length=300)
+    meta_app_id: str | None=Field(default=None,min_length=1,max_length=500)
+    meta_user_id: str | None=Field(default=None,min_length=1,max_length=32,pattern=r'^[0-9]+$')
+    meta_page_id: str | None=Field(default=None,min_length=1,max_length=32,pattern=r'^[0-9]+$')
+    meta_expires_at: int | None=Field(default=None,gt=0,strict=True)
 
     def scopes(self, provider):
         return sorted(set(self.scope.replace(',',' ').split()) & set(SCOPES[provider]))
 
 
 def authorization_url(provider, config, state, verifier):
+    if provider in ('facebook','instagram'):
+        from app.meta_providers import authorization_url as meta_authorize
+        return meta_authorize(provider,config,state)
     entry=config.providers[provider]
     digest=hashlib.sha256(verifier.encode('ascii')).digest()
     challenge=digest.hex() if provider=='tiktok' else base64.urlsafe_b64encode(digest).rstrip(b'=').decode('ascii')
@@ -107,12 +116,19 @@ def parse_tokens(value, previous=None):
 
 
 def exchange(provider, config, code, verifier, client):
+    if provider in ('facebook','instagram'):
+        from app.meta_providers import exchange as meta_exchange
+        return meta_exchange(provider,config,code,client)
     body=credentials(provider,config.providers[provider])
     body.update(grant_type='authorization_code',code=code,redirect_uri=config.callback(provider),code_verifier=verifier)
     return parse_tokens(remote(client,'POST',TOKEN[provider],data=body))
 
 
 def refresh(provider, config, previous, client):
+    if provider in ('facebook','instagram'):
+        # Meta has no refresh-token grant here. Validate the existing token;
+        # account() checks its authoritative expiration without extending it.
+        return previous.model_copy(deep=True)
     if not previous.refresh_token:
         raise SocialError('SOCIAL_REAUTH_REQUIRED','Dauerhafte Zustimmung fehlt. Das Konto erneut verbinden.')
     body=credentials(provider,config.providers[provider])
@@ -123,7 +139,10 @@ def refresh(provider, config, previous, client):
     return result
 
 
-def account(provider, tokens, client):
+def account(provider, tokens, client, config=None):
+    if provider in ('facebook','instagram'):
+        from app.meta_providers import account as meta_account
+        return meta_account(provider,config,tokens,client)
     params={'part':'snippet','mine':'true','maxResults':'2'} if provider=='youtube' else {'fields':'open_id,display_name'}
     value=remote(client,'GET',ACCOUNT[provider],params=params,headers={'Authorization':'Bearer '+tokens.access_token})
     try:
@@ -142,6 +161,9 @@ def account(provider, tokens, client):
 
 
 def revoke(provider, config, tokens, client):
+    if provider in ('facebook','instagram'):
+        from app.meta_providers import revoke as meta_revoke
+        return meta_revoke(provider,config,tokens,client)
     body={'token':tokens.refresh_token or tokens.access_token}
     if provider=='tiktok': body=dict(credentials(provider,config.providers[provider]),token=tokens.access_token)
     remote(client,'POST',REVOKE[provider],data=body)

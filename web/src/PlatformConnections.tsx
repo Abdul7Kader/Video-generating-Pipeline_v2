@@ -6,6 +6,7 @@ type Connection = {
   provider: string; label: string; state: string; account_title: string | null;
   can_connect: boolean; can_refresh: boolean; can_disconnect: boolean; can_forget: boolean;
   problems: string[]; review_status: string;
+  notice: string | null; refresh_label: string; expires_in_days: number | null;
 }
 const labels: Record<string, string> = {
   CONNECTED: 'Verbunden', LIMITED: 'Berechtigungen fehlen', EXPIRED: 'Zugang abgelaufen',
@@ -77,11 +78,11 @@ export default function PlatformConnections({ authorized, onAccessLost }: {
       if (!mounted.current) return
       if (operation === 'authorize') {
         const target = new URL(result.authorization_url)
-        if (target.protocol !== 'https:' || !['accounts.google.com', 'www.tiktok.com'].includes(target.hostname)) throw new Error('Ungültiges Anmeldeziel.')
+        if (target.protocol !== 'https:' || !['accounts.google.com', 'www.tiktok.com', 'www.facebook.com'].includes(target.hostname)) throw new Error('Ungültiges Anmeldeziel.')
         window.location.assign(target.href)
         return
       }
-      setMessage(operation === 'disconnect' ? 'Zugang beim Anbieter widerrufen und lokale Tokens entfernt.' : operation === 'forget' ? 'Lokale Zugangsdaten entfernt. Der Widerruf beim Anbieter wurde hier nicht geprüft.' : 'Zugang erneuert und Zielkonto geprüft.')
+      setMessage(operation === 'disconnect' ? `Zugang beim Anbieter widerrufen und lokale Tokens entfernt${result.removed_connections?.length > 1 ? ' (Instagram und Facebook)' : ''}.` : operation === 'forget' ? 'Lokale Zugangsdaten entfernt. Der Widerruf beim Anbieter wurde hier nicht geprüft.' : result.expiration_extended === false ? 'Meta-Zugang und Zielkonto geprüft. Das Ablaufdatum bleibt bestehen.' : 'Zugang erneuert und Zielkonto geprüft.')
       setRemovedAtProvider(previous => ({ ...previous, [connection.provider]: false }))
       await load()
     } catch (e) {
@@ -111,13 +112,15 @@ export default function PlatformConnections({ authorized, onAccessLost }: {
         <ul className="connection-list">{connections.map(connection => <li key={connection.provider}>
           <h3>{connection.label} <small>{labels[connection.state] ?? connection.state}</small></h3>
           {connection.account_title && <p>Verbundenes Konto: <strong>{connection.account_title}</strong></p>}
+          {connection.expires_in_days !== null && <p>Zugang läuft in {connection.expires_in_days} Tagen ab.</p>}
+          {connection.notice && <p>{connection.notice}</p>}
           {connection.review_status === 'TEST_ONLY' && <p>Entwickler-App für freigegebene Testkonten.</p>}
           {connection.problems.length > 0 && <ul>{connection.problems.map(problem => <li key={problem}>{problem}</li>)}</ul>}
           <div className="connection-actions">
             <button type="button" className="primary-button" disabled={Boolean(busy) || !connection.can_connect}
               onClick={() => void action(connection, 'authorize')}>{connection.state === 'DISCONNECTED' ? 'Konto verbinden' : 'Neu verbinden'}</button>
             {connection.can_refresh && <button type="button" className="secondary-button" disabled={Boolean(busy)}
-              onClick={() => void action(connection, 'refresh')}>Zugang erneuern</button>}
+              onClick={() => void action(connection, 'refresh')}>{connection.refresh_label}</button>}
             {connection.can_disconnect && <button type="button" className="text-button" disabled={Boolean(busy)}
               onClick={() => void action(connection, 'disconnect')}>{connection.state === 'REVOKE_FAILED' ? 'Widerruf wiederholen' : 'Verbindung widerrufen'}</button>}
           </div>

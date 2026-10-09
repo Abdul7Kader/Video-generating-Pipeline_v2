@@ -36,7 +36,11 @@ def digest(value): return hashlib.sha256(value.encode('utf-8')).hexdigest()
 
 def fingerprint(config, provider):
     entry=config.providers[provider]
-    return digest(config.origin+'\0'+entry.client_id+'\0'+entry.client_secret.get_secret_value())
+    value=config.origin+'\0'+entry.client_id+'\0'+entry.client_secret.get_secret_value()
+    if provider in ('facebook','instagram'):
+        from app.meta_providers import VERSION
+        value+='\0'+VERSION+'\0'+entry.meta_page_id
+    return digest(value)
 
 
 def binding(provider, identity, fingerprint_value):
@@ -56,6 +60,7 @@ def stored_tokens(key,row):
 def lock(conn,provider):
     # database() returns a fresh connection that closes at context exit. This
     # session lock survives the durable OAuth checkpoints and dies on close.
+    provider='meta' if provider in ('facebook','instagram') else provider
     if not conn.execute("SELECT pg_try_advisory_lock(hashtextextended(current_schema() || ':social:' || %s,25)) AS ok",(provider,)).fetchone()['ok']:
         raise denied(409,'SOCIAL_BUSY','Eine Kontoänderung läuft bereits. Bitte erneut versuchen.')
 
@@ -101,6 +106,9 @@ def public(row, provider, config, problems):
         can_connect=not blockers(provider,config) and not connected and not any('Schlüssel' in p for p in problems),
         can_refresh=matching and not blockers(provider,config) and state not in ('REVOKE_FAILED','REAUTH_REQUIRED'),
         can_disconnect=matching,can_forget=connected,problems=problems,
+        refresh_label='Zugang prüfen' if provider in ('facebook','instagram') else 'Zugang erneuern',
+        expires_in_days=max(0,int((row['expires_at']-now).total_seconds()//86400)) if connected and row['expires_at'] else None,
+        notice='Meta-Zugang läuft ab; die Prüfung verlängert ihn nicht. App-Widerruf kann auch die andere Meta-Verbindung desselben Kontos entfernen.' if provider in ('facebook','instagram') else None,
         review_status=config.providers[provider].review_status if config and provider in config.providers else 'UNVERIFIED')
 
 
@@ -118,8 +126,15 @@ def list_connections(request:Request,response:Response):
     for provider in PLATFORMS:
         problems=blockers(provider,config)
         if config_problem: problems.append(config_problem)
-        if key_problem and provider in ('youtube','tiktok'): problems.append(key_problem)
+        if key_problem and provider in providers.SCOPES: problems.append(key_problem)
         item=public(rows.get(provider),provider,config,problems)
+        if provider in ('facebook','instagram') and config and provider in config.providers:
+            other='facebook' if provider=='instagram' else 'instagram'
+            sibling=rows.get(other)
+            if (sibling and sibling['state']=='REVOKE_FAILED' and other in config.providers
+                    and config.providers[other].client_id==config.providers[provider].client_id):
+                item['can_connect']=False
+                item['problems'].append('Den gemeinsamen Meta-App-Widerruf zuerst abschließen.')
         if key_problem: item.update(can_connect=False,can_refresh=False,can_disconnect=False)
         result.append(item)
     return {'connections':result}
@@ -136,6 +151,10 @@ def authorize(provider:str,request:Request,response:Response):
     fp=fingerprint(config,provider)
     with database() as conn:
         lock(conn,provider)
+        if provider in ('facebook','instagram'):
+            for pending in conn.execute("SELECT * FROM social_connections WHERE provider IN ('facebook','instagram') AND state='REVOKE_FAILED'"):
+                if stored_tokens(key,pending).meta_app_id==config.providers[provider].client_id:
+                    raise denied(409,'SOCIAL_REVOKE_PENDING','Den gemeinsamen Meta-App-Widerruf zuerst abschließen.')
         row=conn.execute('SELECT * FROM social_connections WHERE provider=%s',(provider,)).fetchone()
         if row and row['tokens_encrypted']:
             raise denied(409,'SOCIAL_REVOKE_PENDING','Bestehenden Zugang erneuern oder vor einer neuen Zustimmung zuerst widerrufen.')
@@ -156,14 +175,14 @@ def save_tokens(conn,provider,config,key,identity,tokens,account_id,account_titl
     now=datetime.now(timezone.utc);fp=fingerprint(config,provider)
     scopes=tokens.scopes(provider)
     state='CONNECTED' if set(providers.SCOPES[provider])<=set(scopes) else 'LIMITED'
-    if not tokens.refresh_token or not verified: state='REAUTH_REQUIRED'
+    if (provider not in ('facebook','instagram') and not tokens.refresh_token) or not verified: state='REAUTH_REQUIRED'
     refresh_expiry=now+timedelta(seconds=tokens.refresh_expires_in) if tokens.refresh_expires_in else (previous['refresh_expires_at'] if previous else None)
     conn.execute('INSERT INTO social_connections(provider,id,config_fingerprint,account_id,account_title,scopes,tokens_encrypted,expires_at,refresh_expires_at,state) '
         'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (provider) DO UPDATE SET '
         'id=EXCLUDED.id,config_fingerprint=EXCLUDED.config_fingerprint,account_id=EXCLUDED.account_id,account_title=EXCLUDED.account_title,scopes=EXCLUDED.scopes,'
         'tokens_encrypted=EXCLUDED.tokens_encrypted,expires_at=EXCLUDED.expires_at,refresh_expires_at=EXCLUDED.refresh_expires_at,state=EXCLUDED.state,error_code=NULL,updated_at=now()',
         (provider,identity,fp,account_id,account_title,Jsonb(scopes),seal(key,binding(provider,identity,fp),tokens.model_dump()),
-         now+timedelta(seconds=tokens.expires_in),refresh_expiry,state))
+         datetime.fromtimestamp(tokens.meta_expires_at,timezone.utc) if provider in ('facebook','instagram') and tokens.meta_expires_at else now+timedelta(seconds=tokens.expires_in),refresh_expiry,state))
 
 
 @router.get('/{provider}/callback',include_in_schema=False)
@@ -205,16 +224,24 @@ def callback(provider:str,request:Request):
                 # ineligible/failed lookup still leaves a revocable credential.
                 save_tokens(conn,provider,config,key,identity,tokens,None,None,verified=False)
                 conn.commit()  # unverified grant survives a failed lookup/process
-                account_id,title=providers.account(provider,tokens,client)
+                if provider in ('facebook','instagram'):
+                    from app.meta_providers import long_lived
+                    tokens=long_lived(provider,config,tokens,client)
+                    save_tokens(conn,provider,config,key,identity,tokens,None,None,verified=False)
+                    conn.commit()
+                account_id,title=providers.account(provider,tokens,client,config)
                 pending=conn.execute('SELECT provider FROM social_oauth_attempts WHERE provider=%s AND state_hash=%s AND expires_at>now() FOR UPDATE',(provider,digest(state))).fetchone()
                 if not pending:
                     # Logout canceled the pending grant. Revoke the new token;
                     # if that fails the staged credential remains recoverable.
                     try:
+                        affected=revoke_targets(conn,provider,config,key,tokens)
                         providers.revoke(provider,config,tokens,client)
-                        clear_local(conn,provider)
+                        for target in affected: clear_local(conn,target)
                     except SocialError:
-                        conn.execute("UPDATE social_connections SET state='REVOKE_FAILED' WHERE provider=%s",(provider,))
+                        for target in revoke_targets(conn,provider,config,key,tokens):
+                            conn.execute("UPDATE social_connections SET state='REVOKE_FAILED' WHERE provider=%s",(target,))
+                            conn.execute('DELETE FROM social_oauth_attempts WHERE provider=%s',(target,))
                     raise SocialError('SOCIAL_STATE_INVALID','Die Betreibersitzung wurde beendet. Bitte neu anmelden.')
             save_tokens(conn,provider,config,key,identity,tokens,account_id,title,previous)
         except SocialError as exc:
@@ -248,6 +275,8 @@ def refresh_connection(provider:str,request:Request):
             if row['refresh_expires_at'] and row['refresh_expires_at']<=datetime.now(timezone.utc):
                 raise SocialError('SOCIAL_REAUTH_REQUIRED','Dauerhafte Zustimmung abgelaufen. Bitte neu verbinden.')
             previous=stored_tokens(key,row)
+            if provider in ('facebook','instagram') and row['expires_at']<=datetime.now(timezone.utc):
+                raise SocialError('SOCIAL_REAUTH_REQUIRED','Meta-Zugang abgelaufen. Den Zugang widerrufen und erneut verbinden.')
             with providers.http_client() as client:
                 tokens=providers.refresh(provider,config,previous,client)
                 # A rotating refresh token may already invalidate the previous
@@ -255,7 +284,7 @@ def refresh_connection(provider:str,request:Request):
                 save_tokens(conn,provider,config,key,row['id'],tokens,row['account_id'],row['account_title'],row,verified=False)
                 conn.commit()
                 received=True
-                account_id,title=providers.account(provider,tokens,client)
+                account_id,title=providers.account(provider,tokens,client,config)
             if account_id!=row['account_id']: raise SocialError('SOCIAL_ACCOUNT_CHANGED','Die erneuerten Tokens gehören zu einem anderen Zielkonto.')
             save_tokens(conn,provider,config,key,row['id'],tokens,account_id,title,row)
         except SocialError as exc:
@@ -263,7 +292,23 @@ def refresh_connection(provider:str,request:Request):
             if received or exc.code in ('SOCIAL_REAUTH_REQUIRED','SOCIAL_ACCOUNT_CHANGED'):
                 conn.execute("UPDATE social_connections SET state='REAUTH_REQUIRED',error_code=%s,updated_at=now() WHERE provider=%s",(exc.code,provider))
     if error: raise denied(409,error.code,error.message)
-    return {'state':'UPDATED'}
+    return {'state':'UPDATED','expiration_extended':provider not in ('facebook','instagram')}
+
+
+def revoke_targets(conn,provider,config,key,tokens):
+    targets=[provider]
+    if provider in ('facebook','instagram'):
+        other='facebook' if provider=='instagram' else 'instagram'
+        sibling=conn.execute('SELECT * FROM social_connections WHERE provider=%s FOR UPDATE',(other,)).fetchone()
+        if sibling and sibling['tokens_encrypted']:
+            candidate=stored_tokens(key,sibling)
+            if candidate.meta_app_id==tokens.meta_app_id and (not candidate.meta_user_id or not tokens.meta_user_id or candidate.meta_user_id==tokens.meta_user_id):
+                targets.append(other)
+        elif other in config.providers and config.providers[other].client_id==tokens.meta_app_id:
+            # No sibling credential yet, but an OAuth window may already be
+            # open. Cancel that attempt under the shared lock as well.
+            targets.append(other)
+    return targets
 
 
 @router.delete('/{provider}')
@@ -271,6 +316,7 @@ def disconnect(provider:str,request:Request):
     require_access(request)
     config,key=configuration(provider,active=False);require_origin(request,config)
     error=None
+    affected=[provider]
     with database() as conn:
         lock(conn,provider)
         row=conn.execute('SELECT * FROM social_connections WHERE provider=%s FOR UPDATE',(provider,)).fetchone()
@@ -278,13 +324,16 @@ def disconnect(provider:str,request:Request):
         row=connection(conn,provider,config)
         try:
             tokens=stored_tokens(key,row)
+            affected=revoke_targets(conn,provider,config,key,tokens)
             with providers.http_client() as client: providers.revoke(provider,config,tokens,client)
-            clear_local(conn,provider)
+            for target in affected: clear_local(conn,target)
         except SocialError as exc:
             error=exc
-            conn.execute("UPDATE social_connections SET state='REVOKE_FAILED',error_code=%s,updated_at=now() WHERE provider=%s",(exc.code,provider))
+            for target in affected:
+                conn.execute("UPDATE social_connections SET state='REVOKE_FAILED',error_code=%s,updated_at=now() WHERE provider=%s",(exc.code,target))
+                conn.execute('DELETE FROM social_oauth_attempts WHERE provider=%s',(target,))
     if error: raise denied(503,'SOCIAL_REVOKE_FAILED','Widerruf nicht bestätigt. Der Zugang bleibt gesperrt; bitte den Widerruf erneut versuchen oder beim Anbieter entfernen.')
-    return {'state':'DISCONNECTED'}
+    return {'state':'DISCONNECTED','removed_connections':affected}
 
 
 class LocalRemoval(BaseModel):
@@ -307,7 +356,7 @@ def clear_local(conn,provider):
 def forget(provider:str,body:LocalRemoval,request:Request):
     """Recovery after an operator removes access in the provider's own console."""
     require_access(request);same_origin(request)
-    if provider not in ('youtube','tiktok'): raise denied(404,'SOCIAL_PLATFORM_UNKNOWN','Unbekannte Plattform.')
+    if provider not in providers.SCOPES: raise denied(404,'SOCIAL_PLATFORM_UNKNOWN','Unbekannte Plattform.')
     with database() as conn:
         lock(conn,provider)
         clear_local(conn,provider)

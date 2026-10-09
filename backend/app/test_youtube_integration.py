@@ -257,10 +257,12 @@ class YouTubeIntegrationTest(unittest.TestCase):
         self.assertEqual(sum(r.method=='PUT' and bool(r.content) for r in self.remote),1)
 
     def test_migration_roundtrip_without_uploads_preserves_version_contract(self):
-        with database() as conn: conn.execute((MIGRATIONS/'0009_youtube_upload.down.sql').read_text())
+        with database() as conn:
+            conn.execute((MIGRATIONS/'0010_meta_connections.down.sql').read_text())
+            conn.execute((MIGRATIONS/'0009_youtube_upload.down.sql').read_text())
         migrate()
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,10)))
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,11)))
 
     def test_large_valid_mp4_uploads_in_bounded_chunks_with_verified_progress(self):
         import subprocess,shutil

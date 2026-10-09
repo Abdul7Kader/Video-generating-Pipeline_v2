@@ -149,6 +149,16 @@ Der Status enthält `video_approved` für das FINAL der aktuellen Version. React
 
 `sources`/`production_sources` bleiben die bestehenden Pexels-Felder; Wan wird additiv ergänzt. Keine Migration erforderlich. Aktuelle Tests verwenden ausdrücklich `execution=CONTROLLED_TEST`, keine reale Wan-Inferenz. Die normale CLOUD-Produktion meldet weiterhin `STAGE_UNAVAILABLE` und benutzt keinen Testprovider. Echte Aktivierung folgt erst nach Grenzen/Kostennachweisen; kompletter CLOUD-Browserlauf mit Testdaten bleibt 23. [Transportvertrag](cloud-transfer-contract.md), [Prüfstand 21](step21-acceptance.md).
 
+## Meta-Verbindungen – Ergänzung zu Schritt 25
+
+Die vorhandenen `/api/connections/{provider}`-Operationen unterstützen zusätzlich `instagram` und `facebook`. Eigene private Einträge mit `meta_page_id`, aktuelle MVP-/Nullkosten-/Konto-/Reviewnachweise und privater Tokenschlüssel sind erforderlich; standardmäßig deaktiviert. Meta verwendet Facebook Login für feste Seiten beziehungsweise deren verknüpfte professionelle Instagram-Konten. Getrennte Callback-Pfade bleiben an Origin/Host, einmaligen State und Browser gebunden.
+
+`GET /api/connections` liefert zusätzlich `refresh_label`, `expires_in_days`, `notice`; weiterhin keine Tokens/App-Secrets. Meta-Label „Zugang prüfen“: `POST /refresh` prüft denselben Benutzer und Zielaccount, Berechtigungen und tatsächlichen Token-/Datenzugriffsablauf; Antwort `expiration_extended=false`. Kein Refresh-Token-Grant oder fiktive Laufzeitverlängerung. `LIMITED` bei fehlenden Scopes, `REAUTH_REQUIRED` bei unbestätigten/abgelaufenen Grants; unverifizierte Tokens bleiben verschlüsselt widerrufbar.
+
+Meta-`DELETE` widerruft den App-/Benutzergrant und liefert `removed_connections`; derselbe bestätigte Benutzer mit derselben App kann beide lokalen Verbindungen betreffen. Unbekannte Benutzeridentität wird konservativ behandelt; verschiedene bestätigte Benutzer bleiben getrennt. Offene entsprechende OAuth-Vorgänge werden abgebrochen. Nicht bestätigter Remote-Widerruf behält Tokens in `REVOKE_FAILED` und sperrt weitere entsprechende Zustimmungen. Die vorhandene `/forget`-Bestätigung löscht nur die ausgewählte lokale Verbindung, ohne Remote-Erfolgsbehauptung. Eine gemeinsame PostgreSQL-Sitzungssperre schützt sämtliche Meta-Verbindungsänderungen.
+
+Migration 0010 erweitert Social-Constraints; Rückmigration mit Meta-Datensätzen/Zustimmungen blockiert. Meta-Publication-Readiness, Optionsabfragen und Freigabe bleiben bis zu Adapter 29/30 mit `PUBLICATION_ADAPTER_UNAVAILABLE` gesperrt. Keine Upload-/RQ-Zustellung durch diese Ergänzung. Aktueller Prüf-/Quellenstand und Live-Grenzen: [Meta-Prüfbericht](step25-meta-acceptance.md).
+
 ## Veröffentlichungsfreigabe – Schritt 26
 
 Basis: `/api/projects/{project_id}/videos/{artifact_id}/publication`. Nur aktuelles fertiges FINAL derselben neuesten Skriptversion. Bestehende Betreibersitzung erforderlich, schreibende Anfragen zusätzlich Same-Origin; Antworten/Fehler `Cache-Control: no-store` und `Referrer-Policy: no-referrer`. UUIDs sind keine Berechtigung. Keine Tokens/private Konfiguration in Antworten.

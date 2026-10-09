@@ -284,13 +284,13 @@ class SocialIntegrationTest(unittest.TestCase):
         with self.assertRaises(psycopg.Error): migrate('down')
         self.assertTrue(self.row()['tokens_encrypted'])
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,10)))
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,11)))
         self.assertEqual(self.delete('/api/connections/youtube').status_code,200)
         # Migration 6 also refuses to discard the isolated operator login.
         with database() as conn: conn.execute('DELETE FROM media_access')
         migrate('down');migrate('up')
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,10)))
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')],list(range(1,11)))
 
     def test_key_loss_recovery_requires_explicit_provider_removal_and_makes_no_remote_claim(self):
         self.connected()

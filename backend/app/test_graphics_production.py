@@ -93,7 +93,7 @@ class GraphicsProductionTest(unittest.TestCase):
     def test_migration_roundtrip_mode_guards_and_nonlossy_rollback(self):
         migrate('down'); migrate('up')
         with database() as conn:
-            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4, 5, 6, 7, 8, 9])
+            self.assertEqual([r['version'] for r in conn.execute('SELECT version FROM schema_migrations ORDER BY version')], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
             for mode in ('LOKAL', 'CLOUD'):
                 project, run = self.project(mode=mode)
                 insert = "INSERT INTO artifacts (project_id,production_run_id,kind,media_type,storage_path,checksum_sha256) VALUES (%s,%s,%s,%s,'graphic.png',%s)"
@@ -105,5 +105,5 @@ class GraphicsProductionTest(unittest.TestCase):
         with self.assertRaises(psycopg.Error):
             migrate('down')
         with database() as conn:
-            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 9)
+            self.assertEqual(conn.execute('SELECT count(*) AS n FROM schema_migrations').fetchone()['n'], 10)
             self.assertEqual(conn.execute("SELECT count(*) AS n FROM artifacts WHERE media_type = 'GRAPHICS_OVERLAY'").fetchone()['n'], 2)

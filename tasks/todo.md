@@ -2,6 +2,8 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
+**Nachtrag 09.10.2026, „mach 2“:** Meta-OAuth/Tokenpflege aus 25 für Facebook und Instagram technisch implementiert und mit synthetischen Plattformantworten funktional geprüft. **97 verschiedene gezielte Backendfälle, davon 67 echte Dienstintegrationen**, zehn Projekttests und Web-Build bestanden; npm-Audit ohne Meldung, `pip check` erfolgreich. Eigene Testdienste entfernt. Echte Meta-App-/Konten-/Kosten-/Rechte-/Callback- und Bedienungsnachweise offen; Gesamtaufgabe 25 bleibt ungecheckt. Uploadadapter 29/30 nicht implementiert und serverseitig blockiert; Kriterien unverändert. [Prüfbericht](step25-meta-acceptance.md).
+
 **Stand 9. Oktober 2026:** Aufgaben 01–21 und M1 sind abgeschlossen; 20 statisch, 21 mit kontrollierten Testdaten. 22 funktional und mit Diensten geprüft, echte Modal-Kontonachweise offen. 23 bis zur finalen Test-MP4 und zum geschützten Abruf funktional nachgewiesen; Betreiber-Bedienungsabnahme offen. Kein Modal-Aufruf. Erstes Ziel ist lokale Nutzung; Codex prüft Funktionen, Betreiber ist Haupttester. Entwicklung am Windows-Rechner/GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus, keine Vorgabe für den Entwicklungsort. Echte Live-Abnahmen bleiben ausdrücklich offen; späterer Code darf mit kontrollierten Daten entwickelt werden.
 
 ## M0 – Machbarkeit und Vertrag
@@ -177,6 +179,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 ## M4 – Veröffentlichung nach Videoabnahme
 
 ### 25. Plattformverbindungen (M; abhängig von: 24, 07–08)
+- **Meta-Nachtrag 09.10.2026, „mach 2“:** Instagram-/Facebook-Verbindungen technisch/funktional ergänzt; feste Seite/professionelles Ziel, verschlüsselte Tokenpflege, echte Ablauf-/Rechteprüfung und gemeinsame Widerrufe. Migration 10. Echte App-/Konten-/Callback-/Review-/Kosten- und Betreiberabnahme offen; kein Meta-Uploadadapter. [Prüfbericht](step25-meta-acceptance.md).
 - **Teilstand 09.10.2026, ausdrücklich durch „mach 4“ beauftragt:** unabhängiger YouTube-/TikTok-OAuth-Code und lokale Plattformoberfläche implementiert/funktional geprüft. AES-GCM-Persistenz, PKCE/Einmalzustimmung, Tokenrotation, Widerruf und Fehlerbereinigung, Migration 7 sowie Argon2id-Login. 37 verschiedene gezielte Backendfälle, zehn Projekttests, Web-Build und Nginx-Syntaxprüfung bestanden; keine Browserabnahme durch Codex. Meta-Adapter, reale Konto-/Kosten-/Reviewnachweise und echter Verbindungstest offen. Fehlende Videoabnahme aus 24 bleibt Aktivierungsschranke; X gesperrt. Abnahmekriterien unverändert, Gesamtaufgabe nicht abgeschlossen. [Prüfbericht/Einrichtung/Übergabe](step25-acceptance.md).
 - [ ] OAuth-/Tokenfluss, sichere Speicherung, Erneuerung und Widerruf für berechtigte Zielkonten implementiert.
 - [ ] Fehlende Rechte oder Kontotypen erscheinen vor der Videofreigabe als konkrete Hinweise.

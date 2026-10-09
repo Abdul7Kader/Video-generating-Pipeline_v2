@@ -28,13 +28,14 @@ class ProviderConfig(BaseModel):
     public_creator_app_confirmed: bool = Field(default=False, strict=True)
     upload_enabled: bool = Field(default=False, strict=True)
     account_reference: str = Field(default='', max_length=300)
+    meta_page_id: str = Field(default='', max_length=32, pattern=r'^([0-9]{1,32})?$')
 
 
 class SocialConfig(BaseModel):
     model_config = ConfigDict(extra='forbid', frozen=True, hide_input_in_errors=True)
     origin: str = 'http://127.0.0.1:4177'
     video_mvp_accepted: bool = Field(default=False, strict=True)
-    providers: dict[Literal['youtube','tiktok'], ProviderConfig] = Field(default_factory=dict)
+    providers: dict[Literal['youtube','tiktok','instagram','facebook'], ProviderConfig] = Field(default_factory=dict)
 
     @field_validator('origin')
     @classmethod
@@ -61,14 +62,14 @@ def load_config():
 
 def blockers(provider, config, now=None):
     if provider == 'x': return ['X benötigt zuerst eine gesonderte Kostenentscheidung.']
-    if provider in ('facebook','instagram'):
-        return ['Meta-Verbindung noch offen: eigene Entwickler-App, passende Seite beziehungsweise professionelles Instagram-Konto und App-Rechte prüfen.']
-    if provider not in ('youtube','tiktok'): return ['Unbekannte Plattform.']
+    if provider not in ('youtube','tiktok','instagram','facebook'): return ['Unbekannte Plattform.']
     if not config: return ['Eigene Entwickler-App und private Plattformkonfiguration fehlen.']
     entry=config.providers.get(provider)
     result=[]
     if not config.video_mvp_accepted: result.append('Die echte CLOUD-Videoabnahme steht noch aus.')
     if not entry: return result+['OAuth-Zugang der eigenen Entwickler-App fehlt.']
+    if provider in ('instagram','facebook') and not entry.meta_page_id:
+        result.append('Die feste Facebook-Seiten-ID fehlt; Instagram benötigt deren verknüpftes professionelles Konto.')
     if not entry.enabled: result.append('Die Verbindung ist in der privaten Konfiguration deaktiviert.')
     now=now or datetime.now(timezone.utc)
     if (not entry.zero_cost_confirmed or not entry.checked_at
@@ -84,7 +85,7 @@ if __name__ == '__main__':
     from app.storage_settings import private_write
     parser=argparse.ArgumentParser(description='Create disabled private OAuth settings; credentials never enter command arguments.')
     parser.add_argument('path',type=Path)
-    parser.add_argument('--provider',action='append',choices=['youtube','tiktok'],required=True)
+    parser.add_argument('--provider',action='append',choices=['youtube','tiktok','instagram','facebook'],required=True)
     parser.add_argument('--origin',default='http://127.0.0.1:4177')
     args=parser.parse_args()
     if args.path.exists(): parser.error('Existing configuration will not be replaced')
@@ -92,7 +93,8 @@ if __name__ == '__main__':
     try:
         for provider in dict.fromkeys(args.provider):
             entries[provider]=ProviderConfig(client_id=getpass(PLATFORMS[provider]+' Client-ID/Key: '),
-                client_secret=getpass(PLATFORMS[provider]+' Client-Secret: '))
+                client_secret=getpass(PLATFORMS[provider]+' Client-Secret: '),
+                meta_page_id=input('Facebook-Seiten-ID: ').strip() if provider in ('instagram','facebook') else '')
         config=SocialConfig(origin=args.origin,providers=entries)
     except (ValueError,EOFError):
         parser.error('Invalid local origin or credential input; no configuration written')
