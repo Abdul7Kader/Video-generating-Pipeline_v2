@@ -12,10 +12,11 @@ type Health = { status: 'ready' | 'waiting'; services: Services }
 type Project = { id: string; idea: string; mode: Mode; media_type: MediaType; created_at: string }
 type ProductionStep = { id: string; name: string; state: string; attempts: number; max_attempts: number }
 type PexelsSource = { scene_position: number; video_id: number; video_page: string; creator: string; creator_page: string; width: number; height: number; duration_seconds: number }
+type WanSource = { scene_position: number; duration_seconds: number; clips: { execution: 'CONTROLLED_TEST' | 'WAN_INFERENCE' }[] }
 type SpeechSegment = { scene_position: number; voice: string; duration_seconds: number }
 type GraphicsManifest = { width: number; height: number; fps: number; duration_frames: number; scenes: { scene_position: number; start_frame: number; caption_frames: number }[] }
 type EncodingManifest = { width: number; height: number; fps: number; duration_seconds: number; video_codec: string; audio_codec: string; size_bytes: number }
-type ProjectStatus = { video_approved?: boolean; final_artifact_id?: string | null; latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
+type ProjectStatus = { video_approved?: boolean; final_artifact_id?: string | null; latest_script_version: number | null; script_approved: boolean; production_run_id: string | null; production_state: string | null; production_error: string | null; production_steps?: ProductionStep[]; production_can_resume?: boolean; production_cancel_requested?: boolean; production_sources?: PexelsSource[]; production_wan_sources?: WanSource[]; production_speech?: SpeechSegment[]; production_graphics?: GraphicsManifest | null; production_encoding?: EncodingManifest | null }
 type ScriptJob = { id: string; state: 'QUEUED' | 'RUNNING' | 'FAILED' | 'COMPLETED'; error_message: string | null; script_version: number | null; created_at: string }
 
 const STORAGE_KEY = 'videostudio:last-project-id'
@@ -393,6 +394,17 @@ export default function Studio() {
                           <a href={source.video_page} target="_blank" rel="noopener noreferrer">Clip {source.video_id} ↗</a>
                           <span>von <a href={source.creator_page} target="_blank" rel="noopener noreferrer">{source.creator}</a></span>
                           <small>{source.width} × {source.height} · {source.duration_seconds.toFixed(1)} s</small>
+                        </li>)}</ul>
+                      </section>}
+                      {Boolean(projectStatus?.production_wan_sources?.length) && <section className="scene-sources" aria-label="Cloud-Szenen">
+                        <h3>Cloud-Szenen</h3>
+                        {projectStatus!.production_wan_sources!.some(source => source.clips.some(clip => clip.execution === 'CONTROLLED_TEST'))
+                          ? <p className="notice-error">Kontrollierte Testclips – keine echte Wan-Generierung. Dieses Video prüft den technischen Ablauf.</p>
+                          : <p>Mit Wan erzeugte Videoszenen.</p>}
+                        <ul>{projectStatus!.production_wan_sources!.map(source => <li key={source.scene_position}>
+                          <span>Szene {source.scene_position}</span>
+                          <span>{source.clips.length} Clips</span>
+                          <small>{new Intl.NumberFormat('de-DE', { maximumFractionDigits: 2 }).format(source.duration_seconds)} s</small>
                         </li>)}</ul>
                       </section>}
                       {Boolean(projectStatus?.production_speech?.length) && <section className="speech-segments" aria-label="Sprachsegmente">

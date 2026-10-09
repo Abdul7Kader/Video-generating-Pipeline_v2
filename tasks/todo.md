@@ -2,7 +2,7 @@
 
 Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigkeiten angegeben sind. Größen: S = ein fokussierter kleiner Schritt, M = ein fokussierter Funktionsabschnitt. Ein Haken wird erst nach der genannten Prüfung gesetzt. Externe Plattformfreigaben bleiben offen, bis ein echter öffentlicher Upload belegt ist.
 
-**Stand 5. Oktober 2026:** Aufgaben 01–21 und M1 sind abgeschlossen; 20 statisch, 21 mit kontrollierten lokalen Testdaten ohne Modal-Aufruf. Nächster Schritt ist 22 (Cloud-Grenzen). Die weitere Entwicklung erfolgt auf dem Windows-Entwicklungsrechner am GitHub-Repository. Installationsziel sind unterstützte Windows-, macOS- und Linux-Rechner mit den jeweils nötigen Werkzeugen; Ubuntu ist eine Option. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus und keine Vorgabe für den Entwicklungsort. Live-Abnahmen bleiben offen, bis sie auf einem vollständig eingerichteten Rechner tatsächlich gelaufen sind. Ein späterer Schritt darf mit kontrollierten Daten entwickelt werden, auch wenn eine frühere Live-Abnahme noch offen ist.
+**Stand 9. Oktober 2026:** Aufgaben 01–21 und M1 sind abgeschlossen; 20 statisch, 21 mit kontrollierten Testdaten. 22 funktional und mit Diensten geprüft, echte Modal-Kontonachweise offen. 23 bis zur finalen Test-MP4 und zum geschützten Abruf funktional nachgewiesen; Betreiber-Bedienungsabnahme offen. Kein Modal-Aufruf. Erstes Ziel ist lokale Nutzung; Codex prüft Funktionen, Betreiber ist Haupttester. Entwicklung am Windows-Rechner/GitHub; Installationsziel bleiben unterstützte Windows-, macOS- und Linux-Rechner. [STATE.md](../STATE.md) enthält den aktuellen Stand. `LOKAL` ist der Pexels-Videomodus, keine Vorgabe für den Entwicklungsort. Echte Live-Abnahmen bleiben ausdrücklich offen; späterer Code darf mit kontrollierten Daten entwickelt werden.
 
 ## M0 – Machbarkeit und Vertrag
 
@@ -155,11 +155,14 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - [x] Modell-/GPU-Fehler bleiben sichtbar und lösen keinen Pexels-Fallback aus.
 - **Prüfung:** Grenzwert- und Fehlerfalltests.
 - **09.10.2026 implementiert/funktional geprüft:** 28 gezielte Funktionen/Verträge, zehn Projekttests und Web-Build bestanden; keine Browserabnahme durch Codex. Betreiber übernimmt Haupttest und Videoabnahme; erstes Ziel ist lokale Nutzung. Clipzahl, Zeitgrenzen einschließlich Produktionssubprozess, OS-Parallelitätssperren und reine Kosten-Vorprüfung implementiert. Echte Dienstintegration offen: PostgreSQL lokal auch außerhalb der Socketbeschränkung nicht erreichbar, null Integrationstests ausgeführt. Tatsächliche Modal-Kontonachweise und Live-Verknüpfung vor 24 weiterhin offen; kein Modal-Aufruf, keine Aktivierung. [Prüfbericht 22](step22-acceptance.md).
+- **Nachweis in 23 ergänzt:** echte PostgreSQL-/Redis-/RQ-/API-Prüfungen in getrennter Testumgebung bestanden, einschließlich Clipgrenze vor Provider und abgelaufener Cloud-Frist bei Resume. Dienstintegration damit nachgewiesen; echte Modal-Kontonachweise unverändert offen.
 
 ### 23. CLOUD-Ablauf mit Testdaten prüfen (M; abhängig von: 15–19, 21–22)
-- [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video auf dem Installationsrechner.
-- [ ] Renderer weist absichtlich gemischtes Manifest zurück.
+- [x] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video auf dem Installationsrechner.
+- [x] Renderer weist absichtlich gemischtes Manifest zurück.
 - **Prüfung:** Browserlauf und maschineller Manifest-/ffprobe-Test mit Testdaten; kein echter Cloud-Generierungsaufruf.
+- [ ] Betreiber übernimmt Browser-/Bedienungsabnahme; Codex führt auf ausdrückliche Nutzervorgabe nur Funktionsprüfungen und Build aus.
+- **09.10.2026 funktional nachgewiesen:** alle fünf echten CPU-Stufen, 36-s-Test-MP4, zwölf kontrollierte Clipaufträge, vollständige Wan-Herkunft, geschützt abrufbare Datei und Bytebereiche, keine Dubletten durch Freigabe/Zustellung. 30 Funktions-/Vertragsprüfungen und acht verschiedene echte Integrationsfälle erfolgreich; Web-Build bestanden. Testvideo/Manifest unter `.data/step23-preview`, keine echte Wan-Qualitätsabnahme. Oberfläche kennzeichnet Testclips; Anzeige noch durch Betreiber prüfen. [Prüfbericht 23](step23-acceptance.md).
 
 ### 24. Erstes echtes CLOUD-Video und Videoabnahme (M; abhängig von: 19, 23)
 - [ ] Ein reales LOKAL-Video ist bereits gespeichert und im Browser abspielbar; der CLOUD-Pfad wurde mit kontrollierten Testdaten geprüft.

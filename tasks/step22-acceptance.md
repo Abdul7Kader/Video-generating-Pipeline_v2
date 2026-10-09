@@ -2,6 +2,8 @@
 
 Stand: **09.10.2026. Implementiert und funktional geprüft; Dienstintegration und echte Kontonachweise noch offen.**
 
+**Aktualisierung durch 23 (09.10.2026):** fehlende Dienstintegration inzwischen auf getrennten PostgreSQL-/Redis-Testcontainern nachgewiesen. Zwei Wan-Transferfälle, vier API-Vertragsfälle und neuer Clipgrenzen-/Frist-Resume-Fall erfolgreich geprüft. Der zuvor nicht erreichbare Dienst ist ein historischer Prüfhinderungsgrund. Tatsächliche Modal-Kontonachweise/Live-Verknüpfung bleiben offen. [Prüfbericht 23](step23-acceptance.md).
+
 ## Auftrag und Ergebnis
 
 Betreiberentscheidung: erstes Ziel ist eine ausschließlich lokal benutzte Webseite. Codex prüft Funktionen und Build; der Betreiber übernimmt Bedienung, Videoqualität und Hauptabnahme. Keine öffentliche Bereitstellung und keine Browserabnahme durch Codex für diesen Schritt.
@@ -55,4 +57,4 @@ Schutzbedarf: Credits/Billing, private Worker-Konfiguration, freigegebene Szenen
 
 Offizielle Quellen am 09.10.2026 erneut geprüft: [Modal Budgets/Spend limits](https://modal.com/docs/guide/budgets), [Modal Skalierungsgrenzen](https://modal.com/docs/guide/scale), [OWASP Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html). Keine Kryptografieänderung oder Behauptung einer Zertifizierung.
 
-Noch offen: erfolgreiche echte Dienstintegration; Betreiber-Hauptabnahme; tatsächliche Abfrage/Verifikation von Modal-Credits, Budget und 0-USD-Spend-Limit vor jedem echten Auftrag, atomare Reservierung über parallele Installationen/Retry sowie Remote-Abbruch/Idempotenz in 24. Ohne diese Nachweise bleiben Live-Aufrufe gesperrt. Anschließend 23 funktional mit Testdaten vorbereiten; Bedienungsabnahme durch Betreiber.
+Noch offen: Betreiber-Hauptabnahme; tatsächliche Abfrage/Verifikation von Modal-Credits, Budget und 0-USD-Spend-Limit vor jedem echten Auftrag, atomare Reservierung über parallele Installationen/Retry sowie Remote-Abbruch/Idempotenz in 24. Ohne diese Nachweise bleiben Live-Aufrufe gesperrt. Dienstintegration und vollständiger Funktionsablauf mit Testdaten sind inzwischen in 23 nachgewiesen; Bedienungsabnahme durch Betreiber.

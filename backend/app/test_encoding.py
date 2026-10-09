@@ -38,6 +38,27 @@ def encoding_context(mode='LOKAL'):
 
 
 class EncodingPlanTest(unittest.TestCase):
+    def test_opposite_provenance_is_rejected_before_rendering(self):
+        from app.wan import plan_requests
+        from app.test_wan import context as wan_context
+        cloud = encoding_context('CLOUD')
+        cloud['previous_results']['SCENES']['sources'] = [dict(
+            scene_position=1, artifact_key='scene_1', video_id=123, file_id=456,
+            query='test only', video_page='https://www.pexels.com/video/123/',
+            creator='Controlled fixture', creator_page='https://www.pexels.com/@fixture/',
+            scene_duration_seconds=7.5, duration_seconds=8, width=720, height=1280, fps=24)]
+        local = encoding_context('LOKAL')
+        planned = plan_requests(wan_context())[0][2]
+        local['previous_results']['SCENES']['wan_sources'] = [dict(scene_position=1,
+            artifact_key='scene_1', scene_duration_seconds=6, duration_seconds=6,
+            clips=[dict(request=r.model_dump(mode='json'), execution='CONTROLLED_TEST',
+                result_path=f'wan/{r.job_id}/clip.mp4', size_bytes=100, checksum_sha256='a'*64,
+                duration_seconds=81/16) for r in planned])]
+        for body in (cloud, local):
+            with self.subTest(mode=body['mode']):
+                with self.assertRaises(StageFailure) as caught: encoding_plan(body)
+                self.assertEqual(caught.exception.code, 'MODE_MISMATCH')
+
     def test_legacy_graphics_cannot_reintroduce_scene_counters_on_resume(self):
         context = encoding_context()
         context['previous_results']['GRAPHICS']['graphics']['template_version'] = 'v1'
@@ -133,10 +154,11 @@ class EncodingRenderTest(unittest.TestCase):
 
     def test_input_hash_path_short_source_and_overlay_damage_stop_before_ffmpeg(self):
         from app.encoding import encode_video
-        for case in ('hash', 'escape', 'short', 'png', 'audio'):
+        for case in ('hash', 'escape', 'short', 'png', 'audio', 'mixed'):
             context = copy.deepcopy(self.context)
             source = context['previous_results']['SCENES']['artifacts'][0]
             if case == 'hash': source['checksum_sha256'] = 'b'*64
+            if case == 'mixed': source['media_type'] = 'AI_GENERATED_VIDEO'
             if case == 'escape': source['storage_path'] = '../outside.mp4'
             if case == 'short':
                 context['scenes'][0]['duration_seconds'] = 6

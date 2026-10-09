@@ -23,6 +23,12 @@ def encoding_plan(context):
     try:
         previous = context['previous_results']
         source = StageResult.model_validate(previous['SCENES'])
+        if ((context['mode'] == 'CLOUD' and source.sources)
+                or (context['mode'] == 'LOKAL' and source.wan_sources)):
+            raise StageFailure('MODE_MISMATCH', 'Gemischte Herkunftsdaten wurden abgewiesen. Kein Quellenwechsel beim Videoschnitt.')
+        if source.wan_sources:
+            from app.wan import validate_scene_manifest
+            validate_scene_manifest(context, source)
         speech = StageResult.model_validate(previous['SPEECH'])
         graphics = StageResult.model_validate(previous['GRAPHICS'])
         if graphics.graphics and graphics.graphics.template_version != 'v2':
