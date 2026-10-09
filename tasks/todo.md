@@ -184,6 +184,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Verbindung und Widerruf nur mit freigegebenen Testkonten.
 
 ### 26. Veröffentlichungsfreigabe (M; abhängig von: 24–25)
+- **Teilstand 09.10.2026, durch „mach die 5“ beauftragt:** Vorschau/Metadaten/Quellen/Kennzeichnungen, versionierter Entwurf und unveränderliche Datei-/Kontofreigabe implementiert; genau ein wartender Auftrag je berechtigter Plattform, keine Uploadzustellung. Migration 8, neue Konto-Zustimmung entwertet frühere Bindung. 47 verschiedene gezielte Backendfälle, zehn Projekttests und Web-Build bestanden. Betreiber prüft Bedienung/Doppelklick im Browser; Voraussetzungen 24–25 und reale Aktivierung offen. Kriterien unverändert, Gesamtaufgabe offen. [Prüfbericht/Übergabe](step26-acceptance.md).
 - [ ] Benutzer wählt Zielplattformen und prüft Titel, Beschreibung, Sichtbarkeit und Videovorschau.
 - [ ] Plattformabhängige Angaben zu Quellen und synthetischen Medien sind vor Freigabe geprüft und gespeichert.
 - [ ] Freigabe referenziert Prüfsumme der finalen Datei; pro Plattform entsteht genau ein Auftrag.
@@ -196,6 +197,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Prüfung:** Echter Testupload, Statusabfrage, Wiederaufnahme nach simuliertem Timeout.
 
 ### 28. TikTok-Adapter (S; abhängig von: 26)
+- **Offener Produktkonflikt aus 26:** Direct Post schließt reine Eigen-/Teamkonto-Werkzeuge aus. Zulässigen breiten Creator-Nutzungskreis vor realer Aktivierung nachweisen; aktuelles lokales Eigengebrauchsziel erfüllt diesen Nachweis nicht. Server sperrt bis dahin Optionsabfrage/Freigabe. Keine Entscheidung zur Änderung des Produkts oder der folgenden Kriterien getroffen. [Offizielle Quelle und Sperre](step26-acceptance.md#offene-abnahme-und-aktivierung).
 - [ ] Direct Post nutzt berechtigten `video.publish`-Scope und zulässige Sichtbarkeitsoptionen.
 - [ ] Audit-/Privatbeschränkung und asynchroner Veröffentlichungsstatus werden korrekt dargestellt.
 - [ ] Nach privatem Integrationstest den nötigen Audit für öffentliche Direct Posts einreichen und Status verfolgen.

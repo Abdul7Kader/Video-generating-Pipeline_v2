@@ -14,6 +14,26 @@ TOKEN={'youtube':'https://oauth2.googleapis.com/token','tiktok':'https://open.ti
 REVOKE={'youtube':'https://oauth2.googleapis.com/revoke','tiktok':'https://open.tiktokapis.com/v2/oauth/revoke/'}
 ACCOUNT={'youtube':'https://www.googleapis.com/youtube/v3/channels','tiktok':'https://open.tiktokapis.com/v2/user/info/'}
 ALLOWED=set(TOKEN.values())|set(REVOKE.values())|set(ACCOUNT.values())
+CREATOR='https://open.tiktokapis.com/v2/post/publish/creator_info/query/'
+ALLOWED.add(CREATOR)
+
+
+class CreatorInfo(BaseModel):
+    model_config=ConfigDict(extra='ignore',hide_input_in_errors=True)
+    privacy_level_options: list[str]=Field(min_length=1,max_length=4)
+    creator_nickname: str=Field(min_length=1,max_length=300)
+    max_video_post_duration_sec: int=Field(gt=0,le=86400,strict=True)
+    comment_disabled: bool=Field(strict=True)
+    duet_disabled: bool=Field(strict=True)
+    stitch_disabled: bool=Field(strict=True)
+
+
+def creator_info(tokens,client):
+    try:
+        value=remote(client,'POST',CREATOR,headers={'Authorization':'Bearer '+tokens.access_token},json={})
+        return CreatorInfo.model_validate(value['data'])
+    except (KeyError,ValueError,TypeError) as exc:
+        raise SocialError('SOCIAL_CREATOR_INVALID','TikTok-Kontooptionen konnten nicht bestätigt werden.') from exc
 
 
 class Tokens(BaseModel):

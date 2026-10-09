@@ -5,6 +5,7 @@ import { request } from './request'
 import StorageSettings from './StorageSettings'
 import PlatformConnections from './PlatformConnections'
 import VideoReview from './VideoReview'
+import PublicationReview from './PublicationReview'
 
 type Mode = 'LOKAL' | 'CLOUD'
 type MediaType = 'STOCK_VIDEO' | 'AI_GENERATED_VIDEO'
@@ -439,6 +440,8 @@ export default function Studio() {
                           duplicateClips={new Set(projectStatus.production_sources?.map(source => source.video_id)).size !== (projectStatus.production_sources?.length ?? 0)}
                           onApproved={() => setProjectStatus(current => current && activeProjectId.current === project.id && current.final_artifact_id === projectStatus.final_artifact_id ? { ...current, video_approved: true } : current)}
                           onEdit={() => { setEditing(true); focusScript() }} />}
+                        {projectStatus?.final_artifact_id && projectStatus.production_state === 'COMPLETED' && <PublicationReview key={`publication-${projectStatus.final_artifact_id}`} projectId={project.id} artifactId={projectStatus.final_artifact_id}
+                          authorized={mediaAuthorized} videoApproved={Boolean(projectStatus.video_approved)} />}
                         {projectStatus?.production_can_resume && <button className="primary-button" type="button" onClick={() => void changeProduction('resume')} disabled={Boolean(productionAction) || loading || saving || Boolean(saveError) || newerScript} aria-busy={productionAction === 'resume'}>Produktion wiederaufnehmen</button>}
                         {['QUEUED', 'RUNNING'].includes(projectStatus?.production_state ?? '') && <button className="secondary-button" type="button" onClick={() => void changeProduction('cancel')} disabled={Boolean(productionAction) || Boolean(projectStatus?.production_cancel_requested) || loading || saving} aria-busy={productionAction === 'cancel'}>Produktion abbrechen</button>}
                       </div>

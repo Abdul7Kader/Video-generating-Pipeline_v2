@@ -162,3 +162,8 @@ input:disabled,textarea:disabled,select:disabled{cursor:not-allowed;color:#81929
 .connection-list small { font-size: .8rem; font-weight: 400; color: #b6c5be; }
 .connection-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 @media (max-width: 480px) { .connection-actions button { width: 100%; } }
+.publication-review { width: 100%; }
+.publication-fields { display: grid; gap: 1rem; min-width: 0; border: 0; padding: 0; }
+.publication-fields > label { display: block; }
+.publication-fields input:not([type="checkbox"]), .publication-fields textarea, .publication-fields select { display: block; width: 100%; max-width: 100%; box-sizing: border-box; padding: .6rem; }
+.publication-sources { white-space: pre-wrap; overflow-wrap: anywhere; }

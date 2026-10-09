@@ -24,6 +24,8 @@ class ProviderConfig(BaseModel):
     zero_cost_confirmed: bool = Field(default=False, strict=True)
     checked_at: AwareDatetime | None = None
     review_status: Literal['UNVERIFIED','TEST_ONLY','APPROVED'] = 'UNVERIFIED'
+    public_upload_approved: bool = Field(default=False, strict=True)
+    public_creator_app_confirmed: bool = Field(default=False, strict=True)
     account_reference: str = Field(default='', max_length=300)
 
 

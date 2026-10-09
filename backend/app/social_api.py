@@ -139,7 +139,9 @@ def authorize(provider:str,request:Request,response:Response):
         row=conn.execute('SELECT * FROM social_connections WHERE provider=%s',(provider,)).fetchone()
         if row and row['tokens_encrypted']:
             raise denied(409,'SOCIAL_REVOKE_PENDING','Bestehenden Zugang erneuern oder vor einer neuen Zustimmung zuerst widerrufen.')
-        identity=row['id'] if row else uuid4()
+        # Each new consent is a new grant, even for the same account. Old
+        # publication consent must not revive after disconnect/reconnect.
+        identity=uuid4()
         conn.execute('DELETE FROM social_oauth_attempts WHERE provider=%s OR expires_at<=now()',(provider,))
         conn.execute('INSERT INTO social_oauth_attempts(provider,state_hash,binding_hash,session_hash,config_fingerprint,connection_id,verifier_encrypted,expires_at) '
             'VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',(provider,digest(state),digest(nonce),digest(session),fp,identity,
