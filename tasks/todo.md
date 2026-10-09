@@ -170,6 +170,7 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - [ ] Modal erzeugt mit `A100-80GB`, ComfyUI und Wan 2.2 T2V-A14B die Szenen für Beispiel B. Das fertige Video liegt auf dem Installationsrechner und ist über dessen Weboberfläche prüfbar; Aufgabe 35 schließt den produktiven Betrieb ab.
 - [ ] Laufzeit, Ressourcenverbrauch, Qualität, Manifest, Prüfsumme und ffprobe-Profil werden protokolliert; ein Fehlschlag wird innerhalb dieser Aufgabe bearbeitet.
 - **Prüfung:** Benutzer sieht und beurteilt ein echtes CLOUD-Video. Kein Social-Media-Upload ist für die Videoabnahme nötig.
+- **09.10.2026 begonnen, offen:** unabhängige Offline-Kostenplanung mit frischen Preisen/expliziten Zusatzkosten und festem 10-USD-Bruttolimit ergänzt; CPU-Limit/RAM-Limit und separater Starttimeout in der gesperrten Modal-Vorschau. 27 Funktionen/Verträge, zehn Projekttests, Web-Build und echte offline SDK-Konstruktion bestanden. Kontozugang/aktuelle Credits/GPU-Zahlungsmethode/0-USD-Nettospend-Limit nicht nachgewiesen; zwölf Clips mit bisherigen Remote-Zeitlimits ergeben 22,73 USD Compute-Planwert vor Zusatzkosten. Kein Live-Aufruf. Kontobeleg, begrenzter Einzelclip-Messlauf, Remote-Adapter/Reservierung/Abbruch und echtes Video bleiben offen; Abnahmekriterien unverändert. [Prüfbericht/Übergabe 24](step24-acceptance.md).
 
 **Checkpoint M3 – Video-MVP:** [ ] LOKAL und CLOUD sind real als abspielbare Videos geprüft; visuelle Medientypen bleiben getrennt. Social Media folgt erst danach.
 

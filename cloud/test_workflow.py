@@ -92,6 +92,39 @@ class CloudPreparationTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'GPU'):
                 validate.validate_bundle(root)
 
+    def test_missing_resource_caps_and_startup_limits_fail_even_with_updated_hash(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            original = validate.load('deployment.json')
+            for name in validate.load('bundle.lock.json')['files_sha256']:
+                shutil.copyfile(validate.ROOT/name, root/name)
+            for field, value in [('cpu_limit', None), ('cpu_limit', 8),
+                                 ('memory_limit_mib', None), ('memory_limit_mib', 131072),
+                                 ('startup_timeout_seconds', 1800), ('scaledown_window_seconds', 60)]:
+                spec = copy.deepcopy(original)
+                if value is None: spec.pop(field)
+                else: spec[field] = value
+                (root/'deployment.json').write_text(json.dumps(spec))
+                lock = validate.load('bundle.lock.json')
+                lock['files_sha256']['deployment.json'] = hashlib.sha256((root/'deployment.json').read_bytes()).hexdigest()
+                (root/'bundle.lock.json').write_text(json.dumps(lock))
+                with self.subTest(field=field, value=value), self.assertRaisesRegex(ValueError, 'resource'):
+                    validate.validate_bundle(root)
+
+    def test_sdk_preview_passes_both_resource_limits_and_separate_startup_timeout(self):
+        import sys
+        from unittest.mock import MagicMock
+        from cloud.modal_app import deployment_preview
+        sdk = MagicMock()
+        with patch.dict(sys.modules, {'modal': sdk}), patch('importlib.metadata.version', return_value='1.6.1'):
+            deployment_preview()
+        kwargs = sdk.App.return_value.function.call_args.kwargs
+        self.assertEqual(kwargs['cpu'], (4, 4))
+        self.assertEqual(kwargs['memory'], (65536, 65536))
+        self.assertEqual(kwargs['startup_timeout'], 300)
+        self.assertEqual(kwargs['timeout'], 1800)
+        self.assertEqual(kwargs['retries'], 0)
+
     def test_volume_hash_verification_never_downloads_or_accepts_escape(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder); (root/'vae').mkdir()

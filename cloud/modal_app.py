@@ -36,7 +36,9 @@ def deployment_preview():
     models = modal.Volume.from_name(spec['models_volume'], create_if_missing=False).with_mount_options(read_only=True)
     results = modal.Volume.from_name(spec['results_volume'], create_if_missing=False)
     app = modal.App(spec['app_name'])
-    app.function(image=image, gpu=spec['gpu'], cpu=spec['cpu'], memory=spec['memory_mib'],
+    app.function(image=image, gpu=spec['gpu'], cpu=(spec['cpu'], spec['cpu_limit']),
+                  memory=(spec['memory_mib'], spec['memory_limit_mib']),
+                  startup_timeout=spec['startup_timeout_seconds'],
                   timeout=spec['timeout_seconds'], retries=spec['retries'],
                   max_containers=spec['max_containers'], min_containers=spec['min_containers'],
                   buffer_containers=spec['buffer_containers'], scaledown_window=spec['scaledown_window_seconds'],

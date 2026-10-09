@@ -91,6 +91,10 @@ def validate_bundle(root=ROOT):
     require(deploy['gpu'] == 'A100-80GB' and deploy['max_containers'] == 1, 'Wrong GPU or concurrency')
     require(deploy['min_containers'] == deploy['buffer_containers'] == deploy['retries'] == 0
             and deploy['timeout_seconds'] == 1800 and deploy['live_enabled'] is False, 'Unsafe deployment defaults')
+    require(deploy.get('cpu_limit') == deploy['cpu'] == 4
+            and deploy.get('memory_limit_mib') == deploy['memory_mib'] == 65536
+            and deploy.get('startup_timeout_seconds') == 300
+            and deploy['scaledown_window_seconds'] == 2, 'Unsafe resource or startup limits')
     require(deploy['models_volume'] != deploy['results_volume'] and deploy['comfy_listen'] == '127.0.0.1', 'Unsafe storage or server binding')
     return dict(workflow=lock['workflow_version'], nodes=14, model_files=4,
                 model_bytes=sum(m['size_bytes'] for m in models), gpu=deploy['gpu'], live_enabled=False)
