@@ -65,6 +65,9 @@ def stage_command():
 
 
 def run_stage(conn, step, context, timeout):
+    if step['name'] == 'SCENES' and context['mode'] == 'CLOUD':
+        from app.cloud_limits import load_limits
+        timeout = min(timeout, load_limits().max_run_seconds)
     flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {"start_new_session": True}
     process = subprocess.Popen(stage_command(), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.DEVNULL, text=True, encoding="utf-8", **flags)
@@ -211,6 +214,12 @@ def run_production(run_id: str):
                            "project_id": str(project["id"]), "mode": project["mode"], "media_type": project["media_type"],
                            "script": script, "scenes": scenes, "previous_results": results}
                 timeout = min(step["timeout_seconds"], (run["deadline_at"] - datetime.now(timezone.utc)).total_seconds())
+                if step['name'] == 'SCENES' and project['mode'] == 'CLOUD':
+                    from app.cloud_limits import load_limits
+                    elapsed = (datetime.now(timezone.utc)-run['started_at']).total_seconds()
+                    timeout = min(timeout, load_limits().max_run_seconds-elapsed)
+                    if timeout <= 0:
+                        raise StageFailure('WAN_RUNTIME_LIMIT', 'Cloud-Laufzeitgrenze erreicht. Geprüfte Clips bleiben gespeichert.')
                 result = run_stage(conn, step, context, timeout)
                 with conn.transaction():
                     require_project(conn, run["project_id"], lock=True)

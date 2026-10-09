@@ -46,9 +46,9 @@ def plan_requests(context):
         raise StageFailure('WAN_PLAN_INVALID', 'Wan-Workflow, Szenenprompt oder Szenendauer ist ungültig. Skript und Cloud-Bundle prüfen.') from exc
 
 
-def inspect_video(path, frames, executable, encoder):
+def inspect_video(path, frames, executable, encoder, remaining=lambda: 30):
     try:
-        data = probe_video(path, executable, count=True)
+        data = probe_video(path, executable, count=True, timeout_seconds=min(30, remaining()))
         streams = data['streams']
         if len(streams) != 1 or 'mp4' not in data['format']['format_name']:
             raise ValueError('container or additional streams')
@@ -62,13 +62,17 @@ def inspect_video(path, frames, executable, encoder):
             raise ValueError('profile')
         subprocess.run([encoder, '-v','error','-xerror','-protocol_whitelist','file,pipe',
                         '-i',str(path),'-map','0:v:0','-f','null','-'], check=True,
-                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=runtime_environment(),timeout=30)
+                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=runtime_environment(),timeout=min(30, remaining()))
+        remaining()
         return duration
+    except subprocess.TimeoutExpired as exc:
+        remaining()
+        raise StageFailure('WAN_MEDIA_TIMEOUT', 'Zeitlimit bei der Wan-Dateiprüfung erreicht.', True) from exc
     except (OSError, ValueError, KeyError, TypeError, ZeroDivisionError, subprocess.SubprocessError) as exc:
         raise StageFailure('WAN_MEDIA_INVALID', 'Wan-Clip ist beschädigt oder entspricht nicht dem festgelegten Videoformat.') from exc
 
 
-def receive_clip(provider, request, directory, root, probe, encoder, check_cancelled, timeout):
+def receive_clip(provider, request, directory, root, probe, encoder, check_cancelled, timeout, remaining=lambda: 30):
     target = safe_path(root, (directory/f'clip-{request.clip_index}.mp4').relative_to(root).as_posix())
     checkpoint = safe_path(root, target.relative_to(root).with_suffix('.json').as_posix())
     intent = safe_path(root, target.relative_to(root).with_suffix('.request.json').as_posix())
@@ -81,18 +85,23 @@ def receive_clip(provider, request, directory, root, probe, encoder, check_cance
         validate_response(saved, request)
         if target.stat().st_size != saved.size_bytes or checksum(target) != saved.checksum_sha256:
             raise ValueError('changed cache')
-        inspect_video(target, RAW_FRAMES, probe, encoder)
+        inspect_video(target, RAW_FRAMES, probe, encoder, remaining)
         return saved
     except (OSError, ValueError, StageFailure):
         checkpoint.unlink(missing_ok=True)
     check_cancelled()
-    response = WanResponse.model_validate(provider.ensure_clip(request, timeout_seconds=timeout))
+    started = time.monotonic()
+    response = WanResponse.model_validate(provider.ensure_clip(request, timeout_seconds=min(timeout, remaining())))
+    check_cancelled()
+    transfer_remaining = min(timeout-(time.monotonic()-started), remaining())
+    if transfer_remaining <= 0:
+        raise TimeoutError('clip deadline')
     validate_response(response, request)
     part = safe_path(root, target.relative_to(root).as_posix()+'.part')
-    started, size, digest = time.monotonic(), 0, hashlib.sha256()
+    size, digest = 0, hashlib.sha256()
     try:
         with part.open('wb') as output:
-            for block in provider.read_clip(response, timeout_seconds=timeout):
+            for block in provider.read_clip(response, timeout_seconds=transfer_remaining):
                 check_cancelled()
                 if time.monotonic()-started > timeout:
                     raise TimeoutError('transfer deadline')
@@ -103,9 +112,12 @@ def receive_clip(provider, request, directory, root, probe, encoder, check_cance
                     raise ValueError('oversized clip')
                 output.write(block); digest.update(block)
             output.flush(); os.fsync(output.fileno())
+        check_cancelled()
+        if time.monotonic()-started > timeout:
+            raise TimeoutError('clip deadline')
         if size != response.size_bytes or digest.hexdigest() != response.checksum_sha256:
             raise StageFailure('WAN_CHECKSUM_MISMATCH', 'Wan-Transfer ist unvollständig oder die Prüfsumme stimmt nicht.')
-        inspect_video(part, RAW_FRAMES, probe, encoder)
+        inspect_video(part, RAW_FRAMES, probe, encoder, remaining)
         check_cancelled()
         part.replace(target)
         write_json(checkpoint, response.model_dump(mode='json'))
@@ -143,10 +155,30 @@ def collect_scenes(context, provider=None, check_cancelled=lambda: None, timeout
         raise StageFailure('STAGE_UNAVAILABLE', 'CLOUD-Generierung ist noch gesperrt. Rücktransfer mit Testdaten ist vorbereitet; Kostenprüfung und echte Wan-Anbindung folgen.')
     if getattr(provider, 'execution', None) != 'CONTROLLED_TEST':
         raise StageFailure('WAN_LIVE_DISABLED', 'Echte Wan-Aufträge bleiben bis zur Kostenprüfung gesperrt.')
-    if not 0 < timeout_seconds <= 30:
+    if not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 30:
         raise StageFailure('WAN_TIMEOUT_INVALID', 'Testtransfer-Zeitlimit muss zwischen 0 und 30 Sekunden liegen.')
     requests = plan_requests(context)
-    root, probe, encoder = media_root(), ffprobe_path(), ffmpeg_path()
+    from app.cloud_limits import load_limits, check_clip_count, cloud_slot
+    limits = load_limits()
+    check_clip_count(requests, limits)
+    deadline = time.monotonic()+limits.max_run_seconds
+    def remaining():
+        seconds = deadline-time.monotonic()
+        if seconds <= 0:
+            raise StageFailure('WAN_RUNTIME_LIMIT', 'Cloud-Laufzeitgrenze erreicht. Geprüfte Clips bleiben gespeichert.')
+        return seconds
+    def check():
+        check_cancelled()
+        remaining()
+    check()
+    root = media_root()
+    with cloud_slot(root, limits.max_parallel):
+        return _collect_scenes(context, provider, requests, root, check,
+                               min(timeout_seconds, limits.max_clip_seconds), remaining)
+
+
+def _collect_scenes(context, provider, requests, root, check_cancelled, timeout_seconds, remaining):
+    probe, encoder = ffprobe_path(), ffmpeg_path()
     folder = run_folder(root, context, 'wan')
     manifest = safe_path(root, (folder/'manifest.json').relative_to(root).as_posix())
     manifest.unlink(missing_ok=True)
@@ -157,7 +189,7 @@ def collect_scenes(context, provider=None, check_cancelled=lambda: None, timeout
             directory = safe_path(root, (folder/f'scene-{position}').relative_to(root).as_posix())
             directory.mkdir(exist_ok=True)
             responses = [receive_clip(provider, request, directory, root, probe, encoder,
-                                      check_cancelled, timeout_seconds) for request in clips]
+                                      check_cancelled, timeout_seconds, remaining) for request in clips]
             target = safe_path(root, (directory/'scene.mp4').relative_to(root).as_posix())
             part = safe_path(root, target.relative_to(root).as_posix()+'.part')
             listing = directory/'concat.txt'
@@ -167,8 +199,8 @@ def collect_scenes(context, provider=None, check_cancelled=lambda: None, timeout
                 subprocess.run([encoder,'-v','error','-y','-protocol_whitelist','file,pipe','-f','concat',
                     '-safe','1','-i',str(listing),'-map','0:v:0','-c','copy','-frames:v',str(frames),
                     '-f','mp4',str(part)], check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
-                    env=runtime_environment(),timeout=30)
-                actual_duration = inspect_video(part, frames, probe, encoder)
+                    env=runtime_environment(),timeout=min(30, remaining()))
+                actual_duration = inspect_video(part, frames, probe, encoder, remaining)
                 check_cancelled()
                 artifact = StageArtifact(key=f'scene_{position}',kind='SOURCE',media_type='AI_GENERATED_VIDEO',
                     storage_path=target.relative_to(root).as_posix(), checksum_sha256=checksum(part))
@@ -187,6 +219,7 @@ def collect_scenes(context, provider=None, check_cancelled=lambda: None, timeout
     except StageFailure:
         raise
     except (TimeoutError, subprocess.TimeoutExpired) as exc:
+        remaining()
         raise StageFailure('WAN_TRANSFER_TIMEOUT', 'Wan-Testtransfer wurde unterbrochen. Geprüfte Clips bleiben wiederaufnehmbar.', True) from exc
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as exc:
         raise StageFailure('WAN_RESPONSE_INVALID', 'Wan-Antwort oder Datei konnte nicht sicher übernommen werden.') from exc

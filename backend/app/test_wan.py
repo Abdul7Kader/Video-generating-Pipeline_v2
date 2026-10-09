@@ -133,5 +133,43 @@ class WanTransferTest(unittest.TestCase):
         self.assertEqual(caught.exception.code,'WAN_JOB_CONFLICT')
         self.assertEqual(len(set(self.provider.calls)),2)
 
+    def test_run_and_clip_deadlines_stop_late_provider_before_transfer(self):
+        for setting, code in [('WAN_MAX_RUN_SECONDS', 'WAN_RUNTIME_LIMIT'),
+                              ('WAN_MAX_CLIP_SECONDS', 'WAN_TRANSFER_TIMEOUT')]:
+            body = context()
+            clock = [0.0]
+            provider = FixtureProvider(self.provider_root)
+            original = provider.ensure_clip
+            observed = []
+            def late(request, *, timeout_seconds):
+                observed.append(timeout_seconds)
+                response = original(request, timeout_seconds=timeout_seconds)
+                clock[0] = 2.0
+                return response
+            with self.subTest(setting=setting), patch.dict(os.environ, {setting: '1'}), \
+                 patch('app.wan.time.monotonic', side_effect=lambda: clock[0]), \
+                 patch.object(provider, 'ensure_clip', side_effect=late), \
+                 patch.object(provider, 'read_clip') as transfer:
+                with self.assertRaises(StageFailure) as caught: collect_scenes(body, provider)
+                self.assertEqual(caught.exception.code, code)
+                self.assertLessEqual(observed[0], 1)
+                transfer.assert_not_called()
+            folder = self.root/'chosen-media/projects'/body['project_id']/'versions/1/runs'/body['run_id']/'wan'
+            self.assertFalse(list(folder.rglob('manifest.json')))
+            self.assertFalse(list(folder.rglob('*.part')))
+        # Slot released by both exceptions; same installation can resume.
+        collect_scenes(self.body, self.provider)
+
+    def test_model_and_gpu_failures_remain_visible_without_sources(self):
+        for code in ('WAN_MODEL_UNAVAILABLE', 'WAN_GPU_UNAVAILABLE'):
+            body = context()
+            with self.subTest(code=code), patch.object(self.provider, 'ensure_clip',
+                    side_effect=StageFailure(code, 'Kontrollierter Providerfehler')):
+                with self.assertRaises(StageFailure) as caught: collect_scenes(body, self.provider)
+                self.assertEqual(caught.exception.code, code)
+            folder = self.root/'chosen-media/projects'/body['project_id']/'versions/1/runs'/body['run_id']/'wan'
+            self.assertFalse(list(folder.rglob('manifest.json')))
+            self.assertFalse(list(folder.rglob('scene.mp4')))
+
 
 if __name__=='__main__': unittest.main()

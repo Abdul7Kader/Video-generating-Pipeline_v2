@@ -62,11 +62,11 @@ def runtime_environment():
         'PATH', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LD_LIBRARY_PATH'}}
 
 
-def probe_video(path, executable, count=False):
+def probe_video(path, executable, count=False, timeout_seconds=120):
     command = [executable, '-v', 'error', '-protocol_whitelist', 'file,pipe', '-show_streams', '-show_format', '-of', 'json']
     if count:
         command.append('-count_frames')
-    return json.loads(subprocess.check_output(command+[str(path)], env=runtime_environment(), stderr=subprocess.DEVNULL, timeout=120))
+    return json.loads(subprocess.check_output(command+[str(path)], env=runtime_environment(), stderr=subprocess.DEVNULL, timeout=timeout_seconds))
 
 
 def prepare_inputs(context, root, executable):

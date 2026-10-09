@@ -150,10 +150,11 @@ Bezug: [Umsetzungsplan](plan.md). Reihenfolge ist verbindlich, soweit Abhängigk
 - **Abgeschlossen 05.10.2026:** Auftrag-/Herkunftsprüfung, Mehrclip-Planung, atomare Transfers/Checkpoints, vollständige MP4-/SHA-/Frameprüfung und Wan-Metadaten im Produktionsstatus. Fünf neue Wan-Tests, sieben gezielte bestehende Backendtests, sieben Cloudtests, zehn Projekttests und Web-Build bestanden. Zwei echte PostgreSQL-/Redis-/RQ-/Prozessfälle plus vier API-Vertragstests in 14,968 s; Timeout mit null Artefakten und Wiederaufnahme derselben Kennungen. Nur `CONTROLLED_TEST`, normale CLOUD-Generierung gesperrt. Kein Modal-/GPU-/Modelldownload-Aufruf; Kriterien unverändert. [Prüfbericht](step21-acceptance.md).
 
 ### 22. Cloud-Grenzen (S; abhängig von: 21)
-- [ ] Maximale Clipzahl, Laufzeit, Parallelität und Kostenlimit sind konfigurierbar und werden vor teuren Aufträgen geprüft.
+- [x] Maximale Clipzahl, Laufzeit, Parallelität und Kostenlimit sind konfigurierbar und werden vor teuren Aufträgen geprüft.
 - [ ] Vor einem echten GPU-Auftrag werden verfügbare Modal-Credits, Workspace-Budget und die Grenze für Nettokosten geprüft. Ohne nachgewiesene Null-Nettokosten-Grenze kein Live-Auftrag.
-- [ ] Modell-/GPU-Fehler bleiben sichtbar und lösen keinen Pexels-Fallback aus.
+- [x] Modell-/GPU-Fehler bleiben sichtbar und lösen keinen Pexels-Fallback aus.
 - **Prüfung:** Grenzwert- und Fehlerfalltests.
+- **09.10.2026 implementiert/funktional geprüft:** 28 gezielte Funktionen/Verträge, zehn Projekttests und Web-Build bestanden; keine Browserabnahme durch Codex. Betreiber übernimmt Haupttest und Videoabnahme; erstes Ziel ist lokale Nutzung. Clipzahl, Zeitgrenzen einschließlich Produktionssubprozess, OS-Parallelitätssperren und reine Kosten-Vorprüfung implementiert. Echte Dienstintegration offen: PostgreSQL lokal auch außerhalb der Socketbeschränkung nicht erreichbar, null Integrationstests ausgeführt. Tatsächliche Modal-Kontonachweise und Live-Verknüpfung vor 24 weiterhin offen; kein Modal-Aufruf, keine Aktivierung. [Prüfbericht 22](step22-acceptance.md).
 
 ### 23. CLOUD-Ablauf mit Testdaten prüfen (M; abhängig von: 15–19, 21–22)
 - [ ] Skriptfreigabe durchläuft den CLOUD-Pfad mit kontrollierten Wan-Antworten und Beispielclips bis zum Video auf dem Installationsrechner.

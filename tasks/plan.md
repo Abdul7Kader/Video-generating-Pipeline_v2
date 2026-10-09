@@ -1,6 +1,8 @@
 # Umsetzungsplan Version 1 – automatisierte Videoproduktion
 
-Stand: 5. Oktober 2026
+Stand: 9. Oktober 2026
+
+**Schritt 22 implementiert/funktional geprüft (09.10.2026):** konfigurierbare Clip-/Zeit-/Parallelitäts-/Kostengrenzen vor Providerarbeit, OS-Sperren über Hostprozesse, begrenzter Produktionssubprozess ohne Fristverlängerung bei Wiederaufnahme, reine Kosten-Vorprüfung mit aktuellem Workspace-/Credits-/Budget-/0-USD-Nettokosten-Nachweisvertrag. 28 gezielte Funktionen/Verträge, zehn Projekttests und Web-Build bestanden. Echte PostgreSQL-/Redis-/RQ-Integration bleibt wegen nicht erreichbarem lokalen PostgreSQL offen; keine tatsächlichen Kontonachweise oder Live-Verknüpfung. Kein Modal-/GPU-Aufruf. Betreiber ist Haupttester und übernimmt Bedienungs-/Videoabnahme; erstes Ziel ist ausschließlich lokale Nutzung der Webseite. Nächster Nachweis: Dienstintegration, danach 23 funktional mit Testdaten. [Prüfbericht 22](step22-acceptance.md).
 
 **Schritt 21 abgeschlossen (05.10.2026):** CLOUD-Rücktransfer mit kontrollierten Testantworten, stabilen Clipkennungen, gespeicherten Intents, Datei-/SHA-/Frame-/Decodeprüfung und Szenenmanifest im konfigurierten Medienspeicher. Mehrclip-Planung und CPU-Zusammenführung; Produktionsstatus/API ergänzt Wan-Metadaten. Echte PostgreSQL-/Redis-/RQ-/Prozessprüfung bis SCENES, Timeout/Wiederaufnahme ohne Artefakt-/Auftragsdubletten, gezielte Backendtests und Web-Build bestanden. **Modal-Verbrauch 0**, kein Live-Provider/Deployment/GPU-Aufruf. Testdateien sind `CONTROLLED_TEST`; normale CLOUD-Produktion bleibt gesperrt. Nächste Aufgabe **22 – Cloud-Grenzen**, anschließend 23 als Testdaten-Browserlauf und 24 nach wirksamer Kostenprüfung. [Prüfbericht 21](step21-acceptance.md), [Transportvertrag](cloud-transfer-contract.md).
 
@@ -161,14 +163,14 @@ Die Prüfpunkte, Abhängigkeiten und konkreten Abnahmekriterien stehen in [todo.
 15. [x] Piper-Sprechersegmente und Zeitdaten erzeugen; Betreiber bestätigt verständliche Hörprobe ([Belege](step15-acceptance.md)).
 16. [x] Remotion-Vorlagen für Text, Untertitel und Grafiken rendern; Dienst-/Produktions-/Browserabnahme bestanden ([Prüfbericht](step16-acceptance.md)).
 17. [x] FFmpeg/ffprobe-Normalisierung, Szenenschnitt, Audio und Encoding bauen; echte MP4 mit vollständiger Wiedergabe abgenommen ([Prüfbericht](step17-acceptance.md)).
-18. [ ] Portablen persistenten Medienspeicher, Manifest und sicheren Videoabruf einrichten.
-19. [ ] Produktionsstatus und Videoprüfung in React bereitstellen.
+18. [x] Portablen persistenten Medienspeicher, Manifest und sicheren Videoabruf einrichten.
+19. [x] Produktionsstatus und Videoprüfung in React bereitstellen.
 
 ### M3 – Cloud-Produktionspfad
 
-20. [ ] Reproduzierbaren ComfyUI/Wan-Workflow für Modal vorbereiten, ohne Generierung auszulösen.
-21. [ ] Szenenaufträge, Ergebnistransfer und Validierung mit Testdaten anbinden.
-22. [ ] Cloud-spezifische Laufzeit-, Kosten- und Fehlergrenzen integrieren.
+20. [x] Reproduzierbaren ComfyUI/Wan-Workflow für Modal vorbereiten, ohne Generierung auszulösen.
+21. [x] Szenenaufträge, Ergebnistransfer und Validierung mit Testdaten anbinden.
+22. [ ] Cloud-spezifische Laufzeit-, Kosten- und Fehlergrenzen integrieren. Implementiert/funktional geprüft; Dienstintegration und tatsächliche Live-Kontonachweise offen.
 23. [ ] Durchgängigen CLOUD-Ablauf mit kontrollierten Testdaten und Trennung der Medientypen prüfen.
 24. [ ] Erstes echtes CLOUD-Video innerhalb nachgewiesener Gratis-Credits erzeugen und im Browser abnehmen.
 
